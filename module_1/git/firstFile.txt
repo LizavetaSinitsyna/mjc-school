@@ -6,5 +6,5 @@ line5
 line6
 line7
 line8
-line9
-line10
+line9 updated for git_1 (step 7)
+line10 updated for git_1 (step 7)
