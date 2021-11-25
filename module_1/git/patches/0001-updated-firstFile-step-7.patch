@@ -1,0 +1,26 @@
+From 3bcff79c97081679c69190272ef4079883b97cea Mon Sep 17 00:00:00 2001
+From: Lizaveta Sinitsyna <lizaveta.mabi@gmail.com>
+Date: Tue, 23 Nov 2021 19:21:46 +0300
+Subject: [PATCH] updated firstFile (step 7)
+
+---
+ module_1/git/firstFile.txt | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/module_1/git/firstFile.txt b/module_1/git/firstFile.txt
+index 31fe82d..93f30de 100644
+--- a/module_1/git/firstFile.txt
++++ b/module_1/git/firstFile.txt
+@@ -6,5 +6,5 @@ line5
+ line6
+ line7
+ line8
+-line9
+-line10
+\ No newline at end of file
++line9 updated for git_1 (step 7)
++line10 updated for git_1 (step 7)
+\ No newline at end of file
+-- 
+2.28.0.windows.1
+
