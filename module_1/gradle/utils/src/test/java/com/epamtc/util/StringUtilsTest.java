@@ -9,4 +9,9 @@ class StringUtilsTest {
 	void isPositiveNumberReturnsTrue() {
 		assertTrue(StringUtils.isPositiveNumber("10"), "isPositiveNumber() should return 'true'");
 	}
+	
+	@Test
+	void isPositiveNumberPassingNullReturnsFalse() {
+		assertFalse(StringUtils.isPositiveNumber(null), "isPositiveNumber() should return 'false'");
+	}
 }
