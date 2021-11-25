@@ -2,8 +2,8 @@ line1
 line2 updated for git_1 in folder1 (step 20)
 line3 updated for git_1 in folder1 (step 19)
 line4 updated for git_1 in folder1 (step 19)
-line5 updated for git_1 in folder2 (step 18)
-line6 updated for git_1 in folder2 (step 18)
+line5 
+line6
 line7 updated for git_1 (step 8)
 line8 updated for git_1 (step 8)
 line9 updated for git_1 (step 7)
