@@ -1,0 +1,17 @@
+plugins {
+	id 'java-library'
+}
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	// https://mvnrepository.com/artifact/org.springframework.data/spring-data-jdbc
+	implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: '2.3.0'
+	
+	// https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2
+	implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.9.0'
+	
+
+
+}

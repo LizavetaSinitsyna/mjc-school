@@ -1,0 +1,4 @@
+rootProject.name = 'gifts'
+include('controller')
+include('service')
+include('repository')
