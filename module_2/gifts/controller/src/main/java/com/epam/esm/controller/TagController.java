@@ -35,7 +35,8 @@ public class TagController {
 	public TagDto read(@PathVariable long id) {
 		return tagService.read(id);
 	}
-
+	
+	//not implemented yet
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<TagDto> readAll(@RequestParam Map<String, String> filterParams) {

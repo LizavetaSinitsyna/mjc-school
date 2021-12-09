@@ -52,7 +52,7 @@ public class CertificateController {
 		return  certificateService.updateCertificateFields(certificate);
 	}
 	
-	//not implemented yet
+	//should be reworked
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate, @PathVariable long id) {

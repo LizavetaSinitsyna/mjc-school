@@ -86,12 +86,12 @@ public class GlobalExceptionHandler {
 		return messageSource.getMessage(KEY_PREFIX + key, null, locale);
 	}
 
-	/*-@ExceptionHandler(Exception.class)
+	@ExceptionHandler(Exception.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiException handleException(Exception exception) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiException(errorMessage, errorCode.getCode(), exception.getCause().getClass().getName());
-	}*/
+	}
 
 }
