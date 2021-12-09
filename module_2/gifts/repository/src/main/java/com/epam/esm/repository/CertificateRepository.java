@@ -12,9 +12,11 @@ public interface CertificateRepository {
 
 	List<CertificateModel> readAll(Map<String, String> filterParams);
 
-	CertificateModel update(CertificateModel certificateDTO);
+	CertificateModel update(CertificateModel certificateModel);
 
 	int delete(long certificateId);
 
 	CertificateModel readByCertificateName(String certificateName);
+
+	List<CertificateModel> readByTagId(long tagId);
 }

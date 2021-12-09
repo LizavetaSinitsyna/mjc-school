@@ -8,7 +8,7 @@ public class DeletedEntityException extends GeneralException {
 
 	}
 
-	public DeletedEntityException(String invalidResource, CustomErrorCode errorCode) {
+	public DeletedEntityException(String invalidResource, ErrorCode errorCode) {
 		super();
 	}
 

@@ -1,20 +1,18 @@
-plugins {
-	id 'java-library'
-}
-repositories {
-	mavenCentral()
+ext {
+	springContextVersion = '5.3.13'
+	jacksonDatatypeVersion = '2.13.0'
+	springTxVersion = '5.3.13'
+	modelmapperVersion = '2.4.5'
 }
 
 dependencies {
-	// https://mvnrepository.com/artifact/org.springframework/spring-context
-	implementation group: 'org.springframework', name: 'spring-context', version: '5.3.13'
+	implementation group: 'org.springframework', name: 'spring-context', version: "${springContextVersion}"
 	
-	// https://mvnrepository.com/artifact/com.fasterxml.jackson.datatype/jackson-datatype-jsr310
-	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: '2.13.0'
+	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonDatatypeVersion}"
 	
-	// https://mvnrepository.com/artifact/org.springframework/spring-tx
-	implementation group: 'org.springframework', name: 'spring-tx', version: '5.3.13'
+	implementation group: 'org.springframework', name: 'spring-tx', version: "${springTxVersion}"
 	
+	implementation group: 'org.modelmapper', name: 'modelmapper', version: "${modelmapperVersion}"
+		
 	implementation project(':repository')
-
 }

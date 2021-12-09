@@ -1,30 +1,27 @@
 package com.epam.esm.service.converter;
 
+import org.modelmapper.Converter;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
+
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.repository.model.TagModel;
 
+@Component
 public class TagConverter {
-	public static TagDto convertModelToDTO(TagModel tagModel) {
-		if (tagModel == null) {
-			return null;
-		}
+	private final ModelMapper modelMapper;
+	private Converter<String, String> spaceRemover = (src) -> src.getSource().replaceAll("\\s+", " ").trim();
 
-		TagDto tagDto = new TagDto();
-		tagDto.setId(tagModel.getId());
-		tagDto.setName(tagModel.getName());
-
-		return tagDto;
+	public TagConverter() {
+		this.modelMapper = new ModelMapper();
+		modelMapper.addConverter(spaceRemover);
 	}
 
-	public static TagModel convertDtoToModel(TagDto tagDto) {
-		if (tagDto == null) {
-			return null;
-		}
+	public TagDto convertToDto(TagModel tagModel) {
+		return modelMapper.map(tagModel, TagDto.class);
+	}
 
-		TagModel tagModel = new TagModel();
-		tagModel.setId(tagDto.getId());
-		tagModel.setName(tagDto.getName());
-
-		return tagModel;
+	public TagModel convertToModel(TagDto tagDto) {
+		return modelMapper.map(tagDto, TagModel.class);
 	}
 }

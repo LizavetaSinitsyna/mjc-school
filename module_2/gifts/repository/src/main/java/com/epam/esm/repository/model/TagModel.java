@@ -1,10 +1,10 @@
 package com.epam.esm.repository.model;
 
-public class TagModel extends EntityModel {
+import lombok.Data;
 
-	private static final long serialVersionUID = 1L;
-
-	public TagModel() {
-
-	}
+@Data
+public class TagModel {
+	private long id;
+	private String name;
+	private boolean isDeleted;
 }

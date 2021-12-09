@@ -8,7 +8,7 @@ public class NullEntityException extends GeneralException {
 		super();
 	}
 
-	public NullEntityException(String invalidResource, CustomErrorCode errorCode) {
+	public NullEntityException(String invalidResource, ErrorCode errorCode) {
 		super(invalidResource, errorCode);
 	}
 	

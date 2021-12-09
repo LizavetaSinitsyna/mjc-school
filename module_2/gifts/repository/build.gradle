@@ -1,17 +1,10 @@
-plugins {
-	id 'java-library'
-}
-repositories {
-	mavenCentral()
+ext {
+	springDataJdbcVersion = '2.3.0'
+	hikariCPVersion = '5.0.0'
 }
 
 dependencies {
-	// https://mvnrepository.com/artifact/org.springframework.data/spring-data-jdbc
-	implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: '2.3.0'
+	implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: "${springDataJdbcVersion}"
 	
-	// https://mvnrepository.com/artifact/org.apache.commons/commons-dbcp2
-	implementation group: 'org.apache.commons', name: 'commons-dbcp2', version: '2.9.0'
-	
-
-
+	implementation group: 'com.zaxxer', name: 'HikariCP', version: "${hikariCPVersion}"
 }

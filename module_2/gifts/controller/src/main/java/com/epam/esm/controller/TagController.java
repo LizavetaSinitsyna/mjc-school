@@ -27,28 +27,24 @@ public class TagController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public TagDto create(@RequestBody TagDto tagDto) {
-		TagDto createdTag = tagService.create(tagDto);
-		return createdTag;
+		return tagService.create(tagDto);
 	}
 
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public TagDto read(@PathVariable long id) {
-		TagDto tag = tagService.read(id);
-		return tag;
+		return tagService.read(id);
 	}
 
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<TagDto> readAll(@RequestParam Map<String, String> filterParams) {
-		List<TagDto> tags = tagService.readAll(filterParams);
-		return tags;
+		return tagService.readAll(filterParams);
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable long id) {
 		tagService.delete(id);
-
 	}
 }

@@ -16,6 +16,6 @@ public interface CertificateService {
 
 	CertificateDto updateCertificateFields(CertificateDto certificate);
 
-	CertificateDto updateEntireCertificate(CertificateDto certificate);
+	CertificateDto updateEntireCertificate(long certificateId, CertificateDto certificate);
 
 }

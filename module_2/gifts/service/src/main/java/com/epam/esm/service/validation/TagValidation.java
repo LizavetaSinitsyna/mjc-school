@@ -1,7 +1,7 @@
 package com.epam.esm.service.validation;
 
 import com.epam.esm.dto.TagDto;
-import com.epam.esm.exception.CustomErrorCode;
+import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NullEntityException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.TagRepository;
@@ -24,13 +24,13 @@ public class TagValidation {
 
 	public void validateId(long id) {
 		if (id <= 0) {
-			throw new ValidationException("id = " + id, CustomErrorCode.INVALID_TAG_ID);
+			throw new ValidationException("id = " + id, ErrorCode.INVALID_TAG_ID);
 		}
 	}
 
 	public void validateName(String name) {
 		if (name == null || name.isBlank() || name.length() < MIN_NAME_LENGTH || name.length() > MAX_NAME_LENGTH) {
-			throw new ValidationException("name = " + name, CustomErrorCode.INVALID_TAG_NAME);
+			throw new ValidationException("name = " + name, ErrorCode.INVALID_TAG_NAME);
 		}
 	}
 
@@ -38,13 +38,13 @@ public class TagValidation {
 		validateName(tagName);
 		TagModel tagModel = tagRepository.readByTagName(tagName);
 		if (tagModel != null) {
-			throw new ValidationException("name = " + tagName, CustomErrorCode.DUPLICATED_TAG_NAME);
+			throw new ValidationException("name = " + tagName, ErrorCode.DUPLICATED_TAG_NAME);
 		}
 	}
 
 	public void validateTagUpdatableFields(TagDto tagDto) {
 		if (tagDto == null) {
-			throw new NullEntityException("tagDto = " + tagDto, CustomErrorCode.NULL_PASSED_PARAMETER);
+			throw new NullEntityException("tagDto = " + tagDto, ErrorCode.NULL_PASSED_PARAMETER);
 		}
 		validateName(tagDto.getName());
 	}

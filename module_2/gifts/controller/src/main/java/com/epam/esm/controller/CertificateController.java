@@ -18,8 +18,6 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.epam.esm.dto.CertificateDto;
-import com.epam.esm.exception.CustomErrorCode;
-import com.epam.esm.exception.ValidationException;
 import com.epam.esm.service.CertificateService;
 
 @RestController
@@ -31,48 +29,39 @@ public class CertificateController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public CertificateDto create(@RequestBody CertificateDto certificateDTO) {
-		CertificateDto createdCertificate = certificateService.create(certificateDTO);
-		return createdCertificate;
+		return certificateService.create(certificateDTO);
 	}
 
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto read(@PathVariable String id) {
-		long certificateId = 0;
-		try {
-			certificateId = Long.parseLong(id);
-		} catch (NumberFormatException e) {
-			throw new ValidationException("id = " + id, CustomErrorCode.INVALID_CERTIFICATE_ID);
-		}
-		CertificateDto certificate = certificateService.read(certificateId);
-		return certificate;
+	public CertificateDto read(@PathVariable long id) {
+		return certificateService.read(id);
 	}
 
+	//not implemented yet
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<CertificateDto> readAll(@RequestParam Map<String, String> filterParams) {
-		List<CertificateDto> certificates = certificateService.readAll(filterParams);
-		return certificates;
+		return certificateService.readAll(filterParams);
 	}
-
+	
+	//not implemented yet
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateCertificateFields(@RequestBody CertificateDto certificate) {
-		CertificateDto updatedCertificate = certificateService.updateCertificateFields(certificate);
-		return updatedCertificate;
+		return  certificateService.updateCertificateFields(certificate);
 	}
-
-	@PutMapping
+	
+	//not implemented yet
+	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate) {
-		CertificateDto updatedCertificate = certificateService.updateEntireCertificate(certificate);
-		return updatedCertificate;
+	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate, @PathVariable long id) {
+		return certificateService.updateEntireCertificate(id, certificate);
 	}
 
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable long id) {
 		certificateService.delete(id);
-
 	}
 }

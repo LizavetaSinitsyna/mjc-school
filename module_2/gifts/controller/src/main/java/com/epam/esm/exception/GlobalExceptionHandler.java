@@ -1,46 +1,97 @@
 package com.epam.esm.exception;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 @ControllerAdvice
 @ResponseBody
 public class GlobalExceptionHandler {
-	@Autowired
-	private ExceptionMessageCreator exceptionMessageCreator;
+	private static final String KEY_PREFIX = "exception.";
+	private static final String KEY_MIDDLE = ".middle_part";
 
-	private ExceptionDto handleException(CustomErrorCode errorCode, String invalidResource) {
-		Locale locale = LocaleContextHolder.getLocale();
-		String errorMassage = exceptionMessageCreator.createMessage(errorCode, locale, invalidResource);
-		return new ExceptionDto(errorMassage, errorCode.getCode());
-	}
+	@Autowired
+	private MessageSource messageSource;
 
 	@ExceptionHandler(ValidationException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ExceptionDto handleValidationException(ValidationException exception) {
-		return handleException(exception.getErrorCode(), exception.getInvalidResource());
-
+	public ApiException handleValidationException(ValidationException exception) {
+		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
 	}
 
 	@ExceptionHandler(NullEntityException.class)
-	@ResponseStatus(HttpStatus.OK)
-	public ExceptionDto handleNoExistedEntityException(NullEntityException exception) {
-		return handleException(exception.getErrorCode(), exception.getInvalidResource());
-
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiException handleNoExistedEntityException(NullEntityException exception) {
+		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
 	}
 
 	@ExceptionHandler(DeletedEntityException.class)
 	@ResponseStatus(HttpStatus.OK)
-	public ExceptionDto handleDeletedEntityException(DeletedEntityException exception) {
-		return handleException(exception.getErrorCode(), exception.getInvalidResource());
-
+	public ApiException handleDeletedEntityException(DeletedEntityException exception) {
+		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
 	}
+
+	@ExceptionHandler(MethodArgumentTypeMismatchException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiException handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException exception) {
+		ErrorCode errorCode = ErrorCode.TYPE_MISMATCH;
+		String error = obtainExceptionMessage(errorCode.getCode() + KEY_MIDDLE, exception.getName().toString(),
+				exception.getRequiredType().toString());
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiException(errorMessage, errorCode.getCode(), error.toString());
+	}
+
+	@ExceptionHandler(InvalidFormatException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiException handleInvalidFormatException(InvalidFormatException exception) {
+		ErrorCode errorCode = ErrorCode.INVALID_FORMAT;
+		String error = obtainExceptionMessage(errorCode.getCode() + KEY_MIDDLE, exception.getValue().toString(),
+				exception.getTargetType().toString());
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiException(errorMessage, errorCode.getCode(), error.toString());
+	}
+
+	private ApiException handleException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode,
+			String invalidResource) {
+		String errorMessage = obtainExceptionMessage(generalErrorCode.getCode(), invalidResource);
+		List<String> subErrors = new ArrayList<>();
+		if (errors != null) {
+			for (Map.Entry<ErrorCode, String> error : errors.entrySet()) {
+				subErrors.add(obtainExceptionMessage(error.getKey().getCode(), error.getValue()));
+			}
+		}
+		return new ApiException(errorMessage.toString(), generalErrorCode.getCode(), subErrors);
+	}
+
+	private String obtainExceptionMessage(String key, Object... insertions) {
+		Locale locale = LocaleContextHolder.getLocale();
+		return messageSource.getMessage(KEY_PREFIX + key, insertions, locale);
+	}
+
+	private String obtainExceptionMessage(String key) {
+		Locale locale = LocaleContextHolder.getLocale();
+		return messageSource.getMessage(KEY_PREFIX + key, null, locale);
+	}
+
+	/*-@ExceptionHandler(Exception.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiException handleException(Exception exception) {
+		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiException(errorMessage, errorCode.getCode(), exception.getCause().getClass().getName());
+	}*/
 
 }

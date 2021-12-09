@@ -1,40 +1,27 @@
 package com.epam.esm.service.converter;
 
+import org.modelmapper.Converter;
+import org.modelmapper.ModelMapper;
+import org.springframework.stereotype.Component;
+
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.repository.model.CertificateModel;
 
+@Component
 public class CertificateConverter {
-	public static CertificateDto convertModelToDTO(CertificateModel certificateModel) {
-		if (certificateModel == null) {
-			return null;
-		}
+	private ModelMapper modelMapper;
+	private Converter<String, String> spaceRemover = (src) -> src.getSource().trim().replaceAll("\\s+", " ").trim();
 
-		CertificateDto certificateDTO = new CertificateDto();
-		certificateDTO.setId(certificateModel.getId());
-		certificateDTO.setName(certificateModel.getName());
-		certificateDTO.setDescription(certificateModel.getDescription());
-		certificateDTO.setDuration(certificateModel.getDuration());
-		certificateDTO.setCreateDate(certificateModel.getCreateDate());
-		certificateDTO.setLastUpdateDate(certificateModel.getLastUpdateDate());
-		certificateDTO.setPrice(certificateModel.getPrice());
-
-		return certificateDTO;
+	public CertificateConverter() {
+		this.modelMapper = new ModelMapper();
+		modelMapper.addConverter(spaceRemover);
 	}
 
-	public static CertificateModel convertDtoToModel(CertificateDto certificateDto) {
-		if (certificateDto == null) {
-			return null;
-		}
+	public CertificateDto convertToDto(CertificateModel certificateModel) {
+		return modelMapper.map(certificateModel, CertificateDto.class);
+	}
 
-		CertificateModel certificateModel = new CertificateModel();
-		certificateModel.setId(certificateDto.getId());
-		certificateModel.setName(certificateDto.getName());
-		certificateModel.setDescription(certificateDto.getDescription());
-		certificateModel.setDuration(certificateDto.getDuration());
-		certificateModel.setCreateDate(certificateDto.getCreateDate());
-		certificateModel.setLastUpdateDate(certificateDto.getLastUpdateDate());
-		certificateModel.setPrice(certificateDto.getPrice());
-
-		return certificateModel;
+	public CertificateModel convertToModel(CertificateDto certificateDto) {
+		return modelMapper.map(certificateDto, CertificateModel.class);
 	}
 }

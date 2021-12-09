@@ -19,4 +19,8 @@ public interface TagRepository {
 	TagModel readByTagName(String tagName);
 
 	int saveTagsForCertificate(long certificateId, List<TagModel> tagModels);
+
+	TagModel restore(TagModel tagModel);
+
+	int deleteAllTagsForCertificate(long certificateId);
 }

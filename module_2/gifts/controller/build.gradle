@@ -1,24 +1,18 @@
-plugins {
-	id 'java-library'
-}
-
-repositories {
-	mavenCentral()
+ext {
+	servletApiVersion = '4.0.1'
+	springWebMvcVersion = '5.3.13'
+	springWebVersion = '5.3.13'
+	jacksonDatabindVersion = '2.13.0'
 }
 
 dependencies {
-	// https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
-	compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
+	compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: "${servletApiVersion}"
 		
-	// https://mvnrepository.com/artifact/org.springframework/spring-webmvc
-	implementation group: 'org.springframework', name: 'spring-webmvc', version: '5.3.13'
+	implementation group: 'org.springframework', name: 'spring-webmvc', version: "${springWebMvcVersion}"
 	
-	// https://mvnrepository.com/artifact/org.springframework/spring-web
-	implementation group: 'org.springframework', name: 'spring-web', version: '5.3.13'
+	implementation group: 'org.springframework', name: 'spring-web', version: "${springWebVersion}"
 	
-	// https://mvnrepository.com/artifact/com.fasterxml.jackson.core/jackson-databind
-	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.13.0'
+	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDatabindVersion}"
 	
-	implementation project(':service')
-	
+	implementation project(':service')	
 }

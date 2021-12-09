@@ -1,20 +1,27 @@
 package com.epam.esm.exception;
 
+import java.util.Map;
+
 public class GeneralException extends RuntimeException {
 
 	private static final long serialVersionUID = 1L;
 
 	private String invalidResource;
-	private CustomErrorCode errorCode;
+	private ErrorCode generalErrorCode;
+	private Map<ErrorCode, String> errors;
 
 	public GeneralException() {
 		super();
 	}
 
-	public GeneralException(String invalidResource, CustomErrorCode errorCode) {
-		super();
+	public GeneralException(String invalidResource, ErrorCode generalErrorCode) {
 		this.invalidResource = invalidResource;
-		this.errorCode = errorCode;
+		this.generalErrorCode = generalErrorCode;
+	}
+
+	public GeneralException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode) {
+		this.errors = errors;
+		this.generalErrorCode = generalErrorCode;
 	}
 
 	public GeneralException(String message) {
@@ -33,8 +40,12 @@ public class GeneralException extends RuntimeException {
 		return invalidResource;
 	}
 
-	public CustomErrorCode getErrorCode() {
-		return errorCode;
+	public ErrorCode getGeneralErrorCode() {
+		return generalErrorCode;
+	}
+
+	public Map<ErrorCode, String> getErrors() {
+		return errors;
 	}
 
 }

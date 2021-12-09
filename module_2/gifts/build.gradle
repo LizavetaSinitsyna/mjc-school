@@ -1,31 +1,30 @@
-	plugins {
-		id 'java-library'
-		id 'war'
-		//id "com.bmuschko.tomcat" version "2.7.0"
-	}
+plugins {
+	id 'java-library'
+	id 'war'
+}
+	
+repositories {
+	mavenCentral()
+}
+
+subprojects {
+	apply plugin: 'java-library'
 	
 	repositories {
 		mavenCentral()
 	}
 	
-	dependencies {
-	
-	// https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api
-	//compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: '4.0.1'
-
-		
-		/*def tomcatVersion = '9.0.5'
-	    tomcat "org.apache.tomcat.embed:tomcat-embed-core:${tomcatVersion}",
-	           "org.apache.tomcat.embed:tomcat-embed-jasper:${tomcatVersion}"*/
-	    
-		implementation project(':service')
-		implementation project(':controller')
-		implementation project(':repository')
-		
+	ext {
+		lombokVersion = '1.18.22'
 	}
+	dependencies {
+		compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+		annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+	}
+}
 	
-	/*tomcat {
-	    httpProtocol = 'org.apache.coyote.http11.Http11Nio2Protocol'
-	    ajpProtocol  = 'org.apache.coyote.ajp.AjpNio2Protocol'
-	}*/
-	
+dependencies {  
+	implementation project(':service')
+	implementation project(':controller')
+	implementation project(':repository')	
+}

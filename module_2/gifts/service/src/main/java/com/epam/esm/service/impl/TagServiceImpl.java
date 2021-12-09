@@ -5,31 +5,44 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.epam.esm.dto.TagDto;
+import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
+import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
+import com.epam.esm.service.validation.TagValidation;
 
 @Service
 public class TagServiceImpl implements TagService {
 
 	@Autowired
+	private CertificateRepository certificateRepository;
+
+	@Autowired
 	private TagRepository tagRepository;
+
+	@Autowired
+	private TagConverter tagConverter;
+
+	@Autowired
+	private TagValidation tagValidation;
 
 	@Override
 	public TagDto create(TagDto tagDto) {
-
-		TagModel createdTagModel = tagRepository.create(TagConverter.convertDtoToModel(tagDto));
-		TagDto createdTag = TagConverter.convertModelToDTO(createdTagModel);
+		tagValidation.validateTagUpdatableFields(tagDto);
+		TagModel createdTagModel = tagRepository.create(tagConverter.convertToModel(tagDto));
+		TagDto createdTag = tagConverter.convertToDto(createdTagModel);
 		return createdTag;
 	}
 
 	@Override
 	public TagDto read(long tagId) {
-		TagDto tagDto = TagConverter.convertModelToDTO(tagRepository.readById(tagId));
-
+		tagValidation.validateId(tagId);
+		TagDto tagDto = tagConverter.convertToDto(tagRepository.readById(tagId));
 		return tagDto;
 	}
 
@@ -40,9 +53,17 @@ public class TagServiceImpl implements TagService {
 	}
 
 	@Override
+	@Transactional
 	public int delete(long tagId) {
-		// TODO Auto-generated method stub
-		return 0;
+		tagValidation.validateId(tagId);
+		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);
+		int deletedTagAmount = tagRepository.delete(tagId);
+		if (certificates != null) {
+			for (CertificateModel certificate : certificates) {
+				certificateRepository.delete(certificate.getId());
+			}
+		}
+		return deletedTagAmount;
 	}
 
 }

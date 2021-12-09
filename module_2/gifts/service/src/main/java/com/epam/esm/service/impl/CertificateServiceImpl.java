@@ -13,7 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.TagDto;
-import com.epam.esm.exception.CustomErrorCode;
+import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.DeletedEntityException;
 import com.epam.esm.exception.NullEntityException;
 import com.epam.esm.repository.CertificateRepository;
@@ -40,36 +40,42 @@ public class CertificateServiceImpl implements CertificateService {
 	@Autowired
 	private TagValidation tagValidation;
 
+	@Autowired
+	private CertificateConverter certificateConverter;
+
+	@Autowired
+	private TagConverter tagConverter;
+
 	@Override
 	@Transactional
 	public CertificateDto create(CertificateDto certificateDto) {
 		certificateValidation.validateCertificateUpdatableFields(certificateDto);
-		certificateValidation.checkDublicatedName(certificateDto.getName());
 
 		Set<TagDto> tagDtos = new HashSet<>(certificateDto.getTags());
 		List<TagModel> tagModels = new ArrayList<>(tagDtos.size());
 		List<TagDto> createdCertificateTagDtos = new ArrayList<>(tagDtos.size());
 
 		for (TagDto tagDto : tagDtos) {
-			tagValidation.validateTagUpdatableFields(tagDto);
 			TagModel tagModel = tagRepository.readByTagName(tagDto.getName());
 			if (tagModel == null) {
-				tagModel = tagRepository.create(TagConverter.convertDtoToModel(tagDto));
+				tagValidation.validateTagUpdatableFields(tagDto);
+				tagModel = tagRepository.create(tagConverter.convertToModel(tagDto));
+			} else if (tagModel.isDeleted()) {
+				tagModel = tagRepository.restore(tagModel);
 			}
 			tagModels.add(tagModel);
-			createdCertificateTagDtos.add(TagConverter.convertModelToDTO(tagModel));
+			createdCertificateTagDtos.add(tagConverter.convertToDto(tagModel));
 		}
-
 		LocalDateTime now = LocalDateTime.now();
 		certificateDto.setCreateDate(now);
 		certificateDto.setLastUpdateDate(now);
 		CertificateModel createdCertificateModel = certificateRepository
-				.create(CertificateConverter.convertDtoToModel(certificateDto));
+				.create(certificateConverter.convertToModel(certificateDto));
 		long createdCertificateModelId = createdCertificateModel.getId();
 
 		tagRepository.saveTagsForCertificate(createdCertificateModelId, tagModels);
 
-		CertificateDto createdCertificate = CertificateConverter.convertModelToDTO(createdCertificateModel);
+		CertificateDto createdCertificate = certificateConverter.convertToDto(createdCertificateModel);
 		createdCertificate.setTags(createdCertificateTagDtos);
 
 		return createdCertificate;
@@ -80,18 +86,17 @@ public class CertificateServiceImpl implements CertificateService {
 		certificateValidation.validateId(certificateId);
 		CertificateModel certificateModel = certificateRepository.readById(certificateId);
 		if (certificateModel == null) {
-			throw new NullEntityException("id = " + certificateId,
-					CustomErrorCode.NO_CERTIFICATE_EXISTS_WITH_REQUIRED_PARAM);
+			throw new NullEntityException("id = " + certificateId, ErrorCode.NO_CERTIFICATE_EXISTS_WITH_REQUIRED_PARAM);
 		}
 		if (certificateModel.isDeleted()) {
-			throw new DeletedEntityException("id = " + certificateId, CustomErrorCode.DELETED_CERTIFICATE);
+			throw new DeletedEntityException("id = " + certificateId, ErrorCode.DELETED_CERTIFICATE);
 		}
-		CertificateDto certificateDto = CertificateConverter.convertModelToDTO(certificateModel);
+		CertificateDto certificateDto = certificateConverter.convertToDto(certificateModel);
 
 		List<TagModel> tagModels = tagRepository.readByCertificateId(certificateId);
 		List<TagDto> tagsDto = new ArrayList<>(tagModels.size());
 		for (TagModel tagModel : tagModels) {
-			tagsDto.add(TagConverter.convertModelToDTO(tagModel));
+			tagsDto.add(tagConverter.convertToDto(tagModel));
 		}
 		certificateDto.setTags(tagsDto);
 
@@ -106,8 +111,8 @@ public class CertificateServiceImpl implements CertificateService {
 
 	@Override
 	public int delete(long certificateId) {
-		// TODO Auto-generated method stub
-		return 0;
+		certificateValidation.validateId(certificateId);
+		return certificateRepository.delete(certificateId);
 	}
 
 	@Override
@@ -117,9 +122,42 @@ public class CertificateServiceImpl implements CertificateService {
 	}
 
 	@Override
-	public CertificateDto updateEntireCertificate(CertificateDto certificate) {
-		// TODO Auto-generated method stub
-		return null;
+	public CertificateDto updateEntireCertificate(long certificateId, CertificateDto certificateDto) {
+		certificateValidation.validateId(certificateId);
+		certificateValidation.validateCertificateUpdatableFields(certificateDto);
+		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
+		certificateToUpdate.setId(certificateId);
+
+		LocalDateTime now = LocalDateTime.now();
+		certificateToUpdate.setLastUpdateDate(now);
+
+		CertificateDto updatedCertificate = certificateConverter
+				.convertToDto(certificateRepository.update(certificateToUpdate));
+		if (updatedCertificate == null) {
+			throw new NullEntityException("id = " + certificateId, ErrorCode.NO_CERTIFICATE_EXISTS_WITH_REQUIRED_PARAM);
+		}
+
+		Set<TagDto> tagDtos = new HashSet<>(certificateDto.getTags());
+		List<TagModel> tagModels = new ArrayList<>(tagDtos.size());
+		List<TagDto> updatedCertificateTagDtos = new ArrayList<>(tagDtos.size());
+
+		for (TagDto tagDto : tagDtos) {
+			TagModel tagModel = tagRepository.readByTagName(tagDto.getName());
+			if (tagModel == null) {
+				tagValidation.validateTagUpdatableFields(tagDto);
+				tagModel = tagRepository.create(tagConverter.convertToModel(tagDto));
+			} else if (tagModel.isDeleted()) {
+				tagModel = tagRepository.restore(tagModel);
+			}
+			tagModels.add(tagModel);
+			updatedCertificateTagDtos.add(tagConverter.convertToDto(tagModel));
+		}
+
+		tagRepository.deleteAllTagsForCertificate(certificateId);
+		tagRepository.saveTagsForCertificate(certificateId, tagModels);
+
+		updatedCertificate.setTags(updatedCertificateTagDtos);
+		return updatedCertificate;
 	}
 
 }
