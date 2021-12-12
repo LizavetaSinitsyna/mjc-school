@@ -1,22 +1,16 @@
 package com.epam.esm.repository;
 
 import java.util.List;
-import java.util.Map;
 
 import com.epam.esm.repository.model.CertificateModel;
 
-public interface CertificateRepository {
-	CertificateModel create(CertificateModel certificateModel);
+public interface CertificateRepository extends GeneralRepository<CertificateModel> {
 
-	CertificateModel readById(long certificateId);
-
-	List<CertificateModel> readAll(Map<String, String> filterParams);
-
-	CertificateModel update(CertificateModel certificateModel);
-
-	int delete(long certificateId);
-
-	CertificateModel readByCertificateName(String certificateName);
+	CertificateModel updateEntireCertificate(CertificateModel certificateModel);
 
 	List<CertificateModel> readByTagId(long tagId);
+
+	boolean certificateExistsByName(String certificateName);
+
+	CertificateModel updateCertificateFields(CertificateModel certificateToUpdate);
 }

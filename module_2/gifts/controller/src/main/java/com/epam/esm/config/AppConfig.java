@@ -17,4 +17,5 @@ public class AppConfig {
 		messageSource.setDefaultEncoding(DEFAULT_ENCODING);
 		return messageSource;
 	}
+
 }

@@ -3,18 +3,18 @@ package com.epam.esm.repository.impl;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
+import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.mapper.CertificateRowMapper;
 import com.epam.esm.repository.model.CertificateModel;
-import com.epam.esm.repository.model.TagModel;
+import com.epam.esm.repository.query_builder.CertificateQueryBuilder;
 
 @Repository
 public class CertificateRepositoryImpl implements CertificateRepository {
@@ -24,14 +24,18 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	private static final String SELECT_CERTIFICATE_BY_NAME_QUERY = "SELECT id, name, description, price, duration, create_date, last_update_date, is_deleted FROM gift_certificates WHERE name = ?";
 	private static final String SELECT_CERTIFICATE_BY_TAG_ID_QUERY = "SELECT id, name, description, price, duration, create_date, last_update_date, is_deleted FROM gift_certificates INNER JOIN tags_certificates "
 			+ "ON id = certificate_id WHERE tag_id = ?";
-	private static final String REMOVE_CERTIFICATE__QUERY = "UPDATE gift_certificates SET is_deleted = true WHERE id = ?";
-	private static final String UPDATE_CERTIFICATE__QUERY = "UPDATE gift_certificates SET name = ?, description = ?, price = ?, duration = ?, last_update_date = ? WHERE id = ?";
+	private static final String REMOVE_CERTIFICATE_QUERY = "UPDATE gift_certificates SET is_deleted = true WHERE id = ?";
+	private static final String UPDATE_ENTIRE_CERTIFICATE_QUERY = "UPDATE gift_certificates SET name = ?, description = ?, price = ?, duration = ?, last_update_date = ? WHERE id = ?";
+	private static final String UPDATE_CERTIFICATE_NOT_NULL_QUERY = "UPDATE gift_certificates SET name = IF(? IS NULL, name, ?), description = IF(? IS NULL, description, ?), price = IF(? IS NULL, price, ?), duration = IF(? IS NULL, duration, ?), last_update_date = ? WHERE id = ?";
 
 	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
 	@Autowired
 	private CertificateRowMapper certificateRowMapper;
+
+	@Autowired
+	private CertificateQueryBuilder certificateQueryBuilder;
 
 	@Override
 	public CertificateModel create(CertificateModel certificateModel) {
@@ -63,7 +67,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	}
 
 	@Override
-	public CertificateModel readByCertificateName(String certificateName) {
+	public CertificateModel readByName(String certificateName) {
 		List<CertificateModel> certificateModelList = jdbcTemplate.query(SELECT_CERTIFICATE_BY_NAME_QUERY,
 				certificateRowMapper, certificateName);
 		if (certificateModelList.isEmpty()) {
@@ -73,21 +77,46 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	}
 
 	@Override
-	public List<CertificateModel> readAll(Map<String, String> filterParams) {
-		// TODO Auto-generated method stub
-		return null;
+	public boolean certificateExistsByName(String certificateName) {
+		List<CertificateModel> certificateModelList = jdbcTemplate.query(SELECT_CERTIFICATE_BY_NAME_QUERY,
+				certificateRowMapper, certificateName);
+		return !certificateModelList.isEmpty();
 	}
 
 	@Override
-	public CertificateModel update(CertificateModel certificateModel) {
+	public List<CertificateModel> readAll(MultiValueMap<String, String> params) {
+		return jdbcTemplate.query(certificateQueryBuilder.buildSearchQuery(params), certificateRowMapper);
+	}
+
+	@Override
+	public CertificateModel updateEntireCertificate(CertificateModel certificateModel) {
 		jdbcTemplate.update(connection -> {
-			PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CERTIFICATE__QUERY);
+			PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_ENTIRE_CERTIFICATE_QUERY);
 			preparedStatement.setString(1, certificateModel.getName());
 			preparedStatement.setString(2, certificateModel.getDescription());
 			preparedStatement.setInt(3, certificateModel.getDuration());
 			preparedStatement.setBigDecimal(4, certificateModel.getPrice());
 			preparedStatement.setTimestamp(5, Timestamp.valueOf(certificateModel.getLastUpdateDate()));
 			preparedStatement.setLong(6, certificateModel.getId());
+			return preparedStatement;
+		});
+		return readById(certificateModel.getId());
+	}
+
+	@Override
+	public CertificateModel updateCertificateFields(CertificateModel certificateModel) {
+		jdbcTemplate.update(connection -> {
+			PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CERTIFICATE_NOT_NULL_QUERY);
+			preparedStatement.setString(1, certificateModel.getName());
+			preparedStatement.setString(2, certificateModel.getName());
+			preparedStatement.setString(3, certificateModel.getDescription());
+			preparedStatement.setString(4, certificateModel.getDescription());
+			preparedStatement.setInt(5, certificateModel.getDuration());
+			preparedStatement.setInt(6, certificateModel.getDuration());
+			preparedStatement.setBigDecimal(7, certificateModel.getPrice());
+			preparedStatement.setBigDecimal(8, certificateModel.getPrice());
+			preparedStatement.setTimestamp(9, Timestamp.valueOf(certificateModel.getLastUpdateDate()));
+			preparedStatement.setLong(10, certificateModel.getId());
 			return preparedStatement;
 		});
 		return readById(certificateModel.getId());
@@ -101,7 +130,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	@Override
 	public int delete(long certificateId) {
 		int effectedRows = jdbcTemplate.update(connection -> {
-			PreparedStatement preparedStatement = connection.prepareStatement(REMOVE_CERTIFICATE__QUERY);
+			PreparedStatement preparedStatement = connection.prepareStatement(REMOVE_CERTIFICATE_QUERY);
 			preparedStatement.setLong(1, certificateId);
 			return preparedStatement;
 		});

@@ -1,18 +1,9 @@
 ext {
 	servletApiVersion = '4.0.1'
-	springWebMvcVersion = '5.3.13'
-	springWebVersion = '5.3.13'
-	jacksonDatabindVersion = '2.13.0'
 }
 
 dependencies {
 	compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: "${servletApiVersion}"
-		
-	implementation group: 'org.springframework', name: 'spring-webmvc', version: "${springWebMvcVersion}"
-	
-	implementation group: 'org.springframework', name: 'spring-web', version: "${springWebVersion}"
-	
-	implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDatabindVersion}"
 	
 	implementation project(':service')	
 }

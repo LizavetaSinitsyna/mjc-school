@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 
 @ControllerAdvice
@@ -48,10 +49,10 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
 	public ApiException handleMethodArgumentTypeMismatchException(MethodArgumentTypeMismatchException exception) {
 		ErrorCode errorCode = ErrorCode.TYPE_MISMATCH;
-		String error = obtainExceptionMessage(errorCode.getCode() + KEY_MIDDLE, exception.getName().toString(),
+		String error = obtainExceptionMessage(errorCode.getCode() + KEY_MIDDLE, exception.getName(),
 				exception.getRequiredType().toString());
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
-		return new ApiException(errorMessage, errorCode.getCode(), error.toString());
+		return new ApiRootCausesException(errorMessage, errorCode.getCode(), error.toString());
 	}
 
 	@ExceptionHandler(InvalidFormatException.class)
@@ -61,7 +62,7 @@ public class GlobalExceptionHandler {
 		String error = obtainExceptionMessage(errorCode.getCode() + KEY_MIDDLE, exception.getValue().toString(),
 				exception.getTargetType().toString());
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
-		return new ApiException(errorMessage, errorCode.getCode(), error.toString());
+		return new ApiRootCausesException(errorMessage, errorCode.getCode(), error.toString());
 	}
 
 	private ApiException handleException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode,
@@ -72,8 +73,9 @@ public class GlobalExceptionHandler {
 			for (Map.Entry<ErrorCode, String> error : errors.entrySet()) {
 				subErrors.add(obtainExceptionMessage(error.getKey().getCode(), error.getValue()));
 			}
+			return new ApiRootCausesException(errorMessage, generalErrorCode.getCode(), subErrors);
 		}
-		return new ApiException(errorMessage.toString(), generalErrorCode.getCode(), subErrors);
+		return new ApiException(errorMessage, generalErrorCode.getCode());
 	}
 
 	private String obtainExceptionMessage(String key, Object... insertions) {
@@ -91,7 +93,22 @@ public class GlobalExceptionHandler {
 	public ApiException handleException(Exception exception) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
-		return new ApiException(errorMessage, errorCode.getCode(), exception.getCause().getClass().getName());
+		return new ApiRootCausesException(errorMessage, errorCode.getCode(), exception.getCause().getClass().getName());
+	}
+
+	@ExceptionHandler(NotFoundException.class)
+	@ResponseStatus(HttpStatus.OK)
+	public ApiException handleNotFoundException(NotFoundException exception) {
+		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
+	}
+
+	@ExceptionHandler(JsonProcessingException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiException handleJsonProcessingException(JsonProcessingException exception) {
+		ErrorCode errorCode = ErrorCode.INVALID_JSON_FORMAT;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiRootCausesException(errorMessage, errorCode.getCode(), exception.getLocalizedMessage());
+
 	}
 
 }

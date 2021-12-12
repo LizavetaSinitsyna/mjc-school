@@ -1,10 +1,10 @@
 package com.epam.esm.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -32,15 +32,14 @@ public class TagController {
 
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public TagDto read(@PathVariable long id) {
-		return tagService.read(id);
+	public TagDto readById(@PathVariable long id) {
+		return tagService.readById(id);
 	}
 	
-	//not implemented yet
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
-	public List<TagDto> readAll(@RequestParam Map<String, String> filterParams) {
-		return tagService.readAll(filterParams);
+	public List<TagDto> readAll(@RequestParam MultiValueMap<String, String> params) {
+		return tagService.readAll(params);
 	}
 
 	@DeleteMapping("/{id}")

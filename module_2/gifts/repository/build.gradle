@@ -1,10 +1,11 @@
 ext {
-	springDataJdbcVersion = '2.3.0'
 	hikariCPVersion = '5.0.0'
+	commonsLangVersion = '3.12.0'
 }
 
 dependencies {
-	implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: "${springDataJdbcVersion}"
-	
 	implementation group: 'com.zaxxer', name: 'HikariCP', version: "${hikariCPVersion}"
+	
+	implementation group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLangVersion}"
+	
 }

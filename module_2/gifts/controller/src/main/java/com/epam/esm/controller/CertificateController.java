@@ -1,10 +1,10 @@
 package com.epam.esm.controller;
 
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -28,31 +28,28 @@ public class CertificateController {
 
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public CertificateDto create(@RequestBody CertificateDto certificateDTO) {
-		return certificateService.create(certificateDTO);
+	public CertificateDto create(@RequestBody CertificateDto certificateDto) {
+		return certificateService.create(certificateDto);
 	}
 
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto read(@PathVariable long id) {
-		return certificateService.read(id);
+	public CertificateDto readById(@PathVariable long id) {
+		return certificateService.readById(id);
 	}
 
-	//not implemented yet
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
-	public List<CertificateDto> readAll(@RequestParam Map<String, String> filterParams) {
-		return certificateService.readAll(filterParams);
+	public List<CertificateDto> readAll(@RequestParam MultiValueMap<String, String> params) {
+		return certificateService.readAll(params);
 	}
-	
-	//not implemented yet
+
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto updateCertificateFields(@RequestBody CertificateDto certificate) {
-		return  certificateService.updateCertificateFields(certificate);
+	public CertificateDto updateCertificateFields(@RequestBody CertificateDto certificate, @PathVariable long id) {
+		return certificateService.updateCertificateFields(id, certificate);
 	}
-	
-	//should be reworked
+
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate, @PathVariable long id) {

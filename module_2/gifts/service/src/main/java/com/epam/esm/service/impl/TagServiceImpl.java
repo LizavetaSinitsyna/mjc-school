@@ -1,21 +1,31 @@
 package com.epam.esm.service.impl;
 
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.TagDto;
+import com.epam.esm.exception.ErrorCode;
+import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
+import com.epam.esm.service.validation.CertificateValidation;
 import com.epam.esm.service.validation.TagValidation;
+import com.epam.esm.service.validation.Util;
 
+/**
+ * 
+ * Contains methods implementation for working mostly with {@code Tag} entity.
+ *
+ */
 @Service
 public class TagServiceImpl implements TagService {
 
@@ -31,27 +41,80 @@ public class TagServiceImpl implements TagService {
 	@Autowired
 	private TagValidation tagValidation;
 
+	@Autowired
+	private CertificateValidation certificateValidation;
+
+	/**
+	 * Creates and saves the passed tag.
+	 * 
+	 * @param tagDto the tag to be saved
+	 * @return
+	 */
 	@Override
 	public TagDto create(TagDto tagDto) {
-		tagValidation.validateTagUpdatableFields(tagDto);
+		tagValidation.validateAllTagFields(tagDto);
 		TagModel createdTagModel = tagRepository.create(tagConverter.convertToModel(tagDto));
 		TagDto createdTag = tagConverter.convertToDto(createdTagModel);
 		return createdTag;
 	}
 
+	/**
+	 * Reads tag with passed id.
+	 * 
+	 * @param tagId id of tag to be read
+	 * @return tag with passed id
+	 */
 	@Override
-	public TagDto read(long tagId) {
+	public TagDto readById(long tagId) {
 		tagValidation.validateId(tagId);
-		TagDto tagDto = tagConverter.convertToDto(tagRepository.readById(tagId));
-		return tagDto;
+		TagModel tagModel = tagRepository.readById(tagId);
+		if (tagModel == null) {
+			throw new NotFoundException("id = " + tagId, ErrorCode.NO_TAG_FOUND);
+		}
+		return tagConverter.convertToDto(tagRepository.readById(tagId));
 	}
 
+	/**
+	 * Reads all tags for the certificate with passed id.
+	 * 
+	 * @param certificateId the id of certificate for which all tags are read
+	 * @return tags for the certificate with passed id
+	 */
 	@Override
-	public List<TagDto> readAll(Map<String, String> filterParams) {
-		// TODO Auto-generated method stub
-		return null;
+	public List<TagDto> readByCertificateId(long certificateId) {
+		certificateValidation.validateId(certificateId);
+		List<TagModel> tagModels = tagRepository.readByCertificateId(certificateId);
+		List<TagDto> tagsDto = new ArrayList<>(tagModels.size());
+		for (TagModel tagModel : tagModels) {
+			tagsDto.add(tagConverter.convertToDto(tagModel));
+		}
+		return tagsDto;
 	}
 
+	/**
+	 * Reads all tags according to passed parameters.
+	 * 
+	 * @param params the parameters which define choice of tags and their ordering
+	 * @return tags which meet passed parameters
+	 */
+	@Override
+	public List<TagDto> readAll(MultiValueMap<String, String> params) {
+		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
+		tagValidation.validateReadParams(paramsInLowerCase);
+		List<TagModel> tagModels = tagRepository.readAll(paramsInLowerCase);
+		List<TagDto> tagDtos = new ArrayList<>(tagModels.size());
+		for (TagModel tagModel : tagModels) {
+			tagDtos.add(tagConverter.convertToDto(tagModel));
+		}
+		return tagDtos;
+	}
+
+	/**
+	 * Deletes tag with passed id.
+	 * 
+	 * @param tagId the id of tag to be deleted
+	 * @return the number of deleted tags
+	 */
 	@Override
 	@Transactional
 	public int delete(long tagId) {

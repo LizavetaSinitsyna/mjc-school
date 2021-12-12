@@ -1,25 +1,54 @@
 plugins {
-	id 'java-library'
 	id 'war'
 }
-	
-repositories {
-	mavenCentral()
+
+ext {
+	lombokVersion = '1.18.22'
+	jacksonDataVersion = '2.13.0'
+	springWebMvcVersion = '5.3.13'
+	springWebVersion = '5.3.13'
+	springDataJdbcVersion = '2.3.0'
+	springContextVersion = '5.3.13'
+	springTxVersion = '5.3.13'
+	springCoreVersion = '5.3.13'
+	jupiterVersion = '5.8.2'
+	mockitoVersion = '4.1.0'
+	springTestVersion = '5.3.13'
 }
 
-subprojects {
+allprojects {
 	apply plugin: 'java-library'
-	
+		
 	repositories {
 		mavenCentral()
 	}
 	
-	ext {
-		lombokVersion = '1.18.22'
-	}
 	dependencies {
+		//all projects
 		compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
 		annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+		implementation group: 'org.springframework', name: 'spring-core', version: "${springCoreVersion}"
+		implementation group: 'org.springframework', name: 'spring-context', version: "${springContextVersion}"
+		testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${jupiterVersion}"
+		testImplementation group: 'org.mockito', name: 'mockito-core', version: "${mockitoVersion}"
+		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
+		testImplementation group: 'org.springframework', name: 'spring-test', version: "${springTestVersion}"
+						
+		//controller layer
+		implementation group: 'org.springframework', name: 'spring-webmvc', version: "${springWebMvcVersion}"
+		implementation group: 'org.springframework', name: 'spring-web', version: "${springWebVersion}"
+		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"
+		
+		//service layer
+		implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonDataVersion}"
+		implementation group: 'org.springframework', name: 'spring-tx', version: "${springTxVersion}"
+		
+		//repository layer
+		implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: "${springDataJdbcVersion}"
+	}
+	
+	test {
+    	useJUnitPlatform()
 	}
 }
 	

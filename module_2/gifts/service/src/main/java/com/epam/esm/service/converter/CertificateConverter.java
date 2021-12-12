@@ -1,6 +1,7 @@
 package com.epam.esm.service.converter;
 
 import org.modelmapper.Converter;
+import org.modelmapper.AbstractConverter;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
@@ -10,11 +11,14 @@ import com.epam.esm.repository.model.CertificateModel;
 @Component
 public class CertificateConverter {
 	private ModelMapper modelMapper;
-	private Converter<String, String> spaceRemover = (src) -> src.getSource().trim().replaceAll("\\s+", " ").trim();
+	private Converter<String, String> spaceRemover = new AbstractConverter<String, String>() {
+	    protected String convert(String source) {
+	        return source == null ? null : source.trim().replaceAll("\\s+", " ");}};
 
 	public CertificateConverter() {
 		this.modelMapper = new ModelMapper();
 		modelMapper.addConverter(spaceRemover);
+		modelMapper.getConfiguration().setFieldMatchingEnabled(true);
 	}
 
 	public CertificateDto convertToDto(CertificateModel certificateModel) {
