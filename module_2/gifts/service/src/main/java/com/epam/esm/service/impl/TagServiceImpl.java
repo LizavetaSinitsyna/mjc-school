@@ -9,8 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.TagDto;
-import com.epam.esm.exception.ErrorCode;
-import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
@@ -66,11 +64,7 @@ public class TagServiceImpl implements TagService {
 	 */
 	@Override
 	public TagDto readById(long tagId) {
-		tagValidation.validateId(tagId);
-		TagModel tagModel = tagRepository.readById(tagId);
-		if (tagModel == null) {
-			throw new NotFoundException("id = " + tagId, ErrorCode.NO_TAG_FOUND);
-		}
+		tagValidation.checkTagExistenceById(tagId);
 		return tagConverter.convertToDto(tagRepository.readById(tagId));
 	}
 
@@ -82,7 +76,7 @@ public class TagServiceImpl implements TagService {
 	 */
 	@Override
 	public List<TagDto> readByCertificateId(long certificateId) {
-		certificateValidation.validateId(certificateId);
+		certificateValidation.checkCertificateExistenceById(certificateId);
 		List<TagModel> tagModels = tagRepository.readByCertificateId(certificateId);
 		List<TagDto> tagsDto = new ArrayList<>(tagModels.size());
 		for (TagModel tagModel : tagModels) {
@@ -118,7 +112,7 @@ public class TagServiceImpl implements TagService {
 	@Override
 	@Transactional
 	public int delete(long tagId) {
-		tagValidation.validateId(tagId);
+		tagValidation.checkTagExistenceById(tagId);
 		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);
 		int deletedTagAmount = tagRepository.delete(tagId);
 		if (certificates != null) {

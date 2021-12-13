@@ -1,9 +1,12 @@
 package com.epam.esm.service.validation;
 
 import com.epam.esm.dto.TagDto;
+import com.epam.esm.exception.DeletedEntityException;
 import com.epam.esm.exception.ErrorCode;
+import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.TagRepository;
+import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.query_builder.EntityConstant;
 
 import java.util.Arrays;
@@ -16,7 +19,7 @@ import org.springframework.util.MultiValueMap;
 
 @Component
 public class TagValidation {
-	private static final int MIN_NAME_LENGTH = 1;
+	private static final int MIN_NAME_LENGTH = 5;
 	private static final int MAX_NAME_LENGTH = 25;
 	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList("page", "limit"));
 	private static final int DEFAULT_PAGE_NUMBER = 1;
@@ -32,6 +35,20 @@ public class TagValidation {
 	public void validateId(Long id) {
 		if (id == null || id <= 0) {
 			throw new ValidationException("id = " + id, ErrorCode.INVALID_TAG_ID);
+		}
+	}
+	
+	public void checkTagExistenceById(long tagId) {
+		validateId(tagId);
+		TagModel tagModel = tagRepository.readById(tagId);
+
+		if (tagModel == null) {
+			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + tagId,
+					ErrorCode.NO_TAG_FOUND);
+		}
+		if (tagModel.isDeleted()) {
+			throw new DeletedEntityException(EntityConstant.ID + Util.DELIMITER + tagId,
+					ErrorCode.DELETED_TAG);
 		}
 	}
 

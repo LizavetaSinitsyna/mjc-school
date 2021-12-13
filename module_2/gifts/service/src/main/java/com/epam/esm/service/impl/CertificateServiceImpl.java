@@ -16,7 +16,6 @@ import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
-import com.epam.esm.exception.DeletedEntityException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
@@ -32,7 +31,8 @@ import com.epam.esm.service.validation.Util;
 
 /**
  * 
- * Contains methods implementation for working mostly with {@code Certificate} entity.
+ * Contains methods implementation for working mostly with {@code Certificate}
+ * entity.
  *
  */
 @Service
@@ -90,7 +90,11 @@ public class CertificateServiceImpl implements CertificateService {
 	 */
 	@Override
 	public CertificateDto readById(long certificateId) {
-		CertificateDto certificateDto = readPlainCertificateById(certificateId);
+		certificateValidation.checkCertificateExistenceById(certificateId);
+
+		CertificateDto certificateDto = certificateConverter
+				.convertToDto(certificateRepository.readById(certificateId));
+
 		certificateDto.setTags(tagService.readByCertificateId(certificateId));
 
 		return certificateDto;
@@ -125,7 +129,7 @@ public class CertificateServiceImpl implements CertificateService {
 	 */
 	@Override
 	public int delete(long certificateId) {
-		certificateValidation.validateId(certificateId);
+		certificateValidation.checkCertificateExistenceById(certificateId);
 		return certificateRepository.delete(certificateId);
 	}
 
@@ -141,10 +145,9 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	@Transactional
 	public CertificateDto updateCertificateFields(long certificateId, CertificateDto certificateDto) {
-		readPlainCertificateById(certificateId);
+		certificateValidation.validateCertificateAllFieldsRequirementsForPatchUpdate(certificateId, certificateDto);
 
 		certificateDto.setId(certificateId);
-		certificateValidation.validateCertificateAllFieldsRequirementsForPatchUpdate(certificateDto);
 		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
 
 		LocalDateTime now = LocalDateTime.now();
@@ -172,10 +175,9 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	@Transactional
 	public CertificateDto updateEntireCertificate(long certificateId, CertificateDto certificateDto) {
-		readPlainCertificateById(certificateId);
+		certificateValidation.validateCertificateAllFieldsRequirementsForEntireUpdate(certificateId, certificateDto);
 
 		certificateDto.setId(certificateId);
-		certificateValidation.validateCertificateAllFieldsRequirementsForEntireUpdate(certificateDto);
 		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
 
 		LocalDateTime now = LocalDateTime.now();
@@ -191,22 +193,6 @@ public class CertificateServiceImpl implements CertificateService {
 		updatedCertificate.setTags(saveCertificateTags(updatedCertificate.getId(), certificateDto.getTags()));
 
 		return updatedCertificate;
-	}
-
-	private CertificateDto readPlainCertificateById(long certificateId) {
-		certificateValidation.validateId(certificateId);
-		CertificateModel certificateModel = certificateRepository.readById(certificateId);
-
-		if (certificateModel == null) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.NO_CERTIFICATE_FOUND);
-		}
-		if (certificateModel.isDeleted()) {
-			throw new DeletedEntityException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.DELETED_CERTIFICATE);
-		}
-
-		return certificateConverter.convertToDto(certificateModel);
 	}
 
 	private List<TagDto> saveCertificateTags(long certificateId, List<TagDto> initialTagDtos) {

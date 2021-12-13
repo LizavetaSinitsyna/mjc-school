@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
+import com.epam.esm.exception.DeletedEntityException;
 import com.epam.esm.exception.ErrorCode;
+import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.model.CertificateModel;
@@ -62,6 +64,20 @@ public class CertificateValidation {
 		return certificateRepository.certificateExistsByName(testedName);
 	}
 
+	public void checkCertificateExistenceById(long certificateId) {
+		validateId(certificateId);
+		CertificateModel certificateModel = certificateRepository.readById(certificateId);
+
+		if (certificateModel == null) {
+			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
+					ErrorCode.NO_CERTIFICATE_FOUND);
+		}
+		if (certificateModel.isDeleted()) {
+			throw new DeletedEntityException(EntityConstant.ID + Util.DELIMITER + certificateId,
+					ErrorCode.DELETED_CERTIFICATE);
+		}
+	}
+
 	public boolean validateDescription(String description) {
 		return Util.checkLength(description, MIN_DESCRIPTION_LENGTH, MAX_DESCRIPTION_LENGTH);
 	}
@@ -75,6 +91,7 @@ public class CertificateValidation {
 	}
 
 	public void validateCertificateAllFieldsRequirementsForCreate(CertificateDto certificateDto) {
+		Util.checkNull(certificateDto);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		errors.putAll(validateAllCertificateUpdatableFields(certificateDto));
 		errors.putAll(validateCertificateUniqueFieldsForCreate(certificateDto));
@@ -83,37 +100,41 @@ public class CertificateValidation {
 		}
 	}
 
-	public void validateCertificateAllFieldsRequirementsForEntireUpdate(CertificateDto certificateDto) {
+	public void validateCertificateAllFieldsRequirementsForEntireUpdate(long certificateId,
+			CertificateDto certificateDto) {
+		Util.checkNull(certificateDto);
+		checkCertificateExistenceById(certificateId);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		errors.putAll(validateAllCertificateUpdatableFields(certificateDto));
-		errors.putAll(validateCertificateUniqueFieldsForUpdate(certificateDto));
+		errors.putAll(validateCertificateUniqueFieldsForUpdate(certificateId, certificateDto));
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
 		}
 	}
 
-	public void validateCertificateAllFieldsRequirementsForPatchUpdate(CertificateDto certificateDto) {
+	public void validateCertificateAllFieldsRequirementsForPatchUpdate(long certificateId,
+			CertificateDto certificateDto) {
+		Util.checkNull(certificateDto);
+		checkCertificateExistenceById(certificateId);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		errors.putAll(validateAllCertificateUpdatableNotNullFields(certificateDto));
-		errors.putAll(validateCertificateUniqueFieldsForUpdate(certificateDto));
+		errors.putAll(validateCertificateUniqueFieldsForUpdate(certificateId, certificateDto));
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
 		}
 	}
 
 	private Map<ErrorCode, String> validateCertificateUniqueFieldsForCreate(CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (checkIsNameDublicated(certificateDto.getName())) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
 					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
 		}
 		return errors;
-
 	}
 
-	private Map<ErrorCode, String> validateCertificateUniqueFieldsForUpdate(CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
+	private Map<ErrorCode, String> validateCertificateUniqueFieldsForUpdate(long certificateId,
+			CertificateDto certificateDto) {
 		Map<ErrorCode, String> errors = new HashMap<>();
 
 		String testedName = Util.removeExtraSpaces(certificateDto.getName());
@@ -128,7 +149,6 @@ public class CertificateValidation {
 	}
 
 	private Map<ErrorCode, String> validateAllCertificateUpdatableFields(CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!validateName(certificateDto.getName())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME,
@@ -150,7 +170,7 @@ public class CertificateValidation {
 	}
 
 	private Map<ErrorCode, String> validateAllCertificateUpdatableNotNullFields(CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
+
 		Map<ErrorCode, String> errors = new HashMap<>();
 
 		String name = certificateDto.getName();
