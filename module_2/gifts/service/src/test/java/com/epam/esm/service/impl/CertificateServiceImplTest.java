@@ -2,6 +2,7 @@ package com.epam.esm.service.impl;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.junit.jupiter.api.Assertions;
@@ -11,9 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
-import com.epam.esm.dto.TagDto;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
@@ -37,9 +39,6 @@ class CertificateServiceImplTest {
 
 	@Mock
 	private CertificateConverter certificateConverter;
-
-	@Mock
-	private List<TagDto> tagDtos;
 
 	@InjectMocks
 	private CertificateServiceImpl certificateServiceImpl;
@@ -79,8 +78,25 @@ class CertificateServiceImplTest {
 
 	@Test
 	void testReadAll() {
-
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		long id = 1;
+		CertificateModel certificateModel = Mockito.mock(CertificateModel.class);
+		certificateModel.setId(id);
+		CertificateDto certificateDto = Mockito.mock(CertificateDto.class);
+		certificateDto.setId(id);
+		List<CertificateModel> certificateModels = new ArrayList<>();
+		certificateModels.add(certificateModel);
+		
+		List<CertificateDto> expected = new ArrayList<>();
+		expected.add(certificateDto);
+		
+		Mockito.when(certificateRepository.readAll(Mockito.any())).thenReturn(certificateModels);
+		Mockito.when(certificateConverter.convertToDto(certificateModel)).thenReturn(certificateDto);
+		
+		Assertions.assertEquals(expected, certificateServiceImpl.readAll(params));
+		
 		Mockito.verify(certificateValidation).validateReadParams(Mockito.any());
+		Mockito.verify(tagService).readByCertificateId(id);
 	}
 
 	@Test

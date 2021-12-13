@@ -30,7 +30,6 @@ allprojects {
 		implementation group: 'org.springframework', name: 'spring-core', version: "${springCoreVersion}"
 		implementation group: 'org.springframework', name: 'spring-context', version: "${springContextVersion}"
 		testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${jupiterVersion}"
-		testImplementation group: 'org.mockito', name: 'mockito-core', version: "${mockitoVersion}"
 		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
 		testImplementation group: 'org.springframework', name: 'spring-test', version: "${springTestVersion}"
 						
@@ -41,7 +40,6 @@ allprojects {
 		
 		//service layer
 		implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonDataVersion}"
-		implementation group: 'org.springframework', name: 'spring-tx', version: "${springTxVersion}"
 		
 		//repository layer
 		implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: "${springDataJdbcVersion}"
