@@ -8,7 +8,7 @@ import com.epam.esm.dto.TagDto;
 
 /**
  * 
- * Contains methods for working mostly with {@code Tag} entity.
+ * Contains methods for working mostly with {@code TagDto} entity.
  *
  */
 public interface TagService {
@@ -16,7 +16,7 @@ public interface TagService {
 	 * Creates and saves the passed tag.
 	 * 
 	 * @param tagDto the tag to be saved
-	 * @return
+	 * @return saved tag
 	 */
 	TagDto create(TagDto tagDto);
 

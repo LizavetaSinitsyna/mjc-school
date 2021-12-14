@@ -32,7 +32,7 @@ allprojects {
 		testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${jupiterVersion}"
 		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
 		testImplementation group: 'org.springframework', name: 'spring-test', version: "${springTestVersion}"
-						
+		
 		//controller layer
 		implementation group: 'org.springframework', name: 'spring-webmvc', version: "${springWebMvcVersion}"
 		implementation group: 'org.springframework', name: 'spring-web', version: "${springWebVersion}"
@@ -40,7 +40,7 @@ allprojects {
 		
 		//service layer
 		implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonDataVersion}"
-		
+		 
 		//repository layer
 		implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: "${springDataJdbcVersion}"
 	}

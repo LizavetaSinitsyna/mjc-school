@@ -31,7 +31,7 @@ import com.epam.esm.service.validation.Util;
 
 /**
  * 
- * Contains methods implementation for working mostly with {@code Certificate}
+ * Contains methods implementation for working mostly with {@code CertificateDto}
  * entity.
  *
  */

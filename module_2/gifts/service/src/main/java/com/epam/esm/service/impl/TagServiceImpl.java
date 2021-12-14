@@ -21,7 +21,8 @@ import com.epam.esm.service.validation.Util;
 
 /**
  * 
- * Contains methods implementation for working mostly with {@code Tag} entity.
+ * Contains methods implementation for working mostly with {@code TagDto}
+ * entity.
  *
  */
 @Service
@@ -46,7 +47,7 @@ public class TagServiceImpl implements TagService {
 	 * Creates and saves the passed tag.
 	 * 
 	 * @param tagDto the tag to be saved
-	 * @return
+	 * @return saved tag
 	 */
 	@Override
 	public TagDto create(TagDto tagDto) {

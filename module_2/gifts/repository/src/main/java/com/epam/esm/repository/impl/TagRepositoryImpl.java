@@ -16,6 +16,12 @@ import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.query_builder.EntityConstant;
 import com.epam.esm.repository.query_builder.SQLUtil;
 
+/**
+ * 
+ * Contains methods implementation for working mostly with {@code TagModel}
+ * entity.
+ *
+ */
 @Repository
 public class TagRepositoryImpl implements TagRepository {
 	private static final String INSERT_TAG_QUERY = "INSERT INTO tags (name) VALUES (?)";
@@ -35,6 +41,12 @@ public class TagRepositoryImpl implements TagRepository {
 	@Autowired
 	private TagRowMapper tagRowMapper;
 
+	/**
+	 * Saves the passed tag.
+	 * 
+	 * @param tagModel the tag to be saved
+	 * @return saved tag
+	 */
 	@Override
 	public TagModel create(TagModel tagModel) {
 		KeyHolder keyHolder = new GeneratedKeyHolder();
@@ -49,6 +61,13 @@ public class TagRepositoryImpl implements TagRepository {
 		return readById(keyHolder.getKey().longValue());
 	}
 
+	/**
+	 * Reads tag with passed id.
+	 * 
+	 * @param tagId the id of tag to be read
+	 * @return tag with passed id
+	 */
+
 	@Override
 	public TagModel readById(long tagId) {
 		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_ID_QUERY, tagRowMapper, tagId);
@@ -59,16 +78,36 @@ public class TagRepositoryImpl implements TagRepository {
 		return tagModelList.get(0);
 	}
 
+	/**
+	 * Checks whether tag with passed id exists.
+	 * 
+	 * @param tagId the id of tag to be checked
+	 * @return {@code true} if the the tag with passed id already exists and
+	 *         {@code false} otherwise
+	 */
 	@Override
 	public boolean tagExistsById(long tagId) {
 		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_ID_QUERY, tagRowMapper, tagId);
 		return !tagModelList.isEmpty();
 	}
 
+	/**
+	 * Reads tags by passed certificate id.
+	 * 
+	 * @param certificateId the id of certificate for tags reading
+	 * @return tags for certificate with passed id
+	 */
 	@Override
 	public List<TagModel> readByCertificateId(long certificateId) {
 		return jdbcTemplate.query(SELECT_TAG_BY_CERTIFICATE_ID_QUERY, tagRowMapper, certificateId);
 	}
+
+	/**
+	 * Reads tag with passed name.
+	 * 
+	 * @param tagName the name of entity to be read
+	 * @return tag with passed name
+	 */
 
 	@Override
 	public TagModel readByName(String tagName) {
@@ -79,12 +118,25 @@ public class TagRepositoryImpl implements TagRepository {
 		return tagModelList.get(0);
 	}
 
+	/**
+	 * Checks whether tag with passed name exists.
+	 * 
+	 * @param tagName the name of tag to be checked
+	 * @return {@code true} if the the tag with passed name already exists and
+	 *         {@code false} otherwise
+	 */
 	@Override
 	public boolean tagExistsByName(String tagName) {
 		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_NAME_QUERY, tagRowMapper, tagName);
 		return !tagModelList.isEmpty();
 	}
 
+	/**
+	 * Reads all tags according to passed parameters.
+	 * 
+	 * @param params the parameters which define choice of tags and their ordering
+	 * @return tags which meet passed parameters
+	 */
 	@Override
 	public List<TagModel> readAll(MultiValueMap<String, String> params) {
 		int pageNumber = Integer.parseInt(params.get(EntityConstant.PAGE).get(0));
@@ -94,6 +146,12 @@ public class TagRepositoryImpl implements TagRepository {
 				offset);
 	}
 
+	/**
+	 * Deletes tag with passed id.
+	 * 
+	 * @param tagId the id of tag to be deleted
+	 * @return the number of deleted tags
+	 */
 	@Override
 	public int delete(long tagId) {
 		int effectedRows = jdbcTemplate.update(connection -> {
@@ -104,6 +162,13 @@ public class TagRepositoryImpl implements TagRepository {
 		return effectedRows;
 	}
 
+	/**
+	 * Saves tags for certificate.
+	 * 
+	 * @param certificateId the id of certificate for which tags should be saved
+	 * @param tagModels     tags to be saved
+	 * @return amount of saved tags
+	 */
 	@Override
 	public int saveTagsForCertificate(long certificateId, List<TagModel> tagModels) {
 		int changedRows = 0;
@@ -120,6 +185,12 @@ public class TagRepositoryImpl implements TagRepository {
 
 	}
 
+	/**
+	 * Restores deleted tag.
+	 * 
+	 * @param tagModel the tag to be restored
+	 * @return restored tag
+	 */
 	@Override
 	public TagModel restore(TagModel tagModel) {
 		int effectedRows = jdbcTemplate.update(connection -> {
@@ -133,6 +204,12 @@ public class TagRepositoryImpl implements TagRepository {
 		return tagModel;
 	}
 
+	/**
+	 * Deletes all tags for the certificate.
+	 * 
+	 * @param certificateId the id of certificate for which tags should be deleted
+	 * @return amount of deleted tags
+	 */
 	@Override
 	public int deleteAllTagsForCertificate(long certificateId) {
 		int effectedRows = jdbcTemplate.update(connection -> {

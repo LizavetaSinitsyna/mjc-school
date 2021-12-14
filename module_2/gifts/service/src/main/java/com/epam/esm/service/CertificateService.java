@@ -8,7 +8,7 @@ import com.epam.esm.dto.CertificateDto;
 
 /**
  * 
- * Contains methods for working mostly with {@code Certificate} entity.
+ * Contains methods for working mostly with {@code CertificateDto} entity.
  *
  */
 public interface CertificateService {

@@ -20,42 +20,89 @@ import org.springframework.web.bind.annotation.RestController;
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.service.CertificateService;
 
+/**
+ * Controller for working with certificates.
+ * 
+ */
 @RestController
 @RequestMapping("/v1/certificates")
 public class CertificateController {
 	@Autowired
 	private CertificateService certificateService;
 
+	/**
+	 * Creates and saves the passed certificate.
+	 * 
+	 * @param certificateDto the certificate to be saved
+	 * @return saved certificate
+	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public CertificateDto create(@RequestBody CertificateDto certificateDto) {
 		return certificateService.create(certificateDto);
 	}
 
+	/**
+	 * Reads certificate with passed id.
+	 * 
+	 * @param id the id of certificate to be read
+	 * @return certificate with passed id
+	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto readById(@PathVariable long id) {
 		return certificateService.readById(id);
 	}
 
+	/**
+	 * Reads all certificates according to passed parameters.
+	 * 
+	 * @param params the parameters which define choice of certificates and their
+	 *               ordering
+	 * @return certificates which meet passed parameters
+	 */
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<CertificateDto> readAll(@RequestParam MultiValueMap<String, String> params) {
 		return certificateService.readAll(params);
 	}
 
+	/**
+	 * Updates certificate fields with passed id using not {@code null} fields of
+	 * passed certificate entity.
+	 * 
+	 * @param id          the id of certificate to be updated
+	 * @param certificate certificate entity which contains fields with new values
+	 *                    to be set
+	 * @return updated certificate
+	 */
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateCertificateFields(@RequestBody CertificateDto certificate, @PathVariable long id) {
 		return certificateService.updateCertificateFields(id, certificate);
 	}
 
+	/**
+	 * Updates entire certificate with passed id using all fields of passed
+	 * certificate.
+	 * 
+	 * @param id          the id of certificate to be updated
+	 * @param certificate certificate entity which contains fields with new values
+	 *                    to be set
+	 * @return updated certificate
+	 */
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate, @PathVariable long id) {
 		return certificateService.updateEntireCertificate(id, certificate);
 	}
 
+	/**
+	 * Deletes certificate with passed id.
+	 * 
+	 * @param id the id of certificate to be deleted
+	 *
+	 */
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable long id) {

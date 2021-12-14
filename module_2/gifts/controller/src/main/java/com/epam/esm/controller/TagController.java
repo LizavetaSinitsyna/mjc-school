@@ -18,30 +18,58 @@ import org.springframework.web.bind.annotation.RestController;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.service.TagService;
 
+/**
+ * Controller for working with tags.
+ * 
+ */
 @RestController
 @RequestMapping("/v1/tags")
 public class TagController {
 	@Autowired
 	private TagService tagService;
 
+	/**
+	 * Creates and saves the passed tag.
+	 * 
+	 * @param tagDto the tag to be saved
+	 * @return saved tag
+	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public TagDto create(@RequestBody TagDto tagDto) {
 		return tagService.create(tagDto);
 	}
 
+	/**
+	 * Reads tag with passed id.
+	 * 
+	 * @param tagId id of tag to be read
+	 * @return tag with passed id
+	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public TagDto readById(@PathVariable long id) {
 		return tagService.readById(id);
 	}
-	
+
+	/**
+	 * Reads all tags according to passed parameters.
+	 * 
+	 * @param params the parameters which define choice of tags and their ordering
+	 * @return tags which meet passed parameters
+	 */
 	@GetMapping
 	@ResponseStatus(HttpStatus.OK)
 	public List<TagDto> readAll(@RequestParam MultiValueMap<String, String> params) {
 		return tagService.readAll(params);
 	}
 
+	/**
+	 * Deletes tag with passed id.
+	 * 
+	 * @param tagId the id of tag to be deleted
+	 * @return the number of deleted tags
+	 */
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable long id) {
