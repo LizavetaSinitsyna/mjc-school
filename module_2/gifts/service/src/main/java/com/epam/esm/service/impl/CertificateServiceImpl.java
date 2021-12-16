@@ -223,7 +223,7 @@ public class CertificateServiceImpl implements CertificateService {
 		CertificateDto updatedCertificate = certificateConverter.convertToDto(certificateModel.get());
 		updatedCertificate.setTags(saveCertificateTags(updatedCertificate.getId(), certificateDto.getTags()));
 
-		return updatedCertificate;
+		return readById(updatedCertificate.getId());
 	}
 
 	/**
@@ -259,16 +259,18 @@ public class CertificateServiceImpl implements CertificateService {
 		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
 		certificateToUpdate.setLastUpdateDate(now);
 
-		CertificateDto updatedCertificate = certificateConverter
-				.convertToDto(certificateRepository.updateEntireCertificate(certificateToUpdate));
-		if (updatedCertificate == null) {
+		Optional<CertificateModel> updatedCertificateModel = certificateRepository
+				.updateEntireCertificate(certificateToUpdate);
+
+		if (updatedCertificateModel.isEmpty()) {
 			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
 					ErrorCode.NO_CERTIFICATE_FOUND);
 		}
+		CertificateDto updatedCertificateDto = certificateConverter.convertToDto(updatedCertificateModel.get());
 
-		updatedCertificate.setTags(saveCertificateTags(updatedCertificate.getId(), certificateDto.getTags()));
+		updatedCertificateDto.setTags(saveCertificateTags(updatedCertificateDto.getId(), certificateDto.getTags()));
 
-		return updatedCertificate;
+		return updatedCertificateDto;
 	}
 
 	/**
@@ -310,8 +312,11 @@ public class CertificateServiceImpl implements CertificateService {
 					throw new ValidationException(errors, ErrorCode.INVALID_TAG);
 				}
 				tagModelToSave = tagRepository.create(tagConverter.convertToModel(tagDto));
-			} else if (tagModel.get().isDeleted()) {
-				tagModelToSave = tagRepository.restore(tagModelToSave);
+			} else {
+				tagModelToSave = tagModel.get();
+				if (tagModelToSave.isDeleted()) {
+					tagModelToSave = tagRepository.restore(tagModelToSave);
+				}
 			}
 			tagModels.add(tagModelToSave);
 			savedCertificateTagDtos.add(tagConverter.convertToDto(tagModelToSave));

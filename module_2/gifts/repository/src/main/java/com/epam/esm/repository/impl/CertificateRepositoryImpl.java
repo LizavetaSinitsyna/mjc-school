@@ -143,7 +143,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return updated certificate
 	 */
 	@Override
-	public CertificateModel updateEntireCertificate(CertificateModel certificateModel) {
+	public Optional<CertificateModel> updateEntireCertificate(CertificateModel certificateModel) {
 		jdbcTemplate.update(connection -> {
 			PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_ENTIRE_CERTIFICATE_QUERY);
 			preparedStatement.setString(1, certificateModel.getName());
@@ -154,7 +154,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 			preparedStatement.setLong(6, certificateModel.getId());
 			return preparedStatement;
 		});
-		return certificateModel;
+		return readById(certificateModel.getId());
 	}
 
 	/**

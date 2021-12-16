@@ -27,7 +27,7 @@ import com.epam.esm.repository.query_builder.SQLUtil;
 public class TagRepositoryImpl implements TagRepository {
 	private static final String INSERT_TAG_QUERY = "INSERT INTO tags (name) VALUES (?)";
 	private static final String INSERT_TAGS_FOR_CERTIFICATE_QUERY = "INSERT INTO tags_certificates (certificate_id, tag_id) VALUES (?, ?)";
-	private static final String SELECT_TAG_BY_ID_QUERY = "SELECT id, name, is_deleted FROM tags WHERE id = ?";
+	private static final String SELECT_TAG_BY_ID_QUERY = "SELECT id, name, is_deleted FROM tags WHERE id = ? AND is_deleted = 0";
 	private static final String SELECT_TAG_BY_NAME_QUERY = "SELECT id, name, is_deleted FROM tags WHERE name = ?";
 	private static final String SELECT_ALL_TAGS_BY_PAGE = "SELECT id, name, is_deleted FROM tags LIMIT ?, ?";
 	private static final String SELECT_TAG_BY_CERTIFICATE_ID_QUERY = "SELECT id, name, is_deleted FROM tags INNER JOIN tags_certificates "

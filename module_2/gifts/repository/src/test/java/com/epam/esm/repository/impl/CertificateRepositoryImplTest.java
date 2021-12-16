@@ -119,9 +119,10 @@ class CertificateRepositoryImplTest {
 		certificateRepository.create(certificate);
 		certificate.setDuration(50);
 
-		CertificateModel actual = certificateRepository.updateEntireCertificate(certificate);
+		Optional<CertificateModel> expected = Optional.of(certificate);
+		Optional<CertificateModel> actual = certificateRepository.updateEntireCertificate(certificate);
 
-		Assertions.assertEquals(certificate, actual);
+		Assertions.assertEquals(expected, actual);
 	}
 
 	@Test

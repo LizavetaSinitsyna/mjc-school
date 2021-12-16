@@ -205,6 +205,9 @@ class CertificateServiceImplTest {
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
 		Mockito.when(tagRepository.create(Mockito.any())).thenReturn(tagModel1);
 		Mockito.when(tagRepository.readByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
+		Mockito.when(certificateRepository.readById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(tagRepository.readByCertificateId(Mockito.anyLong())).thenReturn(Arrays.asList(tagModel1));
+
 
 		CertificateDto actual = certificateServiceImpl.updateCertificateFields(CERTIFICATE_ID_1, expected);
 
@@ -221,7 +224,7 @@ class CertificateServiceImplTest {
 	void testUpdateEntireCertificateWithEmptyTags() {
 		CertificateDto expected = certificateDto1;
 
-		Mockito.when(certificateRepository.updateEntireCertificate(Mockito.any())).thenReturn(certificateModel1);
+		Mockito.when(certificateRepository.updateEntireCertificate(Mockito.any())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.readByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.readById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
@@ -240,7 +243,8 @@ class CertificateServiceImplTest {
 		CertificateDto expected = certificateDto1;
 		expected.setTags(Arrays.asList(tagDto1));
 
-		Mockito.when(certificateRepository.updateEntireCertificate(Mockito.any())).thenReturn(certificateModel1);
+		Mockito.when(certificateRepository.updateEntireCertificate(Mockito.any()))
+				.thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.readByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.readById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
@@ -265,7 +269,7 @@ class CertificateServiceImplTest {
 			certificateServiceImpl.checkCertificateExistenceById(CERTIFICATE_ID_1);
 		});
 	}
-	
+
 	@Test
 	void testCheckCertificateExistenceByIdWithInvalidId() {
 		Assertions.assertThrows(ValidationException.class, () -> {

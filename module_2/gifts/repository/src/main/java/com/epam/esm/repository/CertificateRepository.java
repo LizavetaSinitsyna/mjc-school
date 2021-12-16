@@ -19,7 +19,7 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 *                         values to be set
 	 * @return updated certificate
 	 */
-	CertificateModel updateEntireCertificate(CertificateModel certificateModel);
+	Optional<CertificateModel> updateEntireCertificate(CertificateModel certificateModel);
 
 	/**
 	 * Reads certificates by passed tag id.
