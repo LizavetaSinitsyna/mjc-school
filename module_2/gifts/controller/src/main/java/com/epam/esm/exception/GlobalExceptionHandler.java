@@ -1,6 +1,7 @@
 package com.epam.esm.exception;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -8,6 +9,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
+import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,8 +26,14 @@ public class GlobalExceptionHandler {
 	private static final String KEY_PREFIX = "exception.";
 	private static final String KEY_MIDDLE = ".middle_part";
 
-	@Autowired
 	private MessageSource messageSource;
+	private Environment enviroment;
+
+	@Autowired
+	public GlobalExceptionHandler(MessageSource messageSource, Environment enviroment) {
+		this.messageSource = messageSource;
+		this.enviroment = enviroment;
+	}
 
 	@ExceptionHandler(ValidationException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
@@ -93,7 +101,11 @@ public class GlobalExceptionHandler {
 	public ApiException handleException(Exception exception) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
-		return new ApiRootCausesException(errorMessage, errorCode.getCode(), exception.getCause().getClass().getName());
+		if (Arrays.asList(enviroment.getActiveProfiles()).contains("dev")) {
+			return new ApiRootCausesException(errorMessage, errorCode.getCode(),
+					Arrays.toString(exception.getStackTrace()));
+		}
+		return new ApiException(errorMessage, errorCode.getCode());
 	}
 
 	@ExceptionHandler(NotFoundException.class)
