@@ -40,7 +40,7 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(DeletedEntityException.class)
-	@ResponseStatus(HttpStatus.OK)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ApiException handleDeletedEntityException(DeletedEntityException exception) {
 		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
 	}
@@ -97,7 +97,7 @@ public class GlobalExceptionHandler {
 	}
 
 	@ExceptionHandler(NotFoundException.class)
-	@ResponseStatus(HttpStatus.OK)
+	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ApiException handleNotFoundException(NotFoundException exception) {
 		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
 	}

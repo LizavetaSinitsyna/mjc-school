@@ -2,6 +2,7 @@ package com.epam.esm.repository.impl;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,14 +23,14 @@ import com.epam.esm.repository.model.TagModel;
 		@Sql(scripts = "/schema.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
 		@Sql(scripts = "/data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
 class TagRepositoryImplTest {
-	
+
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long TAG_ID_2 = 2L;
 	private static final Long TAG_ID_3 = 3L;
 	private static final String TAG_NAME = "family";
-	
+
 	private static final Long CERTIFICATE_ID_1 = 1L;
-	
+
 	@Autowired
 	private TagRepository tagRepository;
 	private TagModel tag1;
@@ -42,7 +43,7 @@ class TagRepositoryImplTest {
 		tag1.setId(TAG_ID_1);
 		tag1.setName("food");
 		tag1.setDeleted(false);
-		
+
 		tag2 = new TagModel();
 		tag2.setId(TAG_ID_2);
 		tag2.setName("family");
@@ -63,8 +64,8 @@ class TagRepositoryImplTest {
 
 	@Test
 	void testReadById() {
-		TagModel actual = tagRepository.readById(TAG_ID_1);
-		Assertions.assertEquals(tag1, actual);
+		Optional<TagModel> actual = tagRepository.readById(TAG_ID_1);
+		Assertions.assertEquals(Optional.of(tag1), actual);
 	}
 
 	@Test
@@ -82,8 +83,8 @@ class TagRepositoryImplTest {
 
 	@Test
 	void testReadByName() {
-		TagModel actual = tagRepository.readByName(TAG_NAME);
-		Assertions.assertEquals(tag2, actual);
+		Optional<TagModel> actual = tagRepository.readByName(TAG_NAME);
+		Assertions.assertEquals(Optional.of(tag2), actual);
 	}
 
 	@Test

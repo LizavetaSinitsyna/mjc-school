@@ -1,9 +1,13 @@
 ext {
 	modelmapperVersion = '2.4.5'
+	jacksonDataVersion = '2.13.0'
+	springTxVersion = '5.3.13'
 }
 
 dependencies {
 	implementation group: 'org.modelmapper', name: 'modelmapper', version: "${modelmapperVersion}"
-		
+	implementation group: 'com.fasterxml.jackson.datatype', name: 'jackson-datatype-jsr310', version: "${jacksonDataVersion}"
+	implementation group: 'org.springframework', name: 'spring-tx', version: "${springTxVersion}"
+	
 	implementation project(':repository')
 }

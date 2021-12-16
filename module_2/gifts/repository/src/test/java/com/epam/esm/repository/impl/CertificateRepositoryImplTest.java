@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -76,14 +77,14 @@ class CertificateRepositoryImplTest {
 
 	@Test
 	void testReadById() {
-		CertificateModel actual = certificateRepository.readById(CERTIFICATE_ID_1);
-		Assertions.assertEquals(certificate1, actual);
+		Optional<CertificateModel> actual = certificateRepository.readById(CERTIFICATE_ID_1);
+		Assertions.assertEquals(Optional.of(certificate1), actual);
 	}
 
 	@Test
 	void testReadByName() {
-		CertificateModel actual = certificateRepository.readByName(CERTIFICATE_NAME);
-		Assertions.assertEquals(certificate2, actual);
+		Optional<CertificateModel> actual = certificateRepository.readByName(CERTIFICATE_NAME);
+		Assertions.assertEquals(Optional.of(certificate2), actual);
 	}
 
 	@Test

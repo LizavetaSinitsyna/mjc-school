@@ -3,6 +3,7 @@ package com.epam.esm.repository.impl;
 import java.sql.PreparedStatement;
 import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -27,21 +28,26 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	private static final String INSERT_QUERY = "INSERT INTO gift_certificates "
 			+ "(name, description, price, duration, create_date, last_update_date) VALUES (?, ?, ?, ?, ?, ?)";
 	private static final String SELECT_CERTIFICATE_BY_ID_QUERY = "SELECT id, name, description, price, duration, create_date, last_update_date, is_deleted FROM gift_certificates WHERE id = ? AND is_deleted = 0";
-	private static final String SELECT_CERTIFICATE_BY_NAME_QUERY = "SELECT id, name, description, price, duration, create_date, last_update_date, is_deleted FROM gift_certificates WHERE name = ?";
+	private static final String SELECT_CERTIFICATE_BY_NAME_QUERY = "SELECT id, name, description, price, duration, create_date, last_update_date, is_deleted FROM gift_certificates WHERE name = ? AND is_deleted = 0";
 	private static final String SELECT_CERTIFICATE_BY_TAG_ID_QUERY = "SELECT id, name, description, price, duration, create_date, last_update_date, is_deleted FROM gift_certificates INNER JOIN tags_certificates "
 			+ "ON id = certificate_id WHERE tag_id = ?";
 	private static final String REMOVE_CERTIFICATE_QUERY = "UPDATE gift_certificates SET is_deleted = true WHERE id = ?";
 	private static final String UPDATE_ENTIRE_CERTIFICATE_QUERY = "UPDATE gift_certificates SET name = ?, description = ?, price = ?, duration = ?, last_update_date = ? WHERE id = ?";
 	private static final String UPDATE_CERTIFICATE_NOT_NULL_QUERY = "UPDATE gift_certificates SET name = IF(? IS NULL, name, ?), description = IF(? IS NULL, description, ?), price = IF(? IS NULL, price, ?), duration = IF(? IS NULL, duration, ?), last_update_date = ? WHERE id = ?";
 
-	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
-	@Autowired
 	private CertificateRowMapper certificateRowMapper;
 
-	@Autowired
 	private CertificateQueryBuilder certificateQueryBuilder;
+
+	@Autowired
+	public CertificateRepositoryImpl(JdbcTemplate jdbcTemplate, CertificateRowMapper certificateRowMapper,
+			CertificateQueryBuilder certificateQueryBuilder) {
+		this.jdbcTemplate = jdbcTemplate;
+		this.certificateRowMapper = certificateRowMapper;
+		this.certificateQueryBuilder = certificateQueryBuilder;
+	}
 
 	/**
 	 * Saves the passed certificate.
@@ -65,7 +71,9 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 			return preparedStatement;
 		}, keyHolder);
 
-		return readById(keyHolder.getKey().longValue());
+		certificateModel.setId(keyHolder.getKey().longValue());
+
+		return certificateModel;
 	}
 
 	/**
@@ -75,13 +83,13 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return certificate with passed id
 	 */
 	@Override
-	public CertificateModel readById(long certificateId) {
+	public Optional<CertificateModel> readById(long certificateId) {
 		List<CertificateModel> certificateModelList = jdbcTemplate.query(SELECT_CERTIFICATE_BY_ID_QUERY,
 				certificateRowMapper, certificateId);
 		if (certificateModelList.isEmpty()) {
-			return null;
+			return Optional.empty();
 		}
-		return certificateModelList.get(0);
+		return Optional.ofNullable(certificateModelList.get(0));
 	}
 
 	/**
@@ -91,13 +99,13 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return certificate with passed name
 	 */
 	@Override
-	public CertificateModel readByName(String certificateName) {
+	public Optional<CertificateModel> readByName(String certificateName) {
 		List<CertificateModel> certificateModelList = jdbcTemplate.query(SELECT_CERTIFICATE_BY_NAME_QUERY,
 				certificateRowMapper, certificateName);
 		if (certificateModelList.isEmpty()) {
-			return null;
+			return Optional.empty();
 		}
-		return certificateModelList.get(0);
+		return Optional.ofNullable(certificateModelList.get(0));
 	}
 
 	/**
@@ -146,7 +154,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 			preparedStatement.setLong(6, certificateModel.getId());
 			return preparedStatement;
 		});
-		return readById(certificateModel.getId());
+		return certificateModel;
 	}
 
 	/**
@@ -158,7 +166,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return updated certificate
 	 */
 	@Override
-	public CertificateModel updateCertificateFields(CertificateModel certificateModel) {
+	public Optional<CertificateModel> updateCertificateFields(CertificateModel certificateModel) {
 		jdbcTemplate.update(connection -> {
 			PreparedStatement preparedStatement = connection.prepareStatement(UPDATE_CERTIFICATE_NOT_NULL_QUERY);
 			preparedStatement.setString(1, certificateModel.getName());

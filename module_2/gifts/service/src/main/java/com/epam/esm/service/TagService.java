@@ -44,12 +44,4 @@ public interface TagService {
 	 */
 	int delete(long tagId);
 
-	/**
-	 * Reads all tags for the certificate with passed id.
-	 * 
-	 * @param certificateId the id of certificate for which all tags are read
-	 * @return tags for the certificate with passed id
-	 */
-	List<TagDto> readByCertificateId(long certificateId);
-
 }

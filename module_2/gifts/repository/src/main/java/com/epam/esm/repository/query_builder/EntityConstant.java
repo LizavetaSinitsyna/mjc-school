@@ -1,6 +1,14 @@
 package com.epam.esm.repository.query_builder;
 
+/**
+ * Contains constants for project entities (column names, read parameters)
+ *
+ */
 public class EntityConstant {
+	private EntityConstant() {
+
+	}
+
 	public static final String PARAMS = "params";
 	public static final String PAGE = "page";
 	public static final String LIMIT = "limit";
@@ -20,7 +28,7 @@ public class EntityConstant {
 
 	public static final String CERTIFICATE_ID = "certificate_id";
 	public static final String TAG_ID = "tag_id";
-	
+
 	public static final char DESC_SIGN = '-';
 
 }

@@ -6,6 +6,10 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
+/**
+ * Contains methods for SQL query building.
+ *
+ */
 @Component
 public class CertificateQueryBuilder {
 	private static final String SELECT = "SELECT gift_certificates.id, gift_certificates.name, description, price, duration, create_date,"
@@ -24,6 +28,12 @@ public class CertificateQueryBuilder {
 	private static final String LIMIT = "LIMIT %s, %s";
 	private static final String SPACE = " ";
 
+	/**
+	 * Builds SQL query for certificates search.
+	 * 
+	 * @param params the parameters according to which the search should be made
+	 * @return the constructed SQL query
+	 */
 	public String buildSearchQuery(MultiValueMap<String, String> params) {
 		StringBuilder query = new StringBuilder();
 		query.append(SELECT);

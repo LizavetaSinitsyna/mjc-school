@@ -7,19 +7,17 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
-import com.epam.esm.exception.DeletedEntityException;
 import com.epam.esm.exception.ErrorCode;
-import com.epam.esm.exception.NotFoundException;
-import com.epam.esm.exception.ValidationException;
-import com.epam.esm.repository.CertificateRepository;
-import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.query_builder.EntityConstant;
 
+/**
+ * Contains methods for certificate validation.
+ *
+ */
 @Component
 public class CertificateValidation {
 	private static final int MIN_NAME_LENGTH = 5;
@@ -38,119 +36,52 @@ public class CertificateValidation {
 	private static final int DEFAULT_PAGE_NUMBER = 1;
 	private static final int OFFSET = 10;
 
-	@Autowired
-	private CertificateRepository certificateRepository;
-
 	public CertificateValidation() {
 
 	}
 
-	public void validateId(Long id) {
-		if (id == null || id <= 0) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + id, ErrorCode.INVALID_CERTIFICATE_ID);
-		}
-	}
-
-	public boolean validateName(String name) {
-		return Util.checkLength(name, MIN_NAME_LENGTH, MAX_NAME_LENGTH);
-	}
-
-	public boolean checkIsNameDublicated(String certificateName) {
-		String testedName = Util.removeExtraSpaces(certificateName);
-
-		if (!validateName(testedName)) {
-			return false;
-		}
-		return certificateRepository.certificateExistsByName(testedName);
-	}
-
-	public void checkCertificateExistenceById(long certificateId) {
-		validateId(certificateId);
-		CertificateModel certificateModel = certificateRepository.readById(certificateId);
-
-		if (certificateModel == null) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.NO_CERTIFICATE_FOUND);
-		}
-		if (certificateModel.isDeleted()) {
-			throw new DeletedEntityException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.DELETED_CERTIFICATE);
-		}
-	}
-
+	/**
+	 * Validates passed description requirements.
+	 * 
+	 * @param description the description to validate
+	 * @return {@code true} if the name is valid and {@code false} otherwise
+	 * @see Util#checkLength(String, int, int)
+	 */
 	public boolean validateDescription(String description) {
 		return Util.checkLength(description, MIN_DESCRIPTION_LENGTH, MAX_DESCRIPTION_LENGTH);
 	}
 
+	/**
+	 * Validates passed price requirements.
+	 * 
+	 * @param price the price to validate
+	 * @return {@code true} if the price is valid and {@code false} otherwise
+	 */
 	public boolean validatePrice(BigDecimal price) {
 		return price != null && price.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(MAX_PRICE) < 0;
 	}
 
+	/**
+	 * Validates passed duration requirements.
+	 * 
+	 * @param duration the duration to validate
+	 * @return {@code true} if the duration is valid and {@code false} otherwise
+	 */
 	public boolean validateDuration(Integer duration) {
 		return duration != null && (duration >= MIN_DURATION && duration <= MAX_DURATION);
 	}
 
-	public void validateCertificateAllFieldsRequirementsForCreate(CertificateDto certificateDto) {
+	/**
+	 * Validates all certificate updatable fields.
+	 * 
+	 * @param certificateDto the certificate to be validated
+	 * @return {@code Map} of {@code ErrorCode} as key and invalid resource as a
+	 *         value for invalid fields. If all fields are valid returns empty map
+	 */
+	public Map<ErrorCode, String> validateAllCertificateUpdatableFields(CertificateDto certificateDto) {
 		Util.checkNull(certificateDto);
 		Map<ErrorCode, String> errors = new HashMap<>();
-		errors.putAll(validateAllCertificateUpdatableFields(certificateDto));
-		errors.putAll(validateCertificateUniqueFieldsForCreate(certificateDto));
-		if (!errors.isEmpty()) {
-			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
-		}
-	}
-
-	public void validateCertificateAllFieldsRequirementsForEntireUpdate(long certificateId,
-			CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
-		checkCertificateExistenceById(certificateId);
-		Map<ErrorCode, String> errors = new HashMap<>();
-		errors.putAll(validateAllCertificateUpdatableFields(certificateDto));
-		errors.putAll(validateCertificateUniqueFieldsForUpdate(certificateId, certificateDto));
-		if (!errors.isEmpty()) {
-			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
-		}
-	}
-
-	public void validateCertificateAllFieldsRequirementsForPatchUpdate(long certificateId,
-			CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
-		checkCertificateExistenceById(certificateId);
-		Map<ErrorCode, String> errors = new HashMap<>();
-		errors.putAll(validateAllCertificateUpdatableNotNullFields(certificateDto));
-		errors.putAll(validateCertificateUniqueFieldsForUpdate(certificateId, certificateDto));
-		if (!errors.isEmpty()) {
-			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
-		}
-	}
-
-	private Map<ErrorCode, String> validateCertificateUniqueFieldsForCreate(CertificateDto certificateDto) {
-		Map<ErrorCode, String> errors = new HashMap<>();
-		if (checkIsNameDublicated(certificateDto.getName())) {
-			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
-		}
-		return errors;
-	}
-
-	private Map<ErrorCode, String> validateCertificateUniqueFieldsForUpdate(long certificateId,
-			CertificateDto certificateDto) {
-		Map<ErrorCode, String> errors = new HashMap<>();
-
-		String testedName = Util.removeExtraSpaces(certificateDto.getName());
-
-		CertificateModel certificateModel = certificateRepository.readByName(testedName);
-		if (certificateModel != null && certificateModel.getId() != certificateDto.getId()) {
-			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
-		}
-		return errors;
-
-	}
-
-	private Map<ErrorCode, String> validateAllCertificateUpdatableFields(CertificateDto certificateDto) {
-		Map<ErrorCode, String> errors = new HashMap<>();
-		if (!validateName(certificateDto.getName())) {
+		if (!Util.checkLength(certificateDto.getName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME,
 					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
 		}
@@ -169,80 +100,94 @@ public class CertificateValidation {
 		return errors;
 	}
 
-	private Map<ErrorCode, String> validateAllCertificateUpdatableNotNullFields(CertificateDto certificateDto) {
+	/**
+	 * Validates all certificate updatable not {@code null} fields.
+	 * 
+	 * @param certificateDto the certificate to be validated
+	 * @return {@code Map} of {@code ErrorCode} as key and invalid resource as a
+	 *         value for invalid fields. If all fields are valid returns empty map
+	 */
+	public Map<ErrorCode, String> validateAllCertificateUpdatableNotNullFields(CertificateDto certificateDto) {
+		Util.checkNull(certificateDto);
 
 		Map<ErrorCode, String> errors = new HashMap<>();
 
 		String name = certificateDto.getName();
-		if (name != null && !validateName(name)) {
-			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
+		if (name != null && !Util.checkLength(name, MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
+			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME, EntityConstant.NAME + Util.DELIMITER + name);
 		}
 
 		String description = certificateDto.getDescription();
 		if (description != null && !validateDescription(description)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_DESCRIPTION,
-					EntityConstant.CERTIFICATE_DESCRIPTION + Util.DELIMITER + certificateDto.getDescription());
+					EntityConstant.CERTIFICATE_DESCRIPTION + Util.DELIMITER + description);
 		}
 
 		BigDecimal price = certificateDto.getPrice();
 		if (price != null && !validatePrice(price)) {
-			errors.put(ErrorCode.INVALID_CERTIFICATE_PRICE,
-					EntityConstant.CERTIFICATE_PRICE + Util.DELIMITER + certificateDto.getPrice());
+			errors.put(ErrorCode.INVALID_CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_PRICE + Util.DELIMITER + price);
 		}
 
 		Integer duration = certificateDto.getDuration();
 		if (duration != null && !validateDuration(duration)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_DURATION,
-					EntityConstant.CERTIFICATE_DURATION + Util.DELIMITER + certificateDto.getDuration());
+					EntityConstant.CERTIFICATE_DURATION + Util.DELIMITER + duration);
 		}
 		return errors;
 	}
 
-	public void validateReadParams(MultiValueMap<String, String> params) {
-		Util.checkNull(params);
-		if (!POSSIBLE_READ_PARAMS.containsAll(params.keySet())) {
-			throw new ValidationException(EntityConstant.PARAMS + Util.DELIMITER + params,
-					ErrorCode.INVALID_CERTIFICATE_READ_PARAM);
+	/**
+	 * Validates parameters for certificates reading.
+	 * 
+	 * @param paramsInLowerCase the parameters for certificates reading
+	 * @return {@code Map} of {@code ErrorCode} as key and invalid resource as a
+	 *         value for invalid parameters. If all parameters are valid returns
+	 *         empty map
+	 */
+	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> paramsInLowerCase) {
+		Util.checkNull(paramsInLowerCase);
+		Map<ErrorCode, String> errors = new HashMap<>();
+		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
+			errors.put(ErrorCode.INVALID_CERTIFICATE_READ_PARAM,
+					EntityConstant.PARAMS + Util.DELIMITER + paramsInLowerCase);
 		}
 
-		if (params.containsKey(EntityConstant.ORDER)) {
-			if (!POSSIBLE_SORT_FIELD.containsAll(params.get(EntityConstant.ORDER))) {
-				throw new ValidationException(EntityConstant.PARAMS + Util.DELIMITER + params,
-						ErrorCode.INVALID_CERTIFICATE_SORT_PARAM);
+		if (paramsInLowerCase.containsKey(EntityConstant.ORDER)) {
+			if (!POSSIBLE_SORT_FIELD.containsAll(paramsInLowerCase.get(EntityConstant.ORDER))) {
+				errors.put(ErrorCode.INVALID_CERTIFICATE_SORT_PARAM,
+						EntityConstant.PARAMS + Util.DELIMITER + paramsInLowerCase);
 			}
 		}
-		if (params.containsKey(EntityConstant.PAGE)) {
+		if (paramsInLowerCase.containsKey(EntityConstant.PAGE)) {
 			int page = DEFAULT_PAGE_NUMBER;
-			String initialPage = params.get(EntityConstant.PAGE).get(0);
+			String initialPage = paramsInLowerCase.get(EntityConstant.PAGE).get(0);
 			try {
 				page = Integer.parseInt(initialPage);
 			} catch (NumberFormatException e) {
-				throw new ValidationException(EntityConstant.PAGE + Util.DELIMITER + initialPage,
-						ErrorCode.INVALID_PAGE_FORMAT);
+				errors.put(ErrorCode.INVALID_PAGE_FORMAT, EntityConstant.PAGE + Util.DELIMITER + initialPage);
 			}
 			if (page <= 0) {
-				throw new ValidationException(EntityConstant.PAGE + Util.DELIMITER + page,
-						ErrorCode.NEGATIVE_PAGE_NUMBER);
+				errors.put(ErrorCode.NEGATIVE_PAGE_NUMBER, EntityConstant.PAGE + Util.DELIMITER + page);
 			}
 		} else {
-			params.put(EntityConstant.PAGE, Arrays.asList(Integer.toString(DEFAULT_PAGE_NUMBER)));
+			paramsInLowerCase.put(EntityConstant.PAGE, Arrays.asList(Integer.toString(DEFAULT_PAGE_NUMBER)));
 		}
 
-		if (params.containsKey(EntityConstant.LIMIT)) {
+		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
 			int limit = OFFSET;
+			String initialOffset = paramsInLowerCase.get(EntityConstant.LIMIT).get(0);
 			try {
-				limit = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
+				limit = Integer.parseInt(paramsInLowerCase.get(EntityConstant.LIMIT).get(0));
 			} catch (NumberFormatException e) {
-				throw new ValidationException(EntityConstant.LIMIT + Util.DELIMITER + limit,
-						ErrorCode.INVALID_OFFSET_FORMAT);
+				errors.put(ErrorCode.INVALID_OFFSET_FORMAT, EntityConstant.LIMIT + Util.DELIMITER + initialOffset);
 			}
 			if (limit <= 0) {
-				throw new ValidationException(EntityConstant.LIMIT + Util.DELIMITER + limit, ErrorCode.NEGATIVE_OFFSET);
+				errors.put(ErrorCode.NEGATIVE_OFFSET, EntityConstant.LIMIT + Util.DELIMITER + limit);
 			}
 		} else {
-			params.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(OFFSET)));
+			paramsInLowerCase.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(OFFSET)));
 		}
+		return errors;
 	}
 
 }

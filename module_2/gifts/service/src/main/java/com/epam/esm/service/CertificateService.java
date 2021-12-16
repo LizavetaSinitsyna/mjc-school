@@ -67,4 +67,14 @@ public interface CertificateService {
 	 */
 	List<CertificateDto> readAll(MultiValueMap<String, String> params);
 
+	/**
+	 * Checks if certificate with passed id exists.
+	 * 
+	 * @param certificateId the id to be checked
+	 * @throws ValidationException if passed id is not valid
+	 * @throws NotFoundException   if certificate with passed id does not exist
+	 * @see #isIdValid(long)
+	 */
+	void checkCertificateExistenceById(long certificateId);
+
 }

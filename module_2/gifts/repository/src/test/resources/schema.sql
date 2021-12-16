@@ -1,6 +1,6 @@
 CREATE TABLE gift_certificates (
   id BIGINT NOT NULL AUTO_INCREMENT,
-  name varchar(50) NOT NULL UNIQUE,
+  name varchar(50) NOT NULL,
   description varchar(1000) NOT NULL,
   price decimal(7,2) NOT NULL,
   duration INTEGER NOT NULL,

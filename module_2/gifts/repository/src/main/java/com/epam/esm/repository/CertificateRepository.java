@@ -1,6 +1,7 @@
 package com.epam.esm.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import com.epam.esm.repository.model.CertificateModel;
 
@@ -45,5 +46,5 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 *                            values to be set
 	 * @return updated certificate
 	 */
-	CertificateModel updateCertificateFields(CertificateModel certificateToUpdate);
+	Optional<CertificateModel> updateCertificateFields(CertificateModel certificateToUpdate);
 }

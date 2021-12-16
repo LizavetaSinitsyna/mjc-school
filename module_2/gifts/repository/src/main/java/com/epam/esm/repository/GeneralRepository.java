@@ -1,6 +1,7 @@
 package com.epam.esm.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.util.MultiValueMap;
 
@@ -25,7 +26,7 @@ public interface GeneralRepository<T> {
 	 * @param id the id of entity to be read
 	 * @return entity with passed id
 	 */
-	T readById(long id);
+	Optional<T> readById(long id);
 
 	/**
 	 * Reads entity with passed name.
@@ -33,7 +34,7 @@ public interface GeneralRepository<T> {
 	 * @param name the name of entity to be read
 	 * @return entity with passed name
 	 */
-	T readByName(String name);
+	Optional<T> readByName(String name);
 
 	/**
 	 * Reads all entities according to passed parameters.

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,8 +26,13 @@ import com.epam.esm.service.TagService;
 @RestController
 @RequestMapping("/v1/tags")
 public class TagController {
-	@Autowired
+
 	private TagService tagService;
+
+	@Autowired
+	public TagController(TagService tagService) {
+		this.tagService = tagService;
+	}
 
 	/**
 	 * Creates and saves the passed tag.
@@ -55,13 +61,17 @@ public class TagController {
 	/**
 	 * Reads all tags according to passed parameters.
 	 * 
-	 * @param params the parameters which define choice of tags and their ordering
+	 * @param params the parameters which define the choice of tags and their ordering
 	 * @return tags which meet passed parameters
 	 */
 	@GetMapping
-	@ResponseStatus(HttpStatus.OK)
-	public List<TagDto> readAll(@RequestParam MultiValueMap<String, String> params) {
-		return tagService.readAll(params);
+	public ResponseEntity<List<TagDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		List<TagDto> tags = tagService.readAll(params);
+		if (tags.isEmpty()) {
+			return new ResponseEntity<>(tags, HttpStatus.NO_CONTENT);
+		} else {
+			return new ResponseEntity<>(tags, HttpStatus.OK);
+		}
 	}
 
 	/**

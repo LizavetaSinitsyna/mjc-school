@@ -2,6 +2,7 @@ package com.epam.esm.repository.impl;
 
 import java.sql.PreparedStatement;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -35,11 +36,15 @@ public class TagRepositoryImpl implements TagRepository {
 	private static final String REMOVE_TAG__QUERY = "UPDATE tags SET is_deleted = true WHERE id = ?";
 	private static final String DELETE_TAGS_FOR_CERTIFICATE_QUERY = "DELETE FROM tags_certificates WHERE certificate_id = ?";
 
-	@Autowired
 	private JdbcTemplate jdbcTemplate;
 
-	@Autowired
 	private TagRowMapper tagRowMapper;
+
+	@Autowired
+	public TagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper) {
+		this.jdbcTemplate = jdbcTemplate;
+		this.tagRowMapper = tagRowMapper;
+	}
 
 	/**
 	 * Saves the passed tag.
@@ -58,7 +63,9 @@ public class TagRepositoryImpl implements TagRepository {
 			return preparedStatement;
 		}, keyHolder);
 
-		return readById(keyHolder.getKey().longValue());
+		tagModel.setId(keyHolder.getKey().longValue());
+
+		return tagModel;
 	}
 
 	/**
@@ -69,13 +76,13 @@ public class TagRepositoryImpl implements TagRepository {
 	 */
 
 	@Override
-	public TagModel readById(long tagId) {
+	public Optional<TagModel> readById(long tagId) {
 		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_ID_QUERY, tagRowMapper, tagId);
 
 		if (tagModelList.isEmpty()) {
-			return null;
+			return Optional.empty();
 		}
-		return tagModelList.get(0);
+		return Optional.ofNullable(tagModelList.get(0));
 	}
 
 	/**
@@ -110,12 +117,12 @@ public class TagRepositoryImpl implements TagRepository {
 	 */
 
 	@Override
-	public TagModel readByName(String tagName) {
+	public Optional<TagModel> readByName(String tagName) {
 		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_NAME_QUERY, tagRowMapper, tagName);
 		if (tagModelList.isEmpty()) {
-			return null;
+			return Optional.empty();
 		}
-		return tagModelList.get(0);
+		return Optional.ofNullable(tagModelList.get(0));
 	}
 
 	/**

@@ -2,130 +2,143 @@ package com.epam.esm.service.impl;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.TagDto;
+import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.TagModel;
+import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
-import com.epam.esm.service.validation.CertificateValidation;
 import com.epam.esm.service.validation.TagValidation;
 
 @ExtendWith(MockitoExtension.class)
 class TagServiceImplTest {
-	private static final long ID = 1L;
-	@Mock
-	private TagValidation tagValidation;
-
-	@Mock
+	private static TagValidation tagValidation;
+	private static TagConverter tagConverter;
 	private TagRepository tagRepository;
 
-	@Mock
-	private TagConverter tagConverter;
-
-	@Mock
 	private CertificateRepository certificateRepository;
 
-	@Mock
-	private CertificateValidation certificateValidation;
+	private static TagService tagServiceImpl;
 
-	@InjectMocks
-	private TagServiceImpl tagServiceImpl;
+	private static final Long TAG_ID_1 = 1L;
+	private static final Long INVALID_ID = -1L;
+	private TagModel tagModel1;
+	private TagDto tagDto1;
+
+	@BeforeAll
+	public static void init() {
+		tagValidation = new TagValidation();
+		tagConverter = new TagConverter();
+	}
+
+	@BeforeEach
+	public void setUp() {
+		certificateRepository = Mockito.mock(CertificateRepository.class);
+		tagRepository = Mockito.mock(TagRepository.class);
+		tagServiceImpl = new TagServiceImpl(certificateRepository, tagRepository, tagConverter, tagValidation);
+
+		tagModel1 = new TagModel();
+		tagModel1.setId(TAG_ID_1);
+		tagModel1.setName("food");
+		tagModel1.setDeleted(false);
+
+		tagDto1 = new TagDto();
+		tagDto1.setId(TAG_ID_1);
+		tagDto1.setName("food");
+
+	}
 
 	@Test
 	void testCreate() {
-		TagModel tagModel = new TagModel();
-		TagDto expected = new TagDto();
+		TagDto expected = tagDto1;
 
-		Mockito.when(tagConverter.convertToModel(expected)).thenReturn(tagModel);
-		Mockito.when(tagRepository.create(tagModel)).thenReturn(tagModel);
-		Mockito.when(tagConverter.convertToDto(tagModel)).thenReturn(expected);
+		Mockito.when(tagRepository.create(Mockito.any())).thenReturn(tagModel1);
+		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(false);
 
 		TagDto actual = tagServiceImpl.create(expected);
 
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(tagRepository).create(tagModel);
-		Mockito.verify(tagConverter).convertToDto(tagModel);
-		Mockito.verify(tagConverter).convertToModel(expected);
-		Mockito.verify(tagValidation).validateAllTagFields(Mockito.any());
+		Mockito.verify(tagRepository).create(Mockito.any());
+		Mockito.verify(tagRepository).tagExistsByName(Mockito.any());
+
+	}
+
+	@Test
+	void testCreateWithDiblicatedName() {
+		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(true);
+		Assertions.assertThrows(ValidationException.class, () -> {
+			tagServiceImpl.create(tagDto1);
+		});
+
 	}
 
 	@Test
 	void testReadById() {
-		TagModel tagModel = new TagModel();
-		TagDto expected = new TagDto();
+		TagDto expected = tagDto1;
 
-		Mockito.when(tagRepository.readById(Mockito.anyLong())).thenReturn(tagModel);
-		Mockito.when(tagConverter.convertToDto(tagModel)).thenReturn(expected);
+		Mockito.when(tagRepository.readById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
 
-		Assertions.assertEquals(expected, tagServiceImpl.readById(Mockito.anyLong()));
+		TagDto actual = tagServiceImpl.readById(TAG_ID_1);
+		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(tagValidation).checkTagExistenceById(Mockito.anyLong());
 		Mockito.verify(tagRepository).readById(Mockito.anyLong());
-		Mockito.verify(tagConverter).convertToDto(tagModel);
 	}
 
 	@Test
-	void testReadByCertificateId() {
-		TagModel tagModel = new TagModel();
-		List<TagModel> tagModels = Arrays.asList(tagModel);
-		TagDto tagDto = new TagDto();
-		List<TagDto> expected = Arrays.asList(tagDto);
-		Mockito.when(tagRepository.readByCertificateId(Mockito.anyLong())).thenReturn(tagModels);
-		Mockito.when(tagConverter.convertToDto(tagModel)).thenReturn(tagDto);
-
-		Assertions.assertEquals(expected, tagServiceImpl.readByCertificateId(Mockito.anyLong()));
-
-		Mockito.verify(certificateValidation).checkCertificateExistenceById(Mockito.anyLong());
-		Mockito.verify(tagRepository).readByCertificateId(Mockito.anyLong());
-		Mockito.verify(tagConverter).convertToDto(tagModel);
+	void testReadByIdWithInvalidId() {
+		Assertions.assertThrows(ValidationException.class, () -> {
+			tagServiceImpl.readById(INVALID_ID);
+		});
 	}
 
 	@Test
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		List<TagModel> tagModels = Arrays.asList(tagModel1);
 
-		TagModel tagModel = new TagModel();
-		tagModel.setId(ID);
-		TagDto tagDto = new TagDto();
-		tagDto.setId(ID);
+		List<TagDto> expected = Arrays.asList(tagDto1);
 
-		List<TagModel> tagModels = Arrays.asList(tagModel);
+		Mockito.when(tagRepository.readAll(Mockito.any())).thenReturn(tagModels);
 
-		List<TagDto> expected = Arrays.asList(tagDto);
+		List<TagDto> actual = tagServiceImpl.readAll(params);
+		Assertions.assertEquals(expected, actual);
 
-		Mockito.when(tagRepository.readAll(params)).thenReturn(tagModels);
-		Mockito.when(tagConverter.convertToDto(tagModel)).thenReturn(tagDto);
-
-		Assertions.assertEquals(expected, tagServiceImpl.readAll(params));
-
-		Mockito.verify(tagValidation).validateReadParams(params);
-		Mockito.verify(tagRepository).readAll(params);
+		Mockito.verify(tagRepository).readAll(Mockito.any());
 	}
 
 	@Test
 	void testDelete() {
 		CertificateModel certificateModel = new CertificateModel();
 		List<CertificateModel> certificateModels = Arrays.asList(certificateModel);
-		Mockito.when(certificateRepository.readByTagId(ID)).thenReturn(certificateModels);
-		tagServiceImpl.delete(ID);
+		Mockito.when(certificateRepository.readByTagId(TAG_ID_1)).thenReturn(certificateModels);
+		Mockito.when(tagRepository.delete(TAG_ID_1)).thenReturn(1);
+		tagServiceImpl.delete(TAG_ID_1);
 
-		Mockito.verify(tagValidation).checkTagExistenceById(ID);
-		Mockito.verify(tagRepository).delete(ID);
+		Mockito.verify(tagRepository).delete(TAG_ID_1);
 		Mockito.verify(certificateRepository).delete(Mockito.anyLong());
-		Mockito.verify(certificateRepository).readByTagId(ID);
+		Mockito.verify(certificateRepository).readByTagId(TAG_ID_1);
+	}
+
+	@Test
+	void testDeleteWithInvalidId() {
+		Assertions.assertThrows(ValidationException.class, () -> {
+			tagServiceImpl.delete(INVALID_ID);
+		});
 	}
 
 }

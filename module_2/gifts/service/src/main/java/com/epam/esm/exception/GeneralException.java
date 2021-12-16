@@ -10,10 +10,6 @@ public class GeneralException extends RuntimeException {
 	private ErrorCode generalErrorCode;
 	private Map<ErrorCode, String> errors;
 
-	public GeneralException() {
-		super();
-	}
-
 	public GeneralException(String invalidResource, ErrorCode generalErrorCode) {
 		this.invalidResource = invalidResource;
 		this.generalErrorCode = generalErrorCode;
@@ -22,18 +18,6 @@ public class GeneralException extends RuntimeException {
 	public GeneralException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode) {
 		this.errors = errors;
 		this.generalErrorCode = generalErrorCode;
-	}
-
-	public GeneralException(String message) {
-		super(message);
-	}
-
-	public GeneralException(String message, Throwable cause) {
-		super(message, cause);
-	}
-
-	public GeneralException(Throwable cause) {
-		super(cause);
 	}
 
 	public String getInvalidResource() {

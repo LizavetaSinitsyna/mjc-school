@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -27,8 +28,13 @@ import com.epam.esm.service.CertificateService;
 @RestController
 @RequestMapping("/v1/certificates")
 public class CertificateController {
-	@Autowired
+
 	private CertificateService certificateService;
+
+	@Autowired
+	public CertificateController(CertificateService certificateService) {
+		this.certificateService = certificateService;
+	}
 
 	/**
 	 * Creates and saves the passed certificate.
@@ -57,14 +63,18 @@ public class CertificateController {
 	/**
 	 * Reads all certificates according to passed parameters.
 	 * 
-	 * @param params the parameters which define choice of certificates and their
+	 * @param params the parameters which define the choice of certificates and their
 	 *               ordering
 	 * @return certificates which meet passed parameters
 	 */
 	@GetMapping
-	@ResponseStatus(HttpStatus.OK)
-	public List<CertificateDto> readAll(@RequestParam MultiValueMap<String, String> params) {
-		return certificateService.readAll(params);
+	public ResponseEntity<List<CertificateDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		List<CertificateDto> certificates = certificateService.readAll(params);
+		if (certificates.isEmpty()) {
+			return new ResponseEntity<>(certificates, HttpStatus.NO_CONTENT);
+		} else {
+			return new ResponseEntity<>(certificates, HttpStatus.OK);
+		}
 	}
 
 	/**
