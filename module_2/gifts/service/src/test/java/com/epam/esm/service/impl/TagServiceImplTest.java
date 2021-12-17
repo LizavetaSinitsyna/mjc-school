@@ -127,6 +127,7 @@ class TagServiceImplTest {
 		List<CertificateModel> certificateModels = Arrays.asList(certificateModel);
 		Mockito.when(certificateRepository.readByTagId(TAG_ID_1)).thenReturn(certificateModels);
 		Mockito.when(tagRepository.delete(TAG_ID_1)).thenReturn(1);
+		Mockito.when(tagRepository.readById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
 		tagServiceImpl.delete(TAG_ID_1);
 
 		Mockito.verify(tagRepository).delete(TAG_ID_1);

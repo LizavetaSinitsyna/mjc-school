@@ -126,15 +126,11 @@ public class TagServiceImpl implements TagService {
 	@Override
 	@Transactional
 	public int delete(long tagId) {
-		if (!Util.isPositive(tagId)) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
-		}
+		// check if the tag with passed id exists
+		readById(tagId);
 
 		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);
 		int deletedTagsAmount = tagRepository.delete(tagId);
-		if (deletedTagsAmount < 1) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
-		}
 		if (certificates != null) {
 			for (CertificateModel certificate : certificates) {
 				certificateRepository.delete(certificate.getId());

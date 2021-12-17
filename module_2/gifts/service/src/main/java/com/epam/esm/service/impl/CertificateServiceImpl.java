@@ -165,15 +165,8 @@ public class CertificateServiceImpl implements CertificateService {
 	 */
 	@Override
 	public int delete(long certificateId) {
-		if (!Util.isPositive(certificateId)) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.INVALID_CERTIFICATE_ID);
-		}
+		checkCertificateExistenceById(certificateId);
 		int deletedCertificatesAmount = certificateRepository.delete(certificateId);
-		if (deletedCertificatesAmount < 1) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.NO_CERTIFICATE_FOUND);
-		}
 		return deletedCertificatesAmount;
 	}
 

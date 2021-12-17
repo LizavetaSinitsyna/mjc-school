@@ -180,7 +180,7 @@ class CertificateServiceImplTest {
 	@Test
 	void testDelete() {
 		Mockito.when(certificateRepository.delete(CERTIFICATE_ID_1)).thenReturn(1);
-
+		Mockito.when(certificateRepository.readById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
 		certificateServiceImpl.delete(CERTIFICATE_ID_1);
 
 		Mockito.verify(certificateRepository).delete(CERTIFICATE_ID_1);
