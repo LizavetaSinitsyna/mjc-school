@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.NoHandlerFoundException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -71,6 +72,14 @@ public class GlobalExceptionHandler {
 				exception.getTargetType().toString());
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiRootCausesException(errorMessage, errorCode.getCode(), error.toString());
+	}
+
+	@ExceptionHandler(NoHandlerFoundException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiException handleNoHandlerFoundException(NoHandlerFoundException exception) {
+		ErrorCode errorCode = ErrorCode.NO_HANDLER_FOUND_ERROR_CODE;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode(), exception.getRequestURL());
+		return new ApiException(errorMessage, errorCode.getCode());
 	}
 
 	private ApiException handleException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode,

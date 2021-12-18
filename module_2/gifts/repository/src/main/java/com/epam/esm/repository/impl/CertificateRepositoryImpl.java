@@ -33,7 +33,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 			+ "ON id = certificate_id WHERE tag_id = ?";
 	private static final String REMOVE_CERTIFICATE_QUERY = "UPDATE gift_certificates SET is_deleted = true WHERE id = ?";
 	private static final String UPDATE_ENTIRE_CERTIFICATE_QUERY = "UPDATE gift_certificates SET name = ?, description = ?, price = ?, duration = ?, last_update_date = ? WHERE id = ?";
-	private static final String UPDATE_CERTIFICATE_NOT_NULL_QUERY = "UPDATE gift_certificates SET name = IF(? IS NULL, name, ?), description = IF(? IS NULL, description, ?), price = IF(? IS NULL, price, ?), duration = IF(? IS NULL, duration, ?), last_update_date = ? WHERE id = ?";
+	private static final String UPDATE_CERTIFICATE_NOT_NULL_QUERY = "UPDATE gift_certificates SET name = IF(? IS NULL, name, ?), description = IF(? IS NULL, description, ?), price = IF(? IS NULL, price, ?), duration = IF(? = 0, duration, ?), last_update_date = ? WHERE id = ?";
 
 	private JdbcTemplate jdbcTemplate;
 
