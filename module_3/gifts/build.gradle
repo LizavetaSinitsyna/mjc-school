@@ -1,0 +1,44 @@
+plugins {
+	id 'war'
+}
+
+ext {
+	lombokVersion = '1.18.22'
+	springContextVersion = '5.3.13'
+	springTxVersion = '5.3.13'
+	springCoreVersion = '5.3.13'
+	jupiterVersion = '5.8.2'
+	mockitoVersion = '4.1.0'
+	springTestVersion = '5.3.13'
+	jacksonDataVersion = '2.13.0'
+}
+
+allprojects {
+	apply plugin: 'java-library'
+		
+	repositories {
+		mavenCentral()
+	}
+	
+	dependencies {
+		compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+		annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+		implementation group: 'org.springframework', name: 'spring-core', version: "${springCoreVersion}"
+		implementation group: 'org.springframework', name: 'spring-context', version: "${springContextVersion}"
+		testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${jupiterVersion}"
+		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
+		testImplementation group: 'org.springframework', name: 'spring-test', version: "${springTestVersion}"	
+		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"	 
+	}
+	
+	test {
+    	useJUnitPlatform()
+	}
+}
+
+dependencies {  
+	implementation project(':service')
+	implementation project(':controller')
+	implementation project(':repository')	
+}
+
