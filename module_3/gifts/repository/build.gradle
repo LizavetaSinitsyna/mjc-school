@@ -2,12 +2,15 @@ ext {
 	hikariCPVersion = '5.0.0'
 	commonsLangVersion = '3.12.0'
 	h2databaseVersion = '1.4.200'
-	springDataJdbcVersion = '2.3.0'
+	springBootVersion = '2.6.1'
 }
 
 dependencies {
 	implementation group: 'com.zaxxer', name: 'HikariCP', version: "${hikariCPVersion}"
 	testImplementation group: 'com.h2database', name: 'h2', version: "${h2databaseVersion}"
 	implementation group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLangVersion}"
-	implementation group: 'org.springframework.data', name: 'spring-data-jdbc', version: "${springDataJdbcVersion}"	
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: "${springBootVersion}"
+	implementation group: 'mysql', name: 'mysql-connector-java', version: '8.0.25'
+	
+	
 }

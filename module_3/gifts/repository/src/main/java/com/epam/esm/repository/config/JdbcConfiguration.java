@@ -1,7 +1,11 @@
-package com.epam.esm.repository.config;
+/*-package com.epam.esm.repository.config;
 
 import javax.sql.DataSource;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
@@ -21,7 +25,9 @@ import com.zaxxer.hikari.HikariDataSource;
 @EnableJdbcRepositories("com.epam.esm")
 public class JdbcConfiguration extends AbstractJdbcConfiguration {
 	public static final String HIKARI_CONFIG_FILE_PATH = "/hikaricp.properties";
-
+	
+	private  DataSource dataSource; 
+	
 	@Bean
 	public NamedParameterJdbcOperations operations() {
 		return new NamedParameterJdbcTemplate(dataSource());
@@ -36,6 +42,8 @@ public class JdbcConfiguration extends AbstractJdbcConfiguration {
 	public DataSource dataSource() {
 		HikariConfig config = new HikariConfig(HIKARI_CONFIG_FILE_PATH);
 		HikariDataSource dataSource = new HikariDataSource(config);
+		dataSource.setDriverClassName("com.mysql.jdbc.Driver");
+		DataSourceProperties dataSourceProperties;
 		return dataSource;
 	}
 
@@ -43,4 +51,4 @@ public class JdbcConfiguration extends AbstractJdbcConfiguration {
 	public JdbcTemplate jdbcTemplate() {
 		return new JdbcTemplate(dataSource());
 	}
-}
+}*/

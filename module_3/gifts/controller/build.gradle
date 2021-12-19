@@ -1,13 +1,9 @@
 ext {
-	springWebMvcVersion = '5.3.13'
-	springWebVersion = '5.3.13'
-	servletApiVersion = '4.0.1'
+	springBootVersion = '2.6.1'
 }
 
 dependencies {
-	implementation group: 'org.springframework', name: 'spring-webmvc', version: "${springWebMvcVersion}"
-	implementation group: 'org.springframework', name: 'spring-web', version: "${springWebVersion}"
-	compileOnly group: 'javax.servlet', name: 'javax.servlet-api', version: "${servletApiVersion}"
+	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-web', version: "${springBootVersion}"
 		
 	implementation project(':service')	
 }
