@@ -66,20 +66,20 @@ class TagServiceImplTest {
 	void testCreate() {
 		TagDto expected = tagDto1;
 
-		Mockito.when(tagRepository.create(Mockito.any())).thenReturn(tagModel1);
+		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
 		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(false);
 
 		TagDto actual = tagServiceImpl.create(expected);
 
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(tagRepository).create(Mockito.any());
+		Mockito.verify(tagRepository).save(Mockito.any());
 		Mockito.verify(tagRepository).tagExistsByName(Mockito.any());
 
 	}
 
 	@Test
-	void testCreateWithDiblicatedName() {
+	void testCreateWithDublicatedName() {
 		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(true);
 		Assertions.assertThrows(ValidationException.class, () -> {
 			tagServiceImpl.create(tagDto1);
@@ -91,12 +91,12 @@ class TagServiceImplTest {
 	void testReadById() {
 		TagDto expected = tagDto1;
 
-		Mockito.when(tagRepository.readById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
+		Mockito.when(tagRepository.findById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
 
 		TagDto actual = tagServiceImpl.readById(TAG_ID_1);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(tagRepository).readById(Mockito.anyLong());
+		Mockito.verify(tagRepository).findById(Mockito.anyLong());
 	}
 
 	@Test
@@ -113,12 +113,12 @@ class TagServiceImplTest {
 
 		List<TagDto> expected = Arrays.asList(tagDto1);
 
-		Mockito.when(tagRepository.readAll(Mockito.any())).thenReturn(tagModels);
+		Mockito.when(tagRepository.findAll(Mockito.any())).thenReturn(tagModels);
 
 		List<TagDto> actual = tagServiceImpl.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(tagRepository).readAll(Mockito.any());
+		Mockito.verify(tagRepository).findAll(Mockito.any());
 	}
 
 	@Test
@@ -127,7 +127,7 @@ class TagServiceImplTest {
 		List<CertificateModel> certificateModels = Arrays.asList(certificateModel);
 		Mockito.when(certificateRepository.readByTagId(TAG_ID_1)).thenReturn(certificateModels);
 		Mockito.when(tagRepository.delete(TAG_ID_1)).thenReturn(1);
-		Mockito.when(tagRepository.readById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
+		Mockito.when(tagRepository.findById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
 		tagServiceImpl.delete(TAG_ID_1);
 
 		Mockito.verify(tagRepository).delete(TAG_ID_1);

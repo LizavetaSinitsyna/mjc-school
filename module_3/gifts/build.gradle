@@ -1,12 +1,11 @@
 plugins {
 	id "org.springframework.boot" version "2.6.1"
 	id "io.spring.dependency-management" version "1.0.11.RELEASE"
-	id 'war'
+	id "war"
 }
 
 ext {
 	lombokVersion = '1.18.22'
-	springTxVersion = '5.3.13'
 	jupiterVersion = '5.8.2'
 	mockitoVersion = '4.1.0'
 	jacksonDataVersion = '2.13.0'
@@ -18,11 +17,18 @@ springBoot {
 }
 
 allprojects {
+	group = 'com.epam.esm'
+	version = ''
+	sourceCompatibility = '15'
+
 	apply plugin: 'java-library'
 	
 	repositories {
 		mavenCentral()
 	}
+}
+
+subprojects {
 	
 	dependencies {
 		compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
@@ -32,11 +38,13 @@ allprojects {
 		implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: "${springBootVersion}"
 		testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: "${springBootVersion}"	
 		implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version: "${springBootVersion}"
-		
+				
 		testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter', version: "${jupiterVersion}"
 		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
 		
-		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"	 
+		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"
+		
+		implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'	 
 	}
 	
 	test {

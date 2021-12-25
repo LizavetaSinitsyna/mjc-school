@@ -24,7 +24,7 @@ import com.epam.esm.service.TagService;
  * 
  */
 @RestController
-@RequestMapping("/v1/tags")
+@RequestMapping("/api/v1/tags")
 public class TagController {
 
 	private TagService tagService;

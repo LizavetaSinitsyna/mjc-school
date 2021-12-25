@@ -15,10 +15,10 @@ import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
+import com.epam.esm.repository.EntityConstant;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.TagModel;
-import com.epam.esm.repository.query_builder.EntityConstant;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.TagValidation;
@@ -32,6 +32,8 @@ import com.epam.esm.service.validation.Util;
  */
 @Service
 public class TagServiceImpl implements TagService {
+	private static final int OFFSET = 0;
+	private static final int LIMIT = 10;
 
 	private CertificateRepository certificateRepository;
 
@@ -66,7 +68,7 @@ public class TagServiceImpl implements TagService {
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_TAG);
 		}
-		TagModel createdTagModel = tagRepository.create(tagConverter.convertToModel(tagDto));
+		TagModel createdTagModel = tagRepository.save(tagConverter.convertToModel(tagDto));
 		TagDto createdTag = tagConverter.convertToDto(createdTagModel);
 		return createdTag;
 	}
@@ -84,12 +86,15 @@ public class TagServiceImpl implements TagService {
 		if (!Util.isPositive(tagId)) {
 			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
 		}
-		Optional<TagModel> tagModel = tagRepository.readById(tagId);
+
+		Optional<TagModel> tagModel = tagRepository.findById(tagId);
+
 		if (tagModel.isEmpty()) {
 			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
 		}
 
 		TagDto tagDto = tagConverter.convertToDto(tagModel.get());
+
 		return tagDto;
 	}
 
@@ -104,10 +109,23 @@ public class TagServiceImpl implements TagService {
 	public List<TagDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = tagValidation.validateReadParams(paramsInLowerCase);
+
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_TAG_REQUEST_PARAMS);
 		}
-		List<TagModel> tagModels = tagRepository.readAll(paramsInLowerCase);
+
+		int offset = OFFSET;
+		int limit = LIMIT;
+
+		if (params.containsKey(EntityConstant.OFFSET)) {
+			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
+		}
+
+		if (params.containsKey(EntityConstant.LIMIT)) {
+			limit = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
+		}
+
+		List<TagModel> tagModels = tagRepository.findAll(offset, limit);
 		List<TagDto> tagDtos = new ArrayList<>(tagModels.size());
 		for (TagModel tagModel : tagModels) {
 			tagDtos.add(tagConverter.convertToDto(tagModel));
@@ -126,8 +144,12 @@ public class TagServiceImpl implements TagService {
 	@Override
 	@Transactional
 	public int delete(long tagId) {
-		// check if the tag with passed id exists
-		readById(tagId);
+		if (!Util.isPositive(tagId)) {
+			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
+		}
+		if (!tagRepository.tagExistsById(tagId)) {
+			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
+		}
 
 		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);
 		int deletedTagsAmount = tagRepository.delete(tagId);

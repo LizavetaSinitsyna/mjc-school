@@ -20,10 +20,10 @@ import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
+import com.epam.esm.repository.EntityConstant;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.TagModel;
-import com.epam.esm.repository.query_builder.EntityConstant;
 import com.epam.esm.service.CertificateService;
 import com.epam.esm.service.DateTimeWrapper;
 import com.epam.esm.service.converter.CertificateConverter;
@@ -40,6 +40,8 @@ import com.epam.esm.service.validation.Util;
  */
 @Service
 public class CertificateServiceImpl implements CertificateService {
+	private static final int OFFSET = 0;
+	private static final int LIMIT = 10;
 
 	private CertificateRepository certificateRepository;
 
@@ -91,11 +93,11 @@ public class CertificateServiceImpl implements CertificateService {
 		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
 		certificateDto.setCreateDate(now);
 		certificateDto.setLastUpdateDate(now);
+		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
 
-		CertificateModel createdCertificateModel = certificateRepository
-				.create(certificateConverter.convertToModel(certificateDto));
+		CertificateModel certificateModel = certificateConverter.convertToModel(certificateDto);
+		CertificateModel createdCertificateModel = certificateRepository.save(certificateModel);
 		CertificateDto createdCertificate = certificateConverter.convertToDto(createdCertificateModel);
-		createdCertificate.setTags(saveCertificateTags(createdCertificate.getId(), certificateDto.getTags()));
 
 		return createdCertificate;
 	}
@@ -115,14 +117,15 @@ public class CertificateServiceImpl implements CertificateService {
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
 
-		Optional<CertificateModel> certificateModel = certificateRepository.readById(certificateId);
+		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
+
 		if (certificateModel.isEmpty()) {
 			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
 					ErrorCode.NO_CERTIFICATE_FOUND);
 		}
 
 		CertificateDto certificateDto = certificateConverter.convertToDto(certificateModel.get());
-		certificateDto.setTags(readByCertificateId(certificateId));
+
 		return certificateDto;
 	}
 
@@ -142,14 +145,50 @@ public class CertificateServiceImpl implements CertificateService {
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE_REQUEST_PARAMS);
 		}
-		List<CertificateModel> certificateModels = certificateRepository.readAll(paramsInLowerCase);
+
+		if (paramsInLowerCase.containsKey(EntityConstant.ORDER)) {
+			paramsInLowerCase.put(EntityConstant.ORDER,
+					convertToFieldNames(paramsInLowerCase.get(EntityConstant.ORDER)));
+		}
+
+		int offset = OFFSET;
+		int limit = LIMIT;
+
+		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
+			offset = Integer.parseInt(paramsInLowerCase.get(EntityConstant.OFFSET).get(0));
+		}
+
+		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
+			limit = Integer.parseInt(paramsInLowerCase.get(EntityConstant.LIMIT).get(0));
+		}
+
+		List<CertificateModel> certificateModels = certificateRepository.findAll(paramsInLowerCase, offset, limit);
 		List<CertificateDto> certificateDtos = new ArrayList<>(certificateModels.size());
 		for (CertificateModel certificateModel : certificateModels) {
 			CertificateDto certificateDto = certificateConverter.convertToDto(certificateModel);
-			certificateDto.setTags(readByCertificateId(certificateDto.getId()));
 			certificateDtos.add(certificateDto);
 		}
 		return certificateDtos;
+	}
+
+	private static List<String> convertToFieldNames(List<String> sortParams) {
+		List<String> sortFields = new ArrayList<String>(sortParams.size());
+		for (String sortParam : sortParams) {
+			StringBuilder fieldName = new StringBuilder();
+			String[] words = sortParam.split("_");
+			if (words.length > 1) {
+				fieldName.append(words[0].toLowerCase());
+				for (int i = 1; i < words.length; i++) {
+					fieldName.append(words[i].substring(0, 1).toUpperCase());
+					if (words[i].length() > 1) {
+						fieldName.append(words[i].substring(1).toLowerCase());
+					}
+				}
+			}
+			sortFields.add(fieldName.toString());
+		}
+		System.out.println(sortFields);
+		return sortFields;
 	}
 
 	/**
@@ -200,21 +239,15 @@ public class CertificateServiceImpl implements CertificateService {
 		}
 
 		certificateDto.setId(certificateId);
+		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
 		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
 
 		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
 		certificateToUpdate.setLastUpdateDate(now);
 
-		Optional<CertificateModel> certificateModel = certificateRepository
-				.updateCertificateFields(certificateToUpdate);
+		CertificateModel certificateModel = certificateRepository.updateCertificateFields(certificateToUpdate);
 
-		if (certificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.NO_CERTIFICATE_FOUND);
-		}
-
-		CertificateDto updatedCertificate = certificateConverter.convertToDto(certificateModel.get());
-		updatedCertificate.setTags(saveCertificateTags(updatedCertificate.getId(), certificateDto.getTags()));
+		CertificateDto updatedCertificate = certificateConverter.convertToDto(certificateModel);
 
 		return readById(updatedCertificate.getId());
 	}
@@ -247,21 +280,15 @@ public class CertificateServiceImpl implements CertificateService {
 		}
 
 		certificateDto.setId(certificateId);
+		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
 		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
 
 		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
 		certificateToUpdate.setLastUpdateDate(now);
 
-		Optional<CertificateModel> updatedCertificateModel = certificateRepository
-				.updateEntireCertificate(certificateToUpdate);
+		CertificateModel updatedCertificateModel = certificateRepository.updateEntireCertificate(certificateToUpdate);
 
-		if (updatedCertificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
-					ErrorCode.NO_CERTIFICATE_FOUND);
-		}
-		CertificateDto updatedCertificateDto = certificateConverter.convertToDto(updatedCertificateModel.get());
-
-		updatedCertificateDto.setTags(saveCertificateTags(updatedCertificateDto.getId(), certificateDto.getTags()));
+		CertificateDto updatedCertificateDto = certificateConverter.convertToDto(updatedCertificateModel);
 
 		return updatedCertificateDto;
 	}
@@ -279,7 +306,7 @@ public class CertificateServiceImpl implements CertificateService {
 			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + certificateId,
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
-		Optional<CertificateModel> certificateModel = certificateRepository.readById(certificateId);
+		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
 
 		if (certificateModel.isEmpty()) {
 			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
@@ -288,60 +315,44 @@ public class CertificateServiceImpl implements CertificateService {
 
 	}
 
-	private List<TagDto> saveCertificateTags(long certificateId, List<TagDto> initialTagDtos) {
+	private List<TagDto> obtainCertificateTags(List<TagDto> initialTagDtos) {
 		if (initialTagDtos == null) {
 			return null;
 		}
 		Set<TagDto> tagDtos = new HashSet<>(initialTagDtos);
 		List<TagModel> tagModels = new ArrayList<>(tagDtos.size());
-		List<TagDto> savedCertificateTagDtos = new ArrayList<>(tagDtos.size());
+		List<TagDto> obtainedCertificateTagDtos = new ArrayList<>(tagDtos.size());
 
 		for (TagDto tagDto : tagDtos) {
 			TagModel tagModelToSave = null;
-			Optional<TagModel> tagModel = tagRepository.readByName(Util.removeExtraSpaces(tagDto.getName()));
+			Optional<TagModel> tagModel = tagRepository.findByName(Util.removeExtraSpaces(tagDto.getName()));
 			if (tagModel.isEmpty()) {
 				Map<ErrorCode, String> errors = tagValidation.validateAllTagFields(tagDto);
 				if (!errors.isEmpty()) {
 					throw new ValidationException(errors, ErrorCode.INVALID_TAG);
 				}
-				tagModelToSave = tagRepository.create(tagConverter.convertToModel(tagDto));
+				tagModelToSave = tagRepository.save(tagConverter.convertToModel(tagDto));
 			} else {
 				tagModelToSave = tagModel.get();
 				if (tagModelToSave.isDeleted()) {
-					tagModelToSave = tagRepository.restore(tagModelToSave);
+					tagRepository.restore(tagModelToSave.getId());
 				}
 			}
 			tagModels.add(tagModelToSave);
-			savedCertificateTagDtos.add(tagConverter.convertToDto(tagModelToSave));
+			obtainedCertificateTagDtos.add(tagConverter.convertToDto(tagModelToSave));
 		}
 
-		tagRepository.deleteAllTagsForCertificate(certificateId);
-		tagRepository.saveTagsForCertificate(certificateId, tagModels);
+		/*-tagRepository.deleteAllTagsForCertificate(certificateId);
+		tagRepository.saveTagsForCertificate(certificateId, tagModels);*/
 
-		return savedCertificateTagDtos;
+		return obtainedCertificateTagDtos;
 	}
 
 	private boolean isCertificateNameUniqueForUpdate(long certificateId, CertificateDto certificateDto) {
 		String testedName = Util.removeExtraSpaces(certificateDto.getName());
-		Optional<CertificateModel> certificateModel = certificateRepository.readByName(testedName);
+		Optional<CertificateModel> certificateModel = certificateRepository.findByName(testedName);
 		return certificateModel.isEmpty() || certificateModel.get().getId() == certificateId;
 
-	}
-
-	/**
-	 * Reads all tags for the certificate with passed id.
-	 * 
-	 * @param certificateId the id of certificate for which all tags are read
-	 * @return tags for the certificate with passed id
-	 */
-
-	private List<TagDto> readByCertificateId(long certificateId) {
-		List<TagModel> tagModels = tagRepository.readByCertificateId(certificateId);
-		List<TagDto> tagsDto = new ArrayList<>(tagModels.size());
-		for (TagModel tagModel : tagModels) {
-			tagsDto.add(tagConverter.convertToDto(tagModel));
-		}
-		return tagsDto;
 	}
 
 }

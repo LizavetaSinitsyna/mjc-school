@@ -71,19 +71,19 @@ class CertificateRepositoryImplTest {
 
 	@Test
 	void testCreate() {
-		CertificateModel actual = certificateRepository.create(certificate3);
+		CertificateModel actual = certificateRepository.save(certificate3);
 		Assertions.assertEquals(certificate3, actual);
 	}
 
 	@Test
 	void testReadById() {
-		Optional<CertificateModel> actual = certificateRepository.readById(CERTIFICATE_ID_1);
+		Optional<CertificateModel> actual = certificateRepository.findById(CERTIFICATE_ID_1);
 		Assertions.assertEquals(Optional.of(certificate1), actual);
 	}
 
 	@Test
 	void testReadByName() {
-		Optional<CertificateModel> actual = certificateRepository.readByName(CERTIFICATE_NAME);
+		Optional<CertificateModel> actual = certificateRepository.findByName(CERTIFICATE_NAME);
 		Assertions.assertEquals(Optional.of(certificate2), actual);
 	}
 
@@ -96,12 +96,12 @@ class CertificateRepositoryImplTest {
 	@Test
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
-		certificateRepository.create(certificate3);
+		certificateRepository.save(certificate3);
 		params.add("page", "1");
 		params.add("limit", "1");
 		params.add("sort", "price-");
 
-		List<CertificateModel> actual = certificateRepository.readAll(params);
+		List<CertificateModel> actual = certificateRepository.findAll(params);
 		List<CertificateModel> expected = Arrays.asList(certificate3);
 		Assertions.assertEquals(expected, actual);
 	}
@@ -116,7 +116,7 @@ class CertificateRepositoryImplTest {
 		certificate.setCreateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
 		certificate.setLastUpdateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
 		certificate.setDuration(365);
-		certificateRepository.create(certificate);
+		certificateRepository.save(certificate);
 		certificate.setDuration(50);
 
 		Optional<CertificateModel> expected = Optional.of(certificate);

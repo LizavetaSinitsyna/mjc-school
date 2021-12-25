@@ -1,7 +1,8 @@
 package com.epam.esm.repository;
 
 import java.util.List;
-import java.util.Optional;
+
+import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.model.CertificateModel;
 
@@ -19,7 +20,7 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 *                         values to be set
 	 * @return updated certificate
 	 */
-	Optional<CertificateModel> updateEntireCertificate(CertificateModel certificateModel);
+	CertificateModel updateEntireCertificate(CertificateModel certificateModel);
 
 	/**
 	 * Reads certificates by passed tag id.
@@ -46,5 +47,14 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 *                            values to be set
 	 * @return updated certificate
 	 */
-	Optional<CertificateModel> updateCertificateFields(CertificateModel certificateToUpdate);
+	CertificateModel updateCertificateFields(CertificateModel certificateToUpdate);
+
+	/**
+	 * Reads all certificates according to passed parameters.
+	 * 
+	 * @param params the parameters which define choice of certificates and their
+	 *               ordering
+	 * @return certificates which meet passed parameters
+	 */
+	List<CertificateModel> findAll(MultiValueMap<String, String> params, int offset, int limit);
 }

@@ -60,8 +60,13 @@ public class Util {
 		checkNull(params);
 		MultiValueMap<String, String> paramsInLowerCase = new LinkedMultiValueMap<>();
 		for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-			paramsInLowerCase.put(entry.getKey().toLowerCase(), entry.getValue().stream().map(String::toLowerCase)
-					.collect(Collectors.toCollection(ArrayList::new)));
+			String key = entry.getKey().toLowerCase();
+			if (paramsInLowerCase.containsKey(key)) {
+				paramsInLowerCase.get(key).addAll(entry.getValue());
+			} else {
+				paramsInLowerCase.put(entry.getKey().toLowerCase(), entry.getValue().stream().map(String::toLowerCase)
+						.collect(Collectors.toCollection(ArrayList::new)));
+			}
 		}
 		return paramsInLowerCase;
 	}

@@ -12,7 +12,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.exception.ErrorCode;
-import com.epam.esm.repository.query_builder.EntityConstant;
+import com.epam.esm.repository.EntityConstant;
 
 /**
  * Contains methods for certificate validation.
@@ -28,14 +28,12 @@ public class CertificateValidation {
 	private static final int MAX_DESCRIPTION_LENGTH = 1000;
 	private static final BigDecimal MAX_PRICE = new BigDecimal("99999.99");
 	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList(EntityConstant.SEARCH,
-			EntityConstant.ORDER, EntityConstant.TAG, EntityConstant.PAGE, EntityConstant.LIMIT));
+			EntityConstant.ORDER, EntityConstant.TAG, EntityConstant.OFFSET, EntityConstant.LIMIT));
 	private static final Set<String> POSSIBLE_SORT_FIELD = new HashSet<String>(Arrays.asList(EntityConstant.NAME,
 			EntityConstant.CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_CREATE_DATE,
 			EntityConstant.NAME + EntityConstant.DESC_SIGN, EntityConstant.CERTIFICATE_PRICE + EntityConstant.DESC_SIGN,
 			EntityConstant.CERTIFICATE_CREATE_DATE + EntityConstant.DESC_SIGN));
-	private static final int DEFAULT_PAGE_NUMBER = 1;
-	private static final int OFFSET = 10;
-
+	
 	public CertificateValidation() {
 
 	}
@@ -144,8 +142,9 @@ public class CertificateValidation {
 	 *         value for invalid parameters. If all parameters are valid returns
 	 *         empty map
 	 */
-	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> paramsInLowerCase) {
-		Util.checkNull(paramsInLowerCase);
+	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
+		Util.checkNull(params);
+		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_READ_PARAM,
@@ -158,23 +157,21 @@ public class CertificateValidation {
 						EntityConstant.PARAMS + Util.DELIMITER + paramsInLowerCase);
 			}
 		}
-		if (paramsInLowerCase.containsKey(EntityConstant.PAGE)) {
-			int page = DEFAULT_PAGE_NUMBER;
-			String initialPage = paramsInLowerCase.get(EntityConstant.PAGE).get(0);
+		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
+			int offset = -1;
+			String initialPage = paramsInLowerCase.get(EntityConstant.OFFSET).get(0);
 			try {
-				page = Integer.parseInt(initialPage);
+				offset = Integer.parseInt(initialPage);
 			} catch (NumberFormatException e) {
-				errors.put(ErrorCode.INVALID_PAGE_FORMAT, EntityConstant.PAGE + Util.DELIMITER + initialPage);
+				errors.put(ErrorCode.INVALID_PAGE_FORMAT, EntityConstant.OFFSET + Util.DELIMITER + initialPage);
 			}
-			if (page <= 0) {
-				errors.put(ErrorCode.NEGATIVE_PAGE_NUMBER, EntityConstant.PAGE + Util.DELIMITER + page);
+			if (offset < 0) {
+				errors.put(ErrorCode.NEGATIVE_OFFSET_NUMBER, EntityConstant.OFFSET + Util.DELIMITER + offset);
 			}
-		} else {
-			paramsInLowerCase.put(EntityConstant.PAGE, Arrays.asList(Integer.toString(DEFAULT_PAGE_NUMBER)));
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
-			int limit = OFFSET;
+			int limit = -1;
 			String initialOffset = paramsInLowerCase.get(EntityConstant.LIMIT).get(0);
 			try {
 				limit = Integer.parseInt(paramsInLowerCase.get(EntityConstant.LIMIT).get(0));
@@ -182,10 +179,8 @@ public class CertificateValidation {
 				errors.put(ErrorCode.INVALID_OFFSET_FORMAT, EntityConstant.LIMIT + Util.DELIMITER + initialOffset);
 			}
 			if (limit <= 0) {
-				errors.put(ErrorCode.NEGATIVE_OFFSET, EntityConstant.LIMIT + Util.DELIMITER + limit);
+				errors.put(ErrorCode.NEGATIVE_LIMIT, EntityConstant.LIMIT + Util.DELIMITER + limit);
 			}
-		} else {
-			paramsInLowerCase.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(OFFSET)));
 		}
 		return errors;
 	}

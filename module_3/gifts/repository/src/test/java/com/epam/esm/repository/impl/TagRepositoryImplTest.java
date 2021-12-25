@@ -58,13 +58,13 @@ class TagRepositoryImplTest {
 
 	@Test
 	void testCreate() {
-		TagModel actual = tagRepository.create(tag3);
+		TagModel actual = tagRepository.save(tag3);
 		Assertions.assertEquals(tag3, actual);
 	}
 
 	@Test
 	void testReadById() {
-		Optional<TagModel> actual = tagRepository.readById(TAG_ID_1);
+		Optional<TagModel> actual = tagRepository.findById(TAG_ID_1);
 		Assertions.assertEquals(Optional.of(tag1), actual);
 	}
 
@@ -83,7 +83,7 @@ class TagRepositoryImplTest {
 
 	@Test
 	void testReadByName() {
-		Optional<TagModel> actual = tagRepository.readByName(TAG_NAME);
+		Optional<TagModel> actual = tagRepository.findByName(TAG_NAME);
 		Assertions.assertEquals(Optional.of(tag2), actual);
 	}
 
@@ -96,11 +96,11 @@ class TagRepositoryImplTest {
 	@Test
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
-		tagRepository.create(tag3);
+		tagRepository.save(tag3);
 		params.add("page", "2");
 		params.add("limit", "2");
 
-		List<TagModel> actual = tagRepository.readAll(params);
+		List<TagModel> actual = tagRepository.findAll(params);
 		List<TagModel> expected = Arrays.asList(tag3);
 		Assertions.assertEquals(expected, actual);
 	}
@@ -113,7 +113,7 @@ class TagRepositoryImplTest {
 
 	@Test
 	void testSaveTagsForCertificate() {
-		tagRepository.create(tag3);
+		tagRepository.save(tag3);
 		List<TagModel> tags = Arrays.asList(tag3);
 		int actual = tagRepository.saveTagsForCertificate(CERTIFICATE_ID_1, tags);
 		Assertions.assertEquals(1, actual);

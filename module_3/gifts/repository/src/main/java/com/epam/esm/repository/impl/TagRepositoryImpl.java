@@ -4,6 +4,18 @@ import java.sql.PreparedStatement;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
+import javax.persistence.TypedQuery;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaQuery;
+import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Predicate;
+import javax.persistence.criteria.Root;
+import javax.transaction.Transactional;
+
+import org.hibernate.Criteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -11,11 +23,12 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.MultiValueMap;
 
+import com.epam.esm.repository.EntityConstant;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.mapper.TagRowMapper;
+import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.TagModel;
-import com.epam.esm.repository.query_builder.EntityConstant;
-import com.epam.esm.repository.query_builder.SQLUtil;
+import com.epam.esm.repository.model.TagModel_;
 
 /**
  * 
@@ -25,25 +38,12 @@ import com.epam.esm.repository.query_builder.SQLUtil;
  */
 @Repository
 public class TagRepositoryImpl implements TagRepository {
-	private static final String INSERT_TAG_QUERY = "INSERT INTO tags (name) VALUES (?)";
-	private static final String INSERT_TAGS_FOR_CERTIFICATE_QUERY = "INSERT INTO tags_certificates (certificate_id, tag_id) VALUES (?, ?)";
-	private static final String SELECT_TAG_BY_ID_QUERY = "SELECT id, name, is_deleted FROM tags WHERE id = ? AND is_deleted = 0";
-	private static final String SELECT_TAG_BY_NAME_QUERY = "SELECT id, name, is_deleted FROM tags WHERE name = ?";
-	private static final String SELECT_ALL_TAGS_BY_PAGE = "SELECT id, name, is_deleted FROM tags LIMIT ?, ?";
-	private static final String SELECT_TAG_BY_CERTIFICATE_ID_QUERY = "SELECT id, name, is_deleted FROM tags INNER JOIN tags_certificates "
-			+ "ON id = tag_id WHERE certificate_id = ?";
-	private static final String RESTORE_TAG_QUERY = "UPDATE tags SET is_deleted = false WHERE id = ?";
-	private static final String REMOVE_TAG__QUERY = "UPDATE tags SET is_deleted = true WHERE id = ?";
-	private static final String DELETE_TAGS_FOR_CERTIFICATE_QUERY = "DELETE FROM tags_certificates WHERE certificate_id = ?";
 
-	private JdbcTemplate jdbcTemplate;
+	@PersistenceContext
+	private EntityManager entityManager;
 
-	private TagRowMapper tagRowMapper;
+	public TagRepositoryImpl() {
 
-	@Autowired
-	public TagRepositoryImpl(JdbcTemplate jdbcTemplate, TagRowMapper tagRowMapper) {
-		this.jdbcTemplate = jdbcTemplate;
-		this.tagRowMapper = tagRowMapper;
 	}
 
 	/**
@@ -53,18 +53,9 @@ public class TagRepositoryImpl implements TagRepository {
 	 * @return saved tag
 	 */
 	@Override
-	public TagModel create(TagModel tagModel) {
-		KeyHolder keyHolder = new GeneratedKeyHolder();
-
-		jdbcTemplate.update(connection -> {
-			PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TAG_QUERY,
-					PreparedStatement.RETURN_GENERATED_KEYS);
-			preparedStatement.setString(1, tagModel.getName());
-			return preparedStatement;
-		}, keyHolder);
-
-		tagModel.setId(keyHolder.getKey().longValue());
-
+	@Transactional
+	public TagModel save(TagModel tagModel) {
+		entityManager.persist(tagModel);
 		return tagModel;
 	}
 
@@ -76,13 +67,12 @@ public class TagRepositoryImpl implements TagRepository {
 	 */
 
 	@Override
-	public Optional<TagModel> readById(long tagId) {
-		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_ID_QUERY, tagRowMapper, tagId);
-
-		if (tagModelList.isEmpty()) {
+	public Optional<TagModel> findById(long tagId) {
+		try {
+			return Optional.of(obtainReadByIdQuery(tagId).getSingleResult());
+		} catch (NoResultException e) {
 			return Optional.empty();
 		}
-		return Optional.ofNullable(tagModelList.get(0));
 	}
 
 	/**
@@ -94,35 +84,42 @@ public class TagRepositoryImpl implements TagRepository {
 	 */
 	@Override
 	public boolean tagExistsById(long tagId) {
-		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_ID_QUERY, tagRowMapper, tagId);
-		return !tagModelList.isEmpty();
+		try {
+			obtainReadByIdQuery(tagId).getSingleResult();
+		} catch (NoResultException e) {
+			return false;
+		}
+		return true;
+
+	}
+
+	private TypedQuery<TagModel> obtainReadByIdQuery(long tagId) {
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
+		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
+		tagCriteria.select(tagRoot);
+
+		Predicate isDeletedPredicate = criteriaBuilder.equal(tagRoot.get(TagModel_.isDeleted), false);
+		Predicate idPredicate = criteriaBuilder.equal(tagRoot.get(TagModel_.id), tagId);
+		tagCriteria.where(isDeletedPredicate, idPredicate);
+
+		return entityManager.createQuery(tagCriteria);
 	}
 
 	/**
-	 * Reads tags by passed certificate id.
-	 * 
-	 * @param certificateId the id of certificate for tags reading
-	 * @return tags for certificate with passed id
-	 */
-	@Override
-	public List<TagModel> readByCertificateId(long certificateId) {
-		return jdbcTemplate.query(SELECT_TAG_BY_CERTIFICATE_ID_QUERY, tagRowMapper, certificateId);
-	}
-
-	/**
-	 * Reads tag with passed name.
+	 * Reads tag with passed name even if it is marked as deleted.
 	 * 
 	 * @param tagName the name of entity to be read
 	 * @return tag with passed name
 	 */
 
 	@Override
-	public Optional<TagModel> readByName(String tagName) {
-		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_NAME_QUERY, tagRowMapper, tagName);
-		if (tagModelList.isEmpty()) {
+	public Optional<TagModel> findByName(String tagName) {
+		try {
+			return Optional.of(obtainReadByNameQuery(tagName).getSingleResult());
+		} catch (NoResultException e) {
 			return Optional.empty();
 		}
-		return Optional.ofNullable(tagModelList.get(0));
 	}
 
 	/**
@@ -134,8 +131,21 @@ public class TagRepositoryImpl implements TagRepository {
 	 */
 	@Override
 	public boolean tagExistsByName(String tagName) {
-		List<TagModel> tagModelList = jdbcTemplate.query(SELECT_TAG_BY_NAME_QUERY, tagRowMapper, tagName);
-		return !tagModelList.isEmpty();
+		try {
+			obtainReadByNameQuery(tagName).getSingleResult();
+		} catch (NoResultException e) {
+			return false;
+		}
+		return true;
+	}
+
+	private TypedQuery<TagModel> obtainReadByNameQuery(String tagName) {
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
+		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
+		tagCriteria.select(tagRoot);
+		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.name), tagName));
+		return entityManager.createQuery(tagCriteria);
 	}
 
 	/**
@@ -145,12 +155,16 @@ public class TagRepositoryImpl implements TagRepository {
 	 * @return tags which meet passed parameters
 	 */
 	@Override
-	public List<TagModel> readAll(MultiValueMap<String, String> params) {
-		int pageNumber = Integer.parseInt(params.get(EntityConstant.PAGE).get(0));
-		int offset = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
-
-		return jdbcTemplate.query(SELECT_ALL_TAGS_BY_PAGE, tagRowMapper, SQLUtil.retrieveStartIndex(pageNumber, offset),
-				offset);
+	public List<TagModel> findAll(int offset, int limit) {
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
+		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
+		tagCriteria.select(tagRoot);
+		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.isDeleted), false));
+		TypedQuery<TagModel> typedQuery = entityManager.createQuery(tagCriteria);
+		typedQuery.setFirstResult(offset);
+		typedQuery.setMaxResults(limit);
+		return typedQuery.getResultList();
 	}
 
 	/**
@@ -161,35 +175,12 @@ public class TagRepositoryImpl implements TagRepository {
 	 */
 	@Override
 	public int delete(long tagId) {
-		int effectedRows = jdbcTemplate.update(connection -> {
-			PreparedStatement preparedStatement = connection.prepareStatement(REMOVE_TAG__QUERY);
-			preparedStatement.setLong(1, tagId);
-			return preparedStatement;
-		});
-		return effectedRows;
-	}
-
-	/**
-	 * Saves tags for certificate.
-	 * 
-	 * @param certificateId the id of certificate for which tags should be saved
-	 * @param tagModels     tags to be saved
-	 * @return amount of saved tags
-	 */
-	@Override
-	public int saveTagsForCertificate(long certificateId, List<TagModel> tagModels) {
-		int changedRows = 0;
-		for (TagModel tagModel : tagModels) {
-			changedRows += jdbcTemplate.update(connection -> {
-				PreparedStatement preparedStatement = connection.prepareStatement(INSERT_TAGS_FOR_CERTIFICATE_QUERY);
-				preparedStatement.setLong(1, certificateId);
-				preparedStatement.setLong(2, tagModel.getId());
-				return preparedStatement;
-			});
-		}
-
-		return changedRows;
-
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaUpdate<TagModel> tagCriteria = criteriaBuilder.createCriteriaUpdate(TagModel.class);
+		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
+		tagCriteria.set(TagModel_.isDeleted, true);
+		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.id), tagId));
+		return entityManager.createQuery(tagCriteria).executeUpdate();
 	}
 
 	/**
@@ -199,34 +190,13 @@ public class TagRepositoryImpl implements TagRepository {
 	 * @return restored tag
 	 */
 	@Override
-	public TagModel restore(TagModel tagModel) {
-		int effectedRows = jdbcTemplate.update(connection -> {
-			PreparedStatement preparedStatement = connection.prepareStatement(RESTORE_TAG_QUERY);
-			preparedStatement.setLong(1, tagModel.getId());
-			return preparedStatement;
-		});
-		if (effectedRows > 0) {
-			tagModel.setDeleted(false);
-		}
-		return tagModel;
-	}
-
-	/**
-	 * Deletes all tags for the certificate.
-	 * 
-	 * @param certificateId the id of certificate for which tags should be deleted
-	 * @return amount of deleted tags
-	 */
-	@Override
-	public int deleteAllTagsForCertificate(long certificateId) {
-		int effectedRows = jdbcTemplate.update(connection -> {
-			PreparedStatement preparedStatement = connection.prepareStatement(DELETE_TAGS_FOR_CERTIFICATE_QUERY);
-			preparedStatement.setLong(1, certificateId);
-			return preparedStatement;
-		});
-
-		return effectedRows;
-
+	public int restore(long tagId) {
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaUpdate<TagModel> tagCriteria = criteriaBuilder.createCriteriaUpdate(TagModel.class);
+		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
+		tagCriteria.set(TagModel_.isDeleted, false);
+		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.id), tagId));
+		return entityManager.createQuery(tagCriteria).executeUpdate();
 	}
 
 }

@@ -26,7 +26,7 @@ import com.epam.esm.service.CertificateService;
  * 
  */
 @RestController
-@RequestMapping("/v1/certificates")
+@RequestMapping("/api/v1/certificates")
 public class CertificateController {
 
 	private CertificateService certificateService;
@@ -63,8 +63,8 @@ public class CertificateController {
 	/**
 	 * Reads all certificates according to passed parameters.
 	 * 
-	 * @param params the parameters which define the choice of certificates and their
-	 *               ordering
+	 * @param params the parameters which define the choice of certificates and
+	 *               their ordering
 	 * @return certificates which meet passed parameters
 	 */
 	@GetMapping

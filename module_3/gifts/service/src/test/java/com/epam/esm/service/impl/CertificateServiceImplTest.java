@@ -106,17 +106,17 @@ class CertificateServiceImplTest {
 		CertificateDto expected = certificateDto1;
 		expected.setTags(Arrays.asList(tagDto1));
 
-		Mockito.when(certificateRepository.create(Mockito.any())).thenReturn(certificateModel1);
+		Mockito.when(certificateRepository.save(Mockito.any())).thenReturn(certificateModel1);
 		Mockito.when(certificateRepository.certificateExistsByName(Mockito.any())).thenReturn(false);
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
-		Mockito.when(tagRepository.create(Mockito.any())).thenReturn(tagModel1);
-		Mockito.when(tagRepository.readByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
+		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
+		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
 
 		CertificateDto actual = certificateServiceImpl.create(expected);
 
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(certificateRepository).create(Mockito.any());
+		Mockito.verify(certificateRepository).save(Mockito.any());
 		Mockito.verify(certificateRepository).certificateExistsByName(Mockito.any());
 		Mockito.verify(dateTimeWrapper).obtainCurrentDateTime();
 		Mockito.verify(tagRepository).deleteAllTagsForCertificate(Mockito.anyLong());
@@ -135,7 +135,7 @@ class CertificateServiceImplTest {
 	void testReadById() {
 		CertificateDto expected = certificateDto1;
 		expected.setTags(Arrays.asList(tagDto1));
-		Mockito.when(certificateRepository.readById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(tagRepository.readByCertificateId(Mockito.anyLong())).thenReturn(Arrays.asList(tagModel1));
 
 		CertificateDto actual = certificateServiceImpl.readById(CERTIFICATE_ID_1);
@@ -143,7 +143,7 @@ class CertificateServiceImplTest {
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(tagRepository).readByCertificateId(Mockito.anyLong());
-		Mockito.verify(certificateRepository).readById(CERTIFICATE_ID_1);
+		Mockito.verify(certificateRepository).findById(CERTIFICATE_ID_1);
 	}
 
 	@Test
@@ -161,12 +161,12 @@ class CertificateServiceImplTest {
 		certificateDto1.setTags(Arrays.asList(tagDto1));
 		List<CertificateDto> expected = Arrays.asList(certificateDto1);
 
-		Mockito.when(certificateRepository.readAll(Mockito.any())).thenReturn(certificateModels);
+		Mockito.when(certificateRepository.findAll(Mockito.any())).thenReturn(certificateModels);
 		Mockito.when(tagRepository.readByCertificateId(Mockito.anyLong())).thenReturn(Arrays.asList(tagModel1));
 		List<CertificateDto> actual = certificateServiceImpl.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(certificateRepository).readAll(Mockito.any());
+		Mockito.verify(certificateRepository).findAll(Mockito.any());
 		Mockito.verify(tagRepository).readByCertificateId(Mockito.anyLong());
 	}
 
@@ -180,7 +180,7 @@ class CertificateServiceImplTest {
 	@Test
 	void testDelete() {
 		Mockito.when(certificateRepository.delete(CERTIFICATE_ID_1)).thenReturn(1);
-		Mockito.when(certificateRepository.readById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
 		certificateServiceImpl.delete(CERTIFICATE_ID_1);
 
 		Mockito.verify(certificateRepository).delete(CERTIFICATE_ID_1);
@@ -200,12 +200,12 @@ class CertificateServiceImplTest {
 
 		Mockito.when(certificateRepository.updateCertificateFields(Mockito.any()))
 				.thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.readByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.readById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
-		Mockito.when(tagRepository.create(Mockito.any())).thenReturn(tagModel1);
-		Mockito.when(tagRepository.readByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
-		Mockito.when(certificateRepository.readById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
+		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
+		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(tagRepository.readByCertificateId(Mockito.anyLong())).thenReturn(Arrays.asList(tagModel1));
 
 
@@ -214,7 +214,7 @@ class CertificateServiceImplTest {
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(certificateRepository).updateCertificateFields(certificateModel1);
-		Mockito.verify(certificateRepository).readByName(Mockito.any());
+		Mockito.verify(certificateRepository).findByName(Mockito.any());
 		Mockito.verify(dateTimeWrapper).obtainCurrentDateTime();
 		Mockito.verify(tagRepository).deleteAllTagsForCertificate(Mockito.anyLong());
 		Mockito.verify(tagRepository).saveTagsForCertificate(Mockito.anyLong(), Mockito.any());
@@ -225,8 +225,8 @@ class CertificateServiceImplTest {
 		CertificateDto expected = certificateDto1;
 
 		Mockito.when(certificateRepository.updateEntireCertificate(Mockito.any())).thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.readByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.readById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
 
 		CertificateDto actual = certificateServiceImpl.updateEntireCertificate(CERTIFICATE_ID_1, expected);
@@ -234,7 +234,7 @@ class CertificateServiceImplTest {
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(certificateRepository).updateEntireCertificate(certificateModel1);
-		Mockito.verify(certificateRepository).readByName(Mockito.any());
+		Mockito.verify(certificateRepository).findByName(Mockito.any());
 		Mockito.verify(dateTimeWrapper).obtainCurrentDateTime();
 	}
 
@@ -245,18 +245,18 @@ class CertificateServiceImplTest {
 
 		Mockito.when(certificateRepository.updateEntireCertificate(Mockito.any()))
 				.thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.readByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.readById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(dateTimeWrapper.obtainCurrentDateTime()).thenReturn(localDateTime);
-		Mockito.when(tagRepository.create(Mockito.any())).thenReturn(tagModel1);
-		Mockito.when(tagRepository.readByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
+		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
+		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
 
 		CertificateDto actual = certificateServiceImpl.updateEntireCertificate(CERTIFICATE_ID_1, expected);
 
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(certificateRepository).updateEntireCertificate(certificateModel1);
-		Mockito.verify(certificateRepository).readByName(Mockito.any());
+		Mockito.verify(certificateRepository).findByName(Mockito.any());
 		Mockito.verify(dateTimeWrapper).obtainCurrentDateTime();
 		Mockito.verify(tagRepository).deleteAllTagsForCertificate(Mockito.anyLong());
 		Mockito.verify(tagRepository).saveTagsForCertificate(Mockito.anyLong(), Mockito.any());
@@ -264,7 +264,7 @@ class CertificateServiceImplTest {
 
 	@Test
 	void testCheckCertificateExistenceByIdWithNoExistedCertificate() {
-		Mockito.when(certificateRepository.readById(CERTIFICATE_ID_1)).thenReturn(Optional.ofNullable(null));
+		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.ofNullable(null));
 		Assertions.assertThrows(NotFoundException.class, () -> {
 			certificateServiceImpl.checkCertificateExistenceById(CERTIFICATE_ID_1);
 		});

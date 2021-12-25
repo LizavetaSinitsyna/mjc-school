@@ -2,7 +2,7 @@ package com.epam.esm.service.validation;
 
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.ErrorCode;
-import com.epam.esm.repository.query_builder.EntityConstant;
+import com.epam.esm.repository.EntityConstant;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -17,9 +17,7 @@ import org.springframework.util.MultiValueMap;
 public class TagValidation {
 	private static final int MIN_NAME_LENGTH = 2;
 	private static final int MAX_NAME_LENGTH = 25;
-	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList("page", "limit"));
-	private static final int DEFAULT_PAGE_NUMBER = 1;
-	private static final int OFFSET = 10;
+	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList("offset", "limit"));
 
 	public TagValidation() {
 
@@ -50,30 +48,29 @@ public class TagValidation {
 	 *         value for invalid parameters. If all parameters are valid returns
 	 *         empty map
 	 */
-	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> paramsInLowerCase) {
-		Util.checkNull(paramsInLowerCase);
+	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
+		Util.checkNull(params);
+		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
-			errors.put(ErrorCode.INVALID_TAG_READ_PARAM, EntityConstant.PARAMS + Util.DELIMITER + paramsInLowerCase);
+			errors.put(ErrorCode.INVALID_TAG_READ_PARAM, EntityConstant.PARAMS + Util.DELIMITER + params);
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.PAGE)) {
-			int page = DEFAULT_PAGE_NUMBER;
-			String initialPage = paramsInLowerCase.get(EntityConstant.PAGE).get(0);
+		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
+			int offset = -1;
+			String initialOffset = paramsInLowerCase.get(EntityConstant.OFFSET).get(0);
 			try {
-				page = Integer.parseInt(initialPage);
+				offset = Integer.parseInt(initialOffset);
 			} catch (NumberFormatException e) {
-				errors.put(ErrorCode.INVALID_PAGE_FORMAT, EntityConstant.PAGE + Util.DELIMITER + initialPage);
+				errors.put(ErrorCode.INVALID_PAGE_FORMAT, EntityConstant.OFFSET + Util.DELIMITER + initialOffset);
 			}
-			if (page <= 0) {
-				errors.put(ErrorCode.NEGATIVE_PAGE_NUMBER, EntityConstant.PAGE + Util.DELIMITER + page);
+			if (offset < 0) {
+				errors.put(ErrorCode.NEGATIVE_OFFSET_NUMBER, EntityConstant.OFFSET + Util.DELIMITER + offset);
 			}
-		} else {
-			paramsInLowerCase.put(EntityConstant.PAGE, Arrays.asList(Integer.toString(DEFAULT_PAGE_NUMBER)));
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
-			int limit = OFFSET;
+			int limit = -1;
 			String initialOffset = paramsInLowerCase.get(EntityConstant.LIMIT).get(0);
 			try {
 				limit = Integer.parseInt(initialOffset);
@@ -81,10 +78,8 @@ public class TagValidation {
 				errors.put(ErrorCode.INVALID_OFFSET_FORMAT, EntityConstant.LIMIT + Util.DELIMITER + initialOffset);
 			}
 			if (limit <= 0) {
-				errors.put(ErrorCode.NEGATIVE_OFFSET, EntityConstant.LIMIT + Util.DELIMITER + limit);
+				errors.put(ErrorCode.NEGATIVE_LIMIT, EntityConstant.LIMIT + Util.DELIMITER + limit);
 			}
-		} else {
-			paramsInLowerCase.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(OFFSET)));
 		}
 
 		return errors;

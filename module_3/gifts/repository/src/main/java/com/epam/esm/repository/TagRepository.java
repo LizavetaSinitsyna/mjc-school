@@ -1,7 +1,5 @@
 package com.epam.esm.repository;
 
-import java.util.List;
-
 import com.epam.esm.repository.model.TagModel;
 
 /**
@@ -10,38 +8,6 @@ import com.epam.esm.repository.model.TagModel;
  *
  */
 public interface TagRepository extends GeneralRepository<TagModel> {
-	/**
-	 * Reads tags by passed certificate id.
-	 * 
-	 * @param certificateId the id of certificate for tags reading
-	 * @return tags for certificate with passed id
-	 */
-	List<TagModel> readByCertificateId(long certificateId);
-
-	/**
-	 * Saves tags for certificate.
-	 * 
-	 * @param certificateId the id of certificate for which tags should be saved
-	 * @param tagModels     tags to be saved
-	 * @return amount of saved tags
-	 */
-	int saveTagsForCertificate(long certificateId, List<TagModel> tagModels);
-
-	/**
-	 * Restores deleted tag.
-	 * 
-	 * @param tagModel the tag to be restored
-	 * @return restored tag
-	 */
-	TagModel restore(TagModel tagModel);
-
-	/**
-	 * Deletes all tags for the certificate.
-	 * 
-	 * @param certificateId the id of certificate for which tags should be deleted
-	 * @return amount of deleted tags
-	 */
-	int deleteAllTagsForCertificate(long certificateId);
 
 	/**
 	 * Checks whether tag with passed id exists.
@@ -60,4 +26,12 @@ public interface TagRepository extends GeneralRepository<TagModel> {
 	 *         {@code false} otherwise
 	 */
 	boolean tagExistsByName(String tagName);
+
+	/**
+	 * Restores deleted tag.
+	 * 
+	 * @param tagModel the tag to be restored
+	 * @return restored tag
+	 */
+	int restore(long tagId);
 }
