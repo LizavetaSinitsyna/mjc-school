@@ -12,7 +12,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.exception.ErrorCode;
-import com.epam.esm.repository.EntityConstant;
+import com.epam.esm.repository.model.EntityConstant;
 
 /**
  * Contains methods for certificate validation.
@@ -27,6 +27,7 @@ public class CertificateValidation {
 	private static final int MAX_NAME_LENGTH = 50;
 	private static final int MAX_DESCRIPTION_LENGTH = 1000;
 	private static final BigDecimal MAX_PRICE = new BigDecimal("99999.99");
+	private static final int PRICE_SCALE = 2;
 	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList(EntityConstant.SEARCH,
 			EntityConstant.ORDER, EntityConstant.TAG, EntityConstant.OFFSET, EntityConstant.LIMIT));
 	private static final Set<String> POSSIBLE_SORT_FIELD = new HashSet<String>(Arrays.asList(EntityConstant.NAME,
@@ -56,7 +57,11 @@ public class CertificateValidation {
 	 * @return {@code true} if the price is valid and {@code false} otherwise
 	 */
 	public boolean validatePrice(BigDecimal price) {
-		return price != null && price.compareTo(BigDecimal.ZERO) > 0 && price.compareTo(MAX_PRICE) < 0;
+		if(price == null || price.compareTo(BigDecimal.ZERO) <= 0 || price.compareTo(MAX_PRICE) > 0) {
+			return false;
+		}
+		int scale = price.scale();
+		return scale <= PRICE_SCALE;
 	}
 
 	/**
@@ -81,19 +86,19 @@ public class CertificateValidation {
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!Util.checkLength(certificateDto.getName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 		if (!validateDescription(certificateDto.getDescription())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_DESCRIPTION,
-					EntityConstant.CERTIFICATE_DESCRIPTION + Util.DELIMITER + certificateDto.getDescription());
+					EntityConstant.CERTIFICATE_DESCRIPTION + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getDescription());
 		}
 		if (!validatePrice(certificateDto.getPrice())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_PRICE,
-					EntityConstant.CERTIFICATE_PRICE + Util.DELIMITER + certificateDto.getPrice());
+					EntityConstant.CERTIFICATE_PRICE + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getPrice());
 		}
 		if (!validateDuration(certificateDto.getDuration())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_DURATION,
-					EntityConstant.CERTIFICATE_DURATION + Util.DELIMITER + certificateDto.getDuration());
+					EntityConstant.CERTIFICATE_DURATION + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getDuration());
 		}
 		return errors;
 	}
@@ -112,24 +117,24 @@ public class CertificateValidation {
 
 		String name = certificateDto.getName();
 		if (name != null && !Util.checkLength(name, MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
-			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME, EntityConstant.NAME + Util.DELIMITER + name);
+			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME, EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + name);
 		}
 
 		String description = certificateDto.getDescription();
 		if (description != null && !validateDescription(description)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_DESCRIPTION,
-					EntityConstant.CERTIFICATE_DESCRIPTION + Util.DELIMITER + description);
+					EntityConstant.CERTIFICATE_DESCRIPTION + Util.ERROR_RESOURCE_DELIMITER + description);
 		}
 
 		BigDecimal price = certificateDto.getPrice();
 		if (price != null && !validatePrice(price)) {
-			errors.put(ErrorCode.INVALID_CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_PRICE + Util.DELIMITER + price);
+			errors.put(ErrorCode.INVALID_CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_PRICE + Util.ERROR_RESOURCE_DELIMITER + price);
 		}
 
 		Integer duration = certificateDto.getDuration();
 		if (duration != null && !validateDuration(duration)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_DURATION,
-					EntityConstant.CERTIFICATE_DURATION + Util.DELIMITER + duration);
+					EntityConstant.CERTIFICATE_DURATION + Util.ERROR_RESOURCE_DELIMITER + duration);
 		}
 		return errors;
 	}
@@ -148,39 +153,21 @@ public class CertificateValidation {
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_READ_PARAM,
-					EntityConstant.PARAMS + Util.DELIMITER + paramsInLowerCase);
+					EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.ORDER)) {
 			if (!POSSIBLE_SORT_FIELD.containsAll(paramsInLowerCase.get(EntityConstant.ORDER))) {
 				errors.put(ErrorCode.INVALID_CERTIFICATE_SORT_PARAM,
-						EntityConstant.PARAMS + Util.DELIMITER + paramsInLowerCase);
+						EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
 			}
 		}
 		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
-			int offset = -1;
-			String initialPage = paramsInLowerCase.get(EntityConstant.OFFSET).get(0);
-			try {
-				offset = Integer.parseInt(initialPage);
-			} catch (NumberFormatException e) {
-				errors.put(ErrorCode.INVALID_PAGE_FORMAT, EntityConstant.OFFSET + Util.DELIMITER + initialPage);
-			}
-			if (offset < 0) {
-				errors.put(ErrorCode.NEGATIVE_OFFSET_NUMBER, EntityConstant.OFFSET + Util.DELIMITER + offset);
-			}
+			errors.putAll(PaginationValidation.validateOffset(paramsInLowerCase.get(EntityConstant.OFFSET).get(0)));
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
-			int limit = -1;
-			String initialOffset = paramsInLowerCase.get(EntityConstant.LIMIT).get(0);
-			try {
-				limit = Integer.parseInt(paramsInLowerCase.get(EntityConstant.LIMIT).get(0));
-			} catch (NumberFormatException e) {
-				errors.put(ErrorCode.INVALID_OFFSET_FORMAT, EntityConstant.LIMIT + Util.DELIMITER + initialOffset);
-			}
-			if (limit <= 0) {
-				errors.put(ErrorCode.NEGATIVE_LIMIT, EntityConstant.LIMIT + Util.DELIMITER + limit);
-			}
+			errors.putAll(PaginationValidation.validateLimit(paramsInLowerCase.get(EntityConstant.LIMIT).get(0)));
 		}
 		return errors;
 	}

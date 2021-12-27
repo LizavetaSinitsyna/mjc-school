@@ -1,5 +1,7 @@
 package com.epam.esm.repository;
 
+import java.util.Optional;
+
 import com.epam.esm.repository.model.TagModel;
 
 /**
@@ -19,6 +21,14 @@ public interface TagRepository extends GeneralRepository<TagModel> {
 	boolean tagExistsById(long tagId);
 
 	/**
+	 * Reads entity with passed name.
+	 * 
+	 * @param name the name of entity to be read
+	 * @return entity with passed name
+	 */
+	Optional<TagModel> findByName(String name);
+
+	/**
 	 * Checks whether tag with passed name exists.
 	 * 
 	 * @param tagName the name of tag to be checked
@@ -34,4 +44,12 @@ public interface TagRepository extends GeneralRepository<TagModel> {
 	 * @return restored tag
 	 */
 	int restore(long tagId);
+
+	/**
+	 * Deletes entity with passed id.
+	 * 
+	 * @param id the id of entity to be deleted
+	 * @return the number of deleted entities
+	 */
+	int delete(long id);
 }

@@ -20,9 +20,9 @@ import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
-import com.epam.esm.repository.EntityConstant;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
 import com.epam.esm.service.DateTimeWrapper;
@@ -83,7 +83,7 @@ public class CertificateServiceImpl implements CertificateService {
 		Map<ErrorCode, String> errors = certificateValidation.validateAllCertificateUpdatableFields(certificateDto);
 		if (certificateRepository.certificateExistsByName(Util.removeExtraSpaces(certificateDto.getName()))) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 
 		if (!errors.isEmpty()) {
@@ -113,14 +113,14 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	public CertificateDto readById(long certificateId) {
 		if (!Util.isPositive(certificateId)) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + certificateId,
+			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
 
 		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
 
 		if (certificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
+			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.NO_CERTIFICATE_FOUND);
 		}
 
@@ -231,7 +231,7 @@ public class CertificateServiceImpl implements CertificateService {
 
 		if (!isCertificateNameUniqueForUpdate(certificateId, certificateDto)) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 
 		if (!errors.isEmpty()) {
@@ -245,7 +245,7 @@ public class CertificateServiceImpl implements CertificateService {
 		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
 		certificateToUpdate.setLastUpdateDate(now);
 
-		CertificateModel certificateModel = certificateRepository.updateCertificateFields(certificateToUpdate);
+		CertificateModel certificateModel = certificateRepository.updateCertificate(certificateToUpdate);
 
 		CertificateDto updatedCertificate = certificateConverter.convertToDto(certificateModel);
 
@@ -272,7 +272,7 @@ public class CertificateServiceImpl implements CertificateService {
 
 		if (!isCertificateNameUniqueForUpdate(certificateId, certificateDto)) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 
 		if (!errors.isEmpty()) {
@@ -286,7 +286,7 @@ public class CertificateServiceImpl implements CertificateService {
 		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
 		certificateToUpdate.setLastUpdateDate(now);
 
-		CertificateModel updatedCertificateModel = certificateRepository.updateEntireCertificate(certificateToUpdate);
+		CertificateModel updatedCertificateModel = certificateRepository.updateCertificate(certificateToUpdate);
 
 		CertificateDto updatedCertificateDto = certificateConverter.convertToDto(updatedCertificateModel);
 
@@ -303,13 +303,13 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	public void checkCertificateExistenceById(long certificateId) {
 		if (!Util.isPositive(certificateId)) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + certificateId,
+			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
 		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
 
 		if (certificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + certificateId,
+			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.NO_CERTIFICATE_FOUND);
 		}
 
@@ -341,9 +341,6 @@ public class CertificateServiceImpl implements CertificateService {
 			tagModels.add(tagModelToSave);
 			obtainedCertificateTagDtos.add(tagConverter.convertToDto(tagModelToSave));
 		}
-
-		/*-tagRepository.deleteAllTagsForCertificate(certificateId);
-		tagRepository.saveTagsForCertificate(certificateId, tagModels);*/
 
 		return obtainedCertificateTagDtos;
 	}

@@ -1,6 +1,7 @@
 package com.epam.esm.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.util.MultiValueMap;
 
@@ -12,15 +13,6 @@ import com.epam.esm.repository.model.CertificateModel;
  *
  */
 public interface CertificateRepository extends GeneralRepository<CertificateModel> {
-	/**
-	 * Updates entire certificate with passed id using all fields of passed
-	 * certificate.
-	 * 
-	 * @param certificateModel certificate entity which contains fields with new
-	 *                         values to be set
-	 * @return updated certificate
-	 */
-	CertificateModel updateEntireCertificate(CertificateModel certificateModel);
 
 	/**
 	 * Reads certificates by passed tag id.
@@ -29,6 +21,14 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 * @return certificates with passed tag
 	 */
 	List<CertificateModel> readByTagId(long tagId);
+
+	/**
+	 * Reads entity with passed name.
+	 * 
+	 * @param name the name of entity to be read
+	 * @return entity with passed name
+	 */
+	Optional<CertificateModel> findByName(String name);
 
 	/**
 	 * Checks whether the certificate with passed name already exists.
@@ -47,7 +47,7 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 *                            values to be set
 	 * @return updated certificate
 	 */
-	CertificateModel updateCertificateFields(CertificateModel certificateToUpdate);
+	CertificateModel updateCertificate(CertificateModel certificateToUpdate);
 
 	/**
 	 * Reads all certificates according to passed parameters.
@@ -57,4 +57,21 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 * @return certificates which meet passed parameters
 	 */
 	List<CertificateModel> findAll(MultiValueMap<String, String> params, int offset, int limit);
+
+	/**
+	 * Deletes entity with passed id.
+	 * 
+	 * @param id the id of entity to be deleted
+	 * @return the number of deleted entities
+	 */
+	int delete(long id);
+
+	/**
+	 * Checks whether certificate with passed id exists.
+	 * 
+	 * @param certificateId the id of tag to be checked
+	 * @return {@code true} if the the certificate with passed id already exists and
+	 *         {@code false} otherwise
+	 */
+	boolean certificateExistsById(long certificateId);
 }

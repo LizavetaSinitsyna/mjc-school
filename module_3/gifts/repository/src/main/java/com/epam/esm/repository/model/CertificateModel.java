@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
@@ -13,23 +14,19 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.JoinTable;
 import javax.persistence.ManyToMany;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
-
-import org.hibernate.annotations.DynamicUpdate;
-import org.hibernate.annotations.SelectBeforeUpdate;
 
 import lombok.Data;
 
 @Data
 @Entity
 @Table(name = "gift_certificates")
-@DynamicUpdate(value = true)
-@SelectBeforeUpdate(value = true)
 public class CertificateModel {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	@Column(nullable = false, updatable = false)
-	private long id;
+	private Long id;
 	@Column(nullable = false, length = 50)
 	private String name;
 	@Column(nullable = false, length = 1000)
@@ -47,4 +44,6 @@ public class CertificateModel {
 	@ManyToMany(fetch = FetchType.LAZY)
 	@JoinTable(name = "tags_certificates", joinColumns = @JoinColumn(name = "certificate_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id"))
 	List<TagModel> tags;
+	@OneToMany(mappedBy = "certificate", fetch = FetchType.LAZY)
+	List<OrderCertificateModel> orders;
 }

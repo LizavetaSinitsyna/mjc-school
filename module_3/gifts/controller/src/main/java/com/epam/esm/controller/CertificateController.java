@@ -70,7 +70,7 @@ public class CertificateController {
 	@GetMapping
 	public ResponseEntity<List<CertificateDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
 		List<CertificateDto> certificates = certificateService.readAll(params);
-		if (certificates.isEmpty()) {
+		if (certificates == null || certificates.isEmpty()) {
 			return new ResponseEntity<>(certificates, HttpStatus.NO_CONTENT);
 		} else {
 			return new ResponseEntity<>(certificates, HttpStatus.OK);

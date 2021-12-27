@@ -15,9 +15,9 @@ import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
-import com.epam.esm.repository.EntityConstant;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
@@ -63,7 +63,7 @@ public class TagServiceImpl implements TagService {
 	public TagDto create(TagDto tagDto) {
 		Map<ErrorCode, String> errors = tagValidation.validateAllTagFields(tagDto);
 		if (tagRepository.tagExistsByName(Util.removeExtraSpaces(tagDto.getName()))) {
-			errors.put(ErrorCode.DUPLICATED_TAG_NAME, EntityConstant.NAME + Util.DELIMITER + tagDto.getName());
+			errors.put(ErrorCode.DUPLICATED_TAG_NAME, EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + tagDto.getName());
 		}
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_TAG);
@@ -84,13 +84,13 @@ public class TagServiceImpl implements TagService {
 	@Override
 	public TagDto readById(long tagId) {
 		if (!Util.isPositive(tagId)) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
+			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
 		}
 
 		Optional<TagModel> tagModel = tagRepository.findById(tagId);
 
 		if (tagModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
+			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
 		}
 
 		TagDto tagDto = tagConverter.convertToDto(tagModel.get());
@@ -145,10 +145,10 @@ public class TagServiceImpl implements TagService {
 	@Transactional
 	public int delete(long tagId) {
 		if (!Util.isPositive(tagId)) {
-			throw new ValidationException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
+			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
 		}
 		if (!tagRepository.tagExistsById(tagId)) {
-			throw new NotFoundException(EntityConstant.ID + Util.DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
+			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
 		}
 
 		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);

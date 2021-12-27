@@ -32,10 +32,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.CertificateRepository;
-import com.epam.esm.repository.EntityConstant;
-import com.epam.esm.repository.mapper.CertificateRowMapper;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.CertificateModel_;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
 
@@ -54,9 +53,9 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 
 	@PersistenceContext
 	private EntityManager entityManager;
-	
+
 	public CertificateRepositoryImpl() {
-		
+
 	}
 
 	/**
@@ -80,20 +79,42 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 */
 	@Override
 	public Optional<CertificateModel> findById(long certificateId) {
+		try {
+			return Optional.of(obtainReadByIdQuery(certificateId).getSingleResult());
+		} catch (NoResultException e) {
+			return Optional.empty();
+		}
+	}
+
+	/**
+	 * Checks whether certificate with passed id exists.
+	 * 
+	 * @param certificateId the id of tag to be checked
+	 * @return {@code true} if the the certificate with passed id already exists and
+	 *         {@code false} otherwise
+	 */
+	@Override
+	public boolean certificateExistsById(long certificateId) {
+		try {
+			obtainReadByIdQuery(certificateId).getSingleResult();
+		} catch (NoResultException e) {
+			return false;
+		}
+		return true;
+
+	}
+
+	private TypedQuery<CertificateModel> obtainReadByIdQuery(long tagId) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
 		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
 		certificateCriteria.select(certificateRoot);
 
 		Predicate isDeletedPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false);
-		Predicate idPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.id), certificateId);
+		Predicate idPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.id), tagId);
 		certificateCriteria.where(isDeletedPredicate, idPredicate);
 
-		try {
-			return Optional.of(entityManager.createQuery(certificateCriteria).getSingleResult());
-		} catch (NoResultException e) {
-			return Optional.empty();
-		}
+		return entityManager.createQuery(certificateCriteria);
 	}
 
 	/**
@@ -212,21 +233,6 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	}
 
 	/**
-	 * Updates entire certificate with passed id using all fields of passed
-	 * certificate.
-	 * 
-	 * @param certificateModel certificate entity which contains fields with new
-	 *                         values to be set
-	 * @return updated certificate
-	 */
-	@Override
-	public CertificateModel updateEntireCertificate(CertificateModel certificateModel) {
-		CertificateModel mergedCertificateModel = entityManager.merge(certificateModel);
-		entityManager.refresh(mergedCertificateModel);
-		return mergedCertificateModel;
-	}
-
-	/**
 	 * Updates certificate fields with passed id using not {@code null} fields of
 	 * passed certificate entity.
 	 * 
@@ -235,7 +241,8 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return updated certificate
 	 */
 	@Override
-	public CertificateModel updateCertificateFields(CertificateModel certificateModel) {
+	@Transactional
+	public CertificateModel updateCertificate(CertificateModel certificateModel) {
 		CertificateModel existedCertificate = entityManager.find(CertificateModel.class, certificateModel.getId());
 		setNotNullFields(existedCertificate, certificateModel);
 		entityManager.merge(existedCertificate);
@@ -289,7 +296,8 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	@Override
 	public int delete(long certificateId) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-		CriteriaUpdate<CertificateModel> certificateCriteria = criteriaBuilder.createCriteriaUpdate(CertificateModel.class);
+		CriteriaUpdate<CertificateModel> certificateCriteria = criteriaBuilder
+				.createCriteriaUpdate(CertificateModel.class);
 		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
 		certificateCriteria.set(CertificateModel_.isDeleted, true);
 		certificateCriteria.where(criteriaBuilder.equal(certificateRoot.get(CertificateModel_.id), certificateId));

@@ -23,10 +23,9 @@ import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.MultiValueMap;
 
-import com.epam.esm.repository.EntityConstant;
 import com.epam.esm.repository.TagRepository;
-import com.epam.esm.repository.mapper.TagRowMapper;
 import com.epam.esm.repository.model.CertificateModel;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
 
@@ -198,5 +197,4 @@ public class TagRepositoryImpl implements TagRepository {
 		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.id), tagId));
 		return entityManager.createQuery(tagCriteria).executeUpdate();
 	}
-
 }

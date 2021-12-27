@@ -1,4 +1,4 @@
-package com.epam.esm.repository;
+package com.epam.esm.repository.model;
 
 /**
  * Contains constants for project entities (column names, read parameters)
@@ -29,6 +29,10 @@ public class EntityConstant {
 
 	public static final String CERTIFICATE_ID = "certificate_id";
 	public static final String TAG_ID = "tag_id";
+	public static final String ORDER_ID = "order_id";
+	public static final String USER_ID = "user_id";
+	
+	public static final String ORDER_CERTIFICATES = "certificates";
 
 	public static final char DESC_SIGN = '-';
 

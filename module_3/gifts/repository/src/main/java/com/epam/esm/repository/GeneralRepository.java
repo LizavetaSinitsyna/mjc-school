@@ -27,22 +27,6 @@ public interface GeneralRepository<T> {
 	Optional<T> findById(long id);
 
 	/**
-	 * Reads entity with passed name.
-	 * 
-	 * @param name the name of entity to be read
-	 * @return entity with passed name
-	 */
-	Optional<T> findByName(String name);
-
-	/**
-	 * Deletes entity with passed id.
-	 * 
-	 * @param id the id of entity to be deleted
-	 * @return the number of deleted entities
-	 */
-	int delete(long id);
-
-	/**
 	 * Reads all entities according to passed parameters.
 	 * 
 	 * @param params the parameters which define choice of tags and their ordering

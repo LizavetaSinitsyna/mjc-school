@@ -44,7 +44,7 @@ subprojects {
 		
 		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"
 		
-		implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'	 
+		implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
 	}
 	
 	test {

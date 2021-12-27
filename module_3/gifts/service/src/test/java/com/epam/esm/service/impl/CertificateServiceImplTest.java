@@ -198,7 +198,7 @@ class CertificateServiceImplTest {
 		CertificateDto expected = certificateDto1;
 		expected.setTags(Arrays.asList(tagDto1));
 
-		Mockito.when(certificateRepository.updateCertificateFields(Mockito.any()))
+		Mockito.when(certificateRepository.updateCertificate(Mockito.any()))
 				.thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
@@ -213,7 +213,7 @@ class CertificateServiceImplTest {
 
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(certificateRepository).updateCertificateFields(certificateModel1);
+		Mockito.verify(certificateRepository).updateCertificate(certificateModel1);
 		Mockito.verify(certificateRepository).findByName(Mockito.any());
 		Mockito.verify(dateTimeWrapper).obtainCurrentDateTime();
 		Mockito.verify(tagRepository).deleteAllTagsForCertificate(Mockito.anyLong());

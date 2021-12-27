@@ -17,7 +17,8 @@ import com.epam.esm.exception.NullEntityException;
  *
  */
 public class Util {
-	public static final String DELIMITER = " = ";
+	public static final String ERROR_RESOURCE_DELIMITER = " = ";
+	public static final String ERROR_RESOURCES_LIST_DELIMITER = ", ";
 
 	private Util() {
 
@@ -98,7 +99,7 @@ public class Util {
 	 */
 	public static void checkNull(Object object) {
 		if (object == null) {
-			throw new NullEntityException("object" + DELIMITER + object, ErrorCode.NULL_PASSED_PARAMETER);
+			throw new NullEntityException("object" + ERROR_RESOURCE_DELIMITER + object, ErrorCode.NULL_PASSED_PARAMETER);
 		}
 	}
 
