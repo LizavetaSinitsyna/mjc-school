@@ -246,6 +246,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		CertificateModel existedCertificate = entityManager.find(CertificateModel.class, certificateModel.getId());
 		setNotNullFields(existedCertificate, certificateModel);
 		entityManager.merge(existedCertificate);
+		entityManager.refresh(existedCertificate);
 		return existedCertificate;
 	}
 
@@ -294,6 +295,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return the number of deleted certificates
 	 */
 	@Override
+	@Transactional
 	public int delete(long certificateId) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 		CriteriaUpdate<CertificateModel> certificateCriteria = criteriaBuilder

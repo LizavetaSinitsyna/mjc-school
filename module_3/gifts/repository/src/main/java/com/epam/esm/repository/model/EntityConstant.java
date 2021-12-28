@@ -26,6 +26,7 @@ public class EntityConstant {
 	public static final String CERTIFICATE_CREATE_DATE = "create_date";
 	public static final String CERTIFICATE_LAST_UPDATE_DATE = "lastUpdateDate";
 	public static final String CERTIFICATE_TAGS = "tags";
+	public static final String CERTIFICATE_AMOUNT = "amount";
 
 	public static final String CERTIFICATE_ID = "certificate_id";
 	public static final String TAG_ID = "tag_id";

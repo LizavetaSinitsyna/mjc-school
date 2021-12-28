@@ -37,7 +37,14 @@ import com.epam.esm.repository.model.TagModel_;
  */
 @Repository
 public class TagRepositoryImpl implements TagRepository {
-
+	private static final String FIND_POPULAR_TAG_BY_MOST_PROFITABLE_USER = "SELECT tags.id, tags.name, tags.is_deleted, SUM(certificate_amount) AS tags_amount "
+			+ "FROM tags INNER JOIN tags_certificates ON tags.id = tags_certificates.tag_id "
+			+ "INNER JOIN gift_certificates ON tags_certificates.certificate_id = gift_certificates.id "
+			+ "INNER JOIN orders_certificates ON gift_certificates.id = orders_certificates.certificate_id "
+			+ "INNER JOIN orders ON orders_certificates.order_id = orders.id WHERE orders.user_id = "
+			+ "(SELECT find_user_subquery.id FROM (SELECT users.id, SUM(cost) FROM users INNER JOIN orders"
+			+ " ON users.id = orders.user_id GROUP BY users.id ORDER BY 2 DESC LIMIT 1) find_user_subquery) "
+			+ "GROUP BY tags.id ORDER BY 4 DESC LIMIT 1";
 	@PersistenceContext
 	private EntityManager entityManager;
 
@@ -196,5 +203,15 @@ public class TagRepositoryImpl implements TagRepository {
 		tagCriteria.set(TagModel_.isDeleted, false);
 		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.id), tagId));
 		return entityManager.createQuery(tagCriteria).executeUpdate();
+	}
+
+	@Override
+	public Optional<TagModel> findPopularTagByMostProfitableUser() {
+		try {
+			return Optional.ofNullable((TagModel) entityManager
+					.createNativeQuery(FIND_POPULAR_TAG_BY_MOST_PROFITABLE_USER, TagModel.class).getSingleResult());
+		} catch (NoResultException e) {
+			return Optional.empty();
+		}
 	}
 }

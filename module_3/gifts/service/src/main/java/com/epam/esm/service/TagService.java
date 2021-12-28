@@ -44,4 +44,6 @@ public interface TagService {
 	 */
 	int delete(long tagId);
 
+	TagDto readPopularTagByMostProfitableUser();
+
 }

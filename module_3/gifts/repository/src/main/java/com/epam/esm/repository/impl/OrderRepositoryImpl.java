@@ -2,8 +2,10 @@ package com.epam.esm.repository.impl;
 
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -62,15 +64,18 @@ public class OrderRepositoryImpl implements OrderRepository {
 	@Transactional
 	public OrderModel save(OrderModel orderModel) {
 		List<OrderCertificateModel> orderCertificateModels = orderModel.getCertificates();
-		for (OrderCertificateModel orderCertificate : orderCertificateModels) {
-			CertificateModel certificateModel = entityManager.find(CertificateModel.class,
-					orderCertificate.getCertificate().getId());
-			orderCertificate.setCertificate(certificateModel);
-			orderCertificate.setOrder(orderModel);
+		if (orderCertificateModels != null && !orderCertificateModels.isEmpty()) {
+			for (OrderCertificateModel orderCertificate : orderCertificateModels) {
+				CertificateModel certificateModel = entityManager.find(CertificateModel.class,
+						orderCertificate.getCertificate().getId());
+				orderCertificate.setCertificate(certificateModel);
+				orderCertificate.setOrder(orderModel);
+			}
 		}
 		orderModel.setCertificates(orderCertificateModels);
+		UserModel userModel = entityManager.find(UserModel.class, orderModel.getUser().getId());
+		orderModel.setUser(userModel);
 		entityManager.persist(orderModel);
-		entityManager.refresh(orderModel);
 		return orderModel;
 	}
 

@@ -29,6 +29,8 @@ class CertificateRepositoryImplTest {
 	private static final Long CERTIFICATE_ID_2 = 2L;
 	private static final Long CERTIFICATE_ID_3 = 3L;
 	private static final Long TAG_ID_2 = 2L;
+	private static final int OFFSET = 0;
+	private static final int LIMIT = 10;
 
 	private static final String CERTIFICATE_NAME = "Certificate for Museum of Arts";
 
@@ -101,26 +103,25 @@ class CertificateRepositoryImplTest {
 		params.add("limit", "1");
 		params.add("sort", "price-");
 
-		List<CertificateModel> actual = certificateRepository.findAll(params);
+		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT);
 		List<CertificateModel> expected = Arrays.asList(certificate3);
 		Assertions.assertEquals(expected, actual);
 	}
 
 	@Test
-	void testUpdateEntireCertificate() {
-		CertificateModel certificate = new CertificateModel();
-		certificate.setId(CERTIFICATE_ID_3);
-		certificate.setName("Certificate to the Zoo");
-		certificate.setDescription("Wonderful trip to the Dipriz zoo in Baranovichi");
-		certificate.setPrice(new BigDecimal("100.00"));
-		certificate.setCreateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
-		certificate.setLastUpdateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
-		certificate.setDuration(365);
-		certificateRepository.save(certificate);
-		certificate.setDuration(50);
-
-		Optional<CertificateModel> expected = Optional.of(certificate);
-		Optional<CertificateModel> actual = certificateRepository.updateEntireCertificate(certificate);
+	void testUpdateCertificate() {
+		CertificateModel expected = new CertificateModel();
+		expected.setId(CERTIFICATE_ID_3);
+		expected.setName("Certificate to the Zoo");
+		expected.setDescription("Wonderful trip to the Dipriz zoo in Baranovichi");
+		expected.setPrice(new BigDecimal("100.00"));
+		expected.setCreateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
+		expected.setLastUpdateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
+		expected.setDuration(365);
+		certificateRepository.save(expected);
+		expected.setDuration(50);
+		
+		CertificateModel actual = certificateRepository.updateCertificate(expected);
 
 		Assertions.assertEquals(expected, actual);
 	}

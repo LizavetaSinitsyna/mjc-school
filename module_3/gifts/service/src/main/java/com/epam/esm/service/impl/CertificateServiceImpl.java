@@ -1,7 +1,5 @@
 package com.epam.esm.service.impl;
 
-import java.time.LocalDateTime;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -25,7 +23,6 @@ import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
-import com.epam.esm.service.DateTimeWrapper;
 import com.epam.esm.service.converter.CertificateConverter;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.CertificateValidation;
@@ -55,19 +52,16 @@ public class CertificateServiceImpl implements CertificateService {
 
 	private TagConverter tagConverter;
 
-	private DateTimeWrapper dateTimeWrapper;
-
 	@Autowired
 	public CertificateServiceImpl(CertificateRepository certificateRepository, TagRepository tagRepository,
 			CertificateValidation certificateValidation, TagValidation tagValidation,
-			CertificateConverter certificateConverter, TagConverter tagConverter, DateTimeWrapper dateTimeWrapper) {
+			CertificateConverter certificateConverter, TagConverter tagConverter) {
 		this.certificateRepository = certificateRepository;
 		this.tagRepository = tagRepository;
 		this.certificateValidation = certificateValidation;
 		this.tagValidation = tagValidation;
 		this.certificateConverter = certificateConverter;
 		this.tagConverter = tagConverter;
-		this.dateTimeWrapper = dateTimeWrapper;
 	}
 
 	/**
@@ -89,12 +83,8 @@ public class CertificateServiceImpl implements CertificateService {
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
 		}
-
-		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
-		certificateDto.setCreateDate(now);
-		certificateDto.setLastUpdateDate(now);
 		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
-
+		certificateDto.setId(null);
 		CertificateModel certificateModel = certificateConverter.convertToModel(certificateDto);
 		CertificateModel createdCertificateModel = certificateRepository.save(certificateModel);
 		CertificateDto createdCertificate = certificateConverter.convertToDto(createdCertificateModel);
@@ -242,9 +232,6 @@ public class CertificateServiceImpl implements CertificateService {
 		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
 		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
 
-		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
-		certificateToUpdate.setLastUpdateDate(now);
-
 		CertificateModel certificateModel = certificateRepository.updateCertificate(certificateToUpdate);
 
 		CertificateDto updatedCertificate = certificateConverter.convertToDto(certificateModel);
@@ -282,9 +269,6 @@ public class CertificateServiceImpl implements CertificateService {
 		certificateDto.setId(certificateId);
 		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
 		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
-
-		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
-		certificateToUpdate.setLastUpdateDate(now);
 
 		CertificateModel updatedCertificateModel = certificateRepository.updateCertificate(certificateToUpdate);
 
@@ -324,6 +308,7 @@ public class CertificateServiceImpl implements CertificateService {
 		List<TagDto> obtainedCertificateTagDtos = new ArrayList<>(tagDtos.size());
 
 		for (TagDto tagDto : tagDtos) {
+			tagDto.setId(null);
 			TagModel tagModelToSave = null;
 			Optional<TagModel> tagModel = tagRepository.findByName(Util.removeExtraSpaces(tagDto.getName()));
 			if (tagModel.isEmpty()) {
@@ -345,7 +330,7 @@ public class CertificateServiceImpl implements CertificateService {
 		return obtainedCertificateTagDtos;
 	}
 
-	private boolean isCertificateNameUniqueForUpdate(long certificateId, CertificateDto certificateDto) {
+	private boolean isCertificateNameUniqueForUpdate(Long certificateId, CertificateDto certificateDto) {
 		String testedName = Util.removeExtraSpaces(certificateDto.getName());
 		Optional<CertificateModel> certificateModel = certificateRepository.findByName(testedName);
 		return certificateModel.isEmpty() || certificateModel.get().getId() == certificateId;

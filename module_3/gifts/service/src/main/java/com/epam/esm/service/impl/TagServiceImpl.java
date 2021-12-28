@@ -34,6 +34,7 @@ import com.epam.esm.service.validation.Util;
 public class TagServiceImpl implements TagService {
 	private static final int OFFSET = 0;
 	private static final int LIMIT = 10;
+	private static final String NO_POPULAR_TAG_FOUND_MESSAGE = "popular tag request";
 
 	private CertificateRepository certificateRepository;
 
@@ -63,11 +64,13 @@ public class TagServiceImpl implements TagService {
 	public TagDto create(TagDto tagDto) {
 		Map<ErrorCode, String> errors = tagValidation.validateAllTagFields(tagDto);
 		if (tagRepository.tagExistsByName(Util.removeExtraSpaces(tagDto.getName()))) {
-			errors.put(ErrorCode.DUPLICATED_TAG_NAME, EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + tagDto.getName());
+			errors.put(ErrorCode.DUPLICATED_TAG_NAME,
+					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + tagDto.getName());
 		}
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_TAG);
 		}
+		tagDto.setId(null);
 		TagModel createdTagModel = tagRepository.save(tagConverter.convertToModel(tagDto));
 		TagDto createdTag = tagConverter.convertToDto(createdTagModel);
 		return createdTag;
@@ -84,13 +87,15 @@ public class TagServiceImpl implements TagService {
 	@Override
 	public TagDto readById(long tagId) {
 		if (!Util.isPositive(tagId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
+			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId,
+					ErrorCode.INVALID_TAG_ID);
 		}
 
 		Optional<TagModel> tagModel = tagRepository.findById(tagId);
 
 		if (tagModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
+			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId,
+					ErrorCode.NO_TAG_FOUND);
 		}
 
 		TagDto tagDto = tagConverter.convertToDto(tagModel.get());
@@ -145,10 +150,12 @@ public class TagServiceImpl implements TagService {
 	@Transactional
 	public int delete(long tagId) {
 		if (!Util.isPositive(tagId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.INVALID_TAG_ID);
+			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId,
+					ErrorCode.INVALID_TAG_ID);
 		}
 		if (!tagRepository.tagExistsById(tagId)) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.NO_TAG_FOUND);
+			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + tagId,
+					ErrorCode.NO_TAG_FOUND);
 		}
 
 		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);
@@ -159,6 +166,15 @@ public class TagServiceImpl implements TagService {
 			}
 		}
 		return deletedTagsAmount;
+	}
+
+	@Override
+	public TagDto readPopularTagByMostProfitableUser() {
+		Optional<TagModel> popularTag = tagRepository.findPopularTagByMostProfitableUser();
+		if (popularTag.isEmpty()) {
+			throw new NotFoundException(NO_POPULAR_TAG_FOUND_MESSAGE, ErrorCode.NO_TAG_FOUND);
+		}
+		return tagConverter.convertToDto(popularTag.get());
 	}
 
 }

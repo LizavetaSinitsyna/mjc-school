@@ -52,4 +52,6 @@ public interface TagRepository extends GeneralRepository<TagModel> {
 	 * @return the number of deleted entities
 	 */
 	int delete(long id);
+
+	Optional<TagModel> findPopularTagByMostProfitableUser();
 }

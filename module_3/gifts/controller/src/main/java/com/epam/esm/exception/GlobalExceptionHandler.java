@@ -1,6 +1,7 @@
 package com.epam.esm.exception;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -104,7 +105,7 @@ public class GlobalExceptionHandler {
 		return messageSource.getMessage(KEY_PREFIX + key, null, locale);
 	}
 
-	/*-@ExceptionHandler(Exception.class)
+	@ExceptionHandler(Exception.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiException handleException(Exception exception) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
@@ -114,7 +115,7 @@ public class GlobalExceptionHandler {
 					Arrays.toString(exception.getStackTrace()));
 		}
 		return new ApiException(errorMessage, errorCode.getCode());
-	}*/
+	}
 
 	@ExceptionHandler(NotFoundException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)

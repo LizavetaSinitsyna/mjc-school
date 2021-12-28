@@ -61,7 +61,8 @@ public class TagController {
 	/**
 	 * Reads all tags according to passed parameters.
 	 * 
-	 * @param params the parameters which define the choice of tags and their ordering
+	 * @param params the parameters which define the choice of tags and their
+	 *               ordering
 	 * @return tags which meet passed parameters
 	 */
 	@GetMapping
@@ -78,7 +79,6 @@ public class TagController {
 	 * Deletes tag with passed id.
 	 * 
 	 * @param tagId the id of tag to be deleted
-	 * @return the number of deleted tags
 	 */
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)

@@ -1,8 +1,8 @@
 package com.epam.esm.service.impl;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -14,7 +14,6 @@ import org.springframework.util.MultiValueMap;
 import com.epam.esm.dto.OrderCertificateDto;
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
-import com.epam.esm.dto.UserDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
@@ -23,11 +22,9 @@ import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
-import com.epam.esm.service.DateTimeWrapper;
+import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.OrderService;
-import com.epam.esm.service.converter.OrderCertificateConverter;
 import com.epam.esm.service.converter.OrderConverter;
 import com.epam.esm.service.converter.OrderDataConverter;
 import com.epam.esm.service.validation.OrderValidation;
@@ -49,24 +46,19 @@ public class OrderServiceImpl implements OrderService {
 	private CertificateRepository certificateRepository;
 	private OrderConverter orderConverter;
 	private OrderDataConverter orderDataConverter;
-	private OrderCertificateConverter orderCertificateConverter;
 	private OrderValidation orderValidation;
-	private DateTimeWrapper dateTimeWrapper;
 
 	@Autowired
 	public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
 			CertificateRepository certificateRepository, OrderConverter orderConverter,
-			OrderDataConverter orderDataConverter, OrderCertificateConverter orderCertificateConverter,
-			OrderValidation orderValidation, DateTimeWrapper dateTimeWrapper) {
+			OrderDataConverter orderDataConverter, OrderValidation orderValidation) {
 		super();
 		this.orderRepository = orderRepository;
 		this.userRepository = userRepository;
 		this.certificateRepository = certificateRepository;
 		this.orderConverter = orderConverter;
 		this.orderDataConverter = orderDataConverter;
-		this.orderCertificateConverter = orderCertificateConverter;
 		this.orderValidation = orderValidation;
-		this.dateTimeWrapper = dateTimeWrapper;
 	}
 
 	/**
@@ -138,56 +130,37 @@ public class OrderServiceImpl implements OrderService {
 
 	@Override
 	public OrderDto create(long userId, OrderDto orderDto) {
-		Util.checkNull(orderDto);
-		if (!userRepository.userExistsById(userId)) {
+		Optional<UserModel> userModel = userRepository.findById(userId);
+		if (userModel.isEmpty()) {
 			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + userId,
 					ErrorCode.NO_USER_FOUND);
 		}
-		List<OrderCertificateDto> orderCertificates = orderDto.getCertificates();
-		if (orderCertificates == null || orderCertificates.isEmpty()) {
-			throw new NotFoundException(
-					EntityConstant.ORDER_CERTIFICATES + Util.ERROR_RESOURCE_DELIMITER + orderCertificates,
-					ErrorCode.NO_ORDER_CERTIFICATES_FOUND);
+		
+		Map<ErrorCode, String> errors = checkOrderCorrectness(orderDto);
+
+		if (!errors.isEmpty()) {
+			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
 		}
 
+		List<OrderCertificateDto> orderCertificates = orderDto.getCertificates();
+		
 		BigDecimal cost = new BigDecimal("0");
-		//List<OrderCertificateModel> managedOrderCertificateModels = new ArrayList<>();
+
+		
 		for (OrderCertificateDto orderCertificate : orderCertificates) {
 			Long certificateId = orderCertificate.getCertificate().getId();
-			if (!Util.isPositive(certificateId)) {
-				throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
-						ErrorCode.INVALID_CERTIFICATE_ID);
-			}
-			Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
-			if (certificateModel.isEmpty()) {
-				throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
-						ErrorCode.NO_CERTIFICATE_FOUND);
-			}
+			Optional<CertificateModel> certificateModelOptional = certificateRepository.findById(certificateId);
+			CertificateModel certificateModel = certificateModelOptional.get();
+
 			int certificateAmount = orderCertificate.getCertificateAmount();
-			if (certificateAmount < 1) {
-				throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateAmount,
-						ErrorCode.NEGATIVE_ORDER_CERTIFICATE_AMOUNT);
-			}
 
-			cost = cost.add(certificateModel.get().getPrice().multiply(new BigDecimal(certificateAmount)));
-			/*-OrderCertificateModel orderCertificateModel = orderCertificateConverter.convertToModel(orderCertificate);
-			orderCertificateModel.setCertificate(certificateModel.get());
-			managedOrderCertificateModels.add(orderCertificateModel);*/
+			cost = cost.add(certificateModel.getPrice().multiply(new BigDecimal(certificateAmount)));
 		}
-		LocalDateTime now = dateTimeWrapper.obtainCurrentDateTime();
-
-		UserDto user = new UserDto();
-		user.setId(userId);
-
-		orderDto.setDate(now);
-		orderDto.setCost(cost);
-		orderDto.setUser(user);
 
 		OrderModel orderToSave = orderConverter.convertToModel(orderDto);
-		/*-orderToSave.setCertificates(managedOrderCertificateModels);
-		for (OrderCertificateModel certificate : orderToSave.getCertificates()) {
-			certificate.setOrder(orderToSave);
-		}*/
+		orderToSave.setId(null);
+		orderToSave.setCost(cost);
+		orderToSave.setUser(userModel.get());
 
 		OrderModel savedOrder = orderRepository.save(orderToSave);
 
@@ -246,6 +219,43 @@ public class OrderServiceImpl implements OrderService {
 			orderDtos.add(orderConverter.convertToDto(orderModel));
 		}
 		return orderDtos;
+	}
+
+	/*-private List<OrderCertificateDto> obtainUniqueOrderCertificates(List<OrderCertificateDto> initialOrderCertificates) {
+		List<OrderCertificateDto> resultOrderCertificates = new ArrayList<>();
+		Map<CertificateDto, Integer> = 
+	}*/
+
+	private Map<ErrorCode, String> checkOrderCorrectness(OrderDto orderDto) {
+		Util.checkNull(orderDto);
+		Map<ErrorCode, String> errors = new HashMap<>();
+		List<OrderCertificateDto> orderCertificates = orderDto.getCertificates();
+		if (orderCertificates == null || orderCertificates.isEmpty()) {
+			errors.put(ErrorCode.NO_ORDER_CERTIFICATES_FOUND,
+					EntityConstant.ORDER_CERTIFICATES + Util.ERROR_RESOURCE_DELIMITER + orderCertificates);
+		} else {
+			for (OrderCertificateDto orderCertificate : orderCertificates) {
+				Long certificateId = orderCertificate.getCertificate().getId();
+				if (!Util.isPositive(certificateId)) {
+					errors.put(ErrorCode.INVALID_CERTIFICATE_ID,
+							EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
+				} else if (!certificateRepository.certificateExistsById(certificateId)) {
+					errors.put(ErrorCode.NO_CERTIFICATE_FOUND,
+							EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
+				}
+
+				int certificateAmount = orderCertificate.getCertificateAmount();
+				if (certificateAmount < 1) {
+					StringBuilder errorMessage = new StringBuilder();
+					errorMessage.append(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
+					errorMessage.append(Util.ERROR_RESOURCES_LIST_DELIMITER);
+					errorMessage.append(
+							EntityConstant.CERTIFICATE_AMOUNT + Util.ERROR_RESOURCE_DELIMITER + certificateAmount);
+					errors.put(ErrorCode.NEGATIVE_ORDER_CERTIFICATE_AMOUNT, errorMessage.toString());
+				}
+			}
+		}
+		return errors;
 	}
 
 }

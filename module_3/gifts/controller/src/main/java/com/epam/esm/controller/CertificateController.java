@@ -2,6 +2,9 @@ package com.epam.esm.controller;
 
 import java.util.List;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,6 +22,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.epam.esm.dto.CertificateDto;
+import com.epam.esm.dto.TagDto;
 import com.epam.esm.service.CertificateService;
 
 /**
@@ -45,7 +49,11 @@ public class CertificateController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
 	public CertificateDto create(@RequestBody CertificateDto certificateDto) {
-		return certificateService.create(certificateDto);
+		CertificateDto createdCertificateDto = certificateService.create(certificateDto);
+		createdCertificateDto
+				.add(linkTo(CertificateController.class).slash(createdCertificateDto.getId()).withSelfRel());
+		addLinksToCertificate(createdCertificateDto);
+		return createdCertificateDto;
 	}
 
 	/**
@@ -57,7 +65,9 @@ public class CertificateController {
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto readById(@PathVariable long id) {
-		return certificateService.readById(id);
+		CertificateDto certificateDto = certificateService.readById(id);
+		addLinksToCertificate(certificateDto);
+		return certificateDto;
 	}
 
 	/**
@@ -73,6 +83,9 @@ public class CertificateController {
 		if (certificates == null || certificates.isEmpty()) {
 			return new ResponseEntity<>(certificates, HttpStatus.NO_CONTENT);
 		} else {
+			for (CertificateDto certificateDto : certificates) {
+				addLinksToCertificate(certificateDto);
+			}
 			return new ResponseEntity<>(certificates, HttpStatus.OK);
 		}
 	}
@@ -89,7 +102,9 @@ public class CertificateController {
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateCertificateFields(@RequestBody CertificateDto certificate, @PathVariable long id) {
-		return certificateService.updateCertificateFields(id, certificate);
+		CertificateDto updatedCertificateDto = certificateService.updateCertificateFields(id, certificate);
+		addLinksToCertificate(updatedCertificateDto);
+		return updatedCertificateDto;
 	}
 
 	/**
@@ -104,7 +119,9 @@ public class CertificateController {
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate, @PathVariable long id) {
-		return certificateService.updateEntireCertificate(id, certificate);
+		CertificateDto updatedCertificateDto = certificateService.updateEntireCertificate(id, certificate);
+		addLinksToCertificate(updatedCertificateDto);
+		return updatedCertificateDto;
 	}
 
 	/**
@@ -117,5 +134,17 @@ public class CertificateController {
 	@ResponseStatus(HttpStatus.NO_CONTENT)
 	public void delete(@PathVariable long id) {
 		certificateService.delete(id);
+	}
+
+	public static void addLinksToCertificate(CertificateDto certificateDto) {
+		if (certificateDto != null) {
+			certificateDto.add(linkTo(CertificateController.class).slash(certificateDto.getId()).withSelfRel());
+			List<TagDto> tags = certificateDto.getTags();
+			if (tags != null && !tags.isEmpty()) {
+				for (TagDto tagDto : tags) {
+					tagDto.add(linkTo(methodOn(TagController.class).readById(tagDto.getId())).withSelfRel());
+				}
+			}
+		}
 	}
 }

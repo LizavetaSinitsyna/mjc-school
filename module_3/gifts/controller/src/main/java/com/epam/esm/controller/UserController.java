@@ -1,5 +1,7 @@
 package com.epam.esm.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,21 +42,27 @@ public class UserController {
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public UserDto readById(@PathVariable long id) {
-		return userService.readById(id);
+		UserDto userDto = userService.readById(id);
+		userDto.add(linkTo(UserController.class).slash(userDto.getId()).withSelfRel());
+		return userDto;
 	}
 
 	/**
 	 * Reads all users according to passed parameters.
 	 * 
-	 * @param params the parameters which define the choice of users and their ordering
+	 * @param params the parameters which define the choice of users and their
+	 *               ordering
 	 * @return users which meet passed parameters
 	 */
 	@GetMapping
 	public ResponseEntity<List<UserDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
 		List<UserDto> users = userService.readAll(params);
-		if (users.isEmpty()) {
+		if (users == null || users.isEmpty()) {
 			return new ResponseEntity<>(users, HttpStatus.NO_CONTENT);
 		} else {
+			for (UserDto userDto : users) {
+				userDto.add(linkTo(UserController.class).slash(userDto.getId()).withSelfRel());
+			}
 			return new ResponseEntity<>(users, HttpStatus.OK);
 		}
 	}

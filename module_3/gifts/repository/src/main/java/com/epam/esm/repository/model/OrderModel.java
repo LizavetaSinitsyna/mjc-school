@@ -7,6 +7,7 @@ import java.util.List;
 import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
+import javax.persistence.EntityListeners;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
@@ -16,11 +17,14 @@ import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
 
+import com.epam.esm.repository.audit.OrderAuditListener;
+
 import lombok.Data;
 
 @Data
 @Entity
 @Table(name = "orders")
+@EntityListeners(OrderAuditListener.class)
 public class OrderModel {
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
