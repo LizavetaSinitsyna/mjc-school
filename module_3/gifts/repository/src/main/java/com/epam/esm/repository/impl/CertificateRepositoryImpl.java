@@ -215,7 +215,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 			Root<CertificateModel> certificateRoot) {
 		List<Order> orderConditions = new ArrayList<>();
 
-		List<String> sortConditions = params.get(EntityConstant.ORDER);
+		List<String> sortConditions = params.get(EntityConstant.ORDER_BY);
 		if (sortConditions != null) {
 			for (String sortParam : sortConditions) {
 				int lastCharIndex = sortParam.length() - 1;

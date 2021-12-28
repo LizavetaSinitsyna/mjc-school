@@ -136,9 +136,9 @@ public class CertificateServiceImpl implements CertificateService {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE_REQUEST_PARAMS);
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.ORDER)) {
-			paramsInLowerCase.put(EntityConstant.ORDER,
-					convertToFieldNames(paramsInLowerCase.get(EntityConstant.ORDER)));
+		if (paramsInLowerCase.containsKey(EntityConstant.ORDER_BY)) {
+			paramsInLowerCase.put(EntityConstant.ORDER_BY,
+					convertToFieldNames(paramsInLowerCase.get(EntityConstant.ORDER_BY)));
 		}
 
 		int offset = OFFSET;

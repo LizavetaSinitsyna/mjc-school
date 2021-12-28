@@ -29,7 +29,7 @@ public class CertificateValidation {
 	private static final BigDecimal MAX_PRICE = new BigDecimal("99999.99");
 	private static final int PRICE_SCALE = 2;
 	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList(EntityConstant.SEARCH,
-			EntityConstant.ORDER, EntityConstant.TAG, EntityConstant.OFFSET, EntityConstant.LIMIT));
+			EntityConstant.ORDER_BY, EntityConstant.TAG, EntityConstant.OFFSET, EntityConstant.LIMIT));
 	private static final Set<String> POSSIBLE_SORT_FIELD = new HashSet<String>(Arrays.asList(EntityConstant.NAME,
 			EntityConstant.CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_CREATE_DATE,
 			EntityConstant.NAME + EntityConstant.DESC_SIGN, EntityConstant.CERTIFICATE_PRICE + EntityConstant.DESC_SIGN,
@@ -82,7 +82,7 @@ public class CertificateValidation {
 	 *         value for invalid fields. If all fields are valid returns empty map
 	 */
 	public Map<ErrorCode, String> validateAllCertificateUpdatableFields(CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
+		Util.checkNull(certificateDto, EntityConstant.CERTIFICATE);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!Util.checkLength(certificateDto.getName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_NAME,
@@ -111,7 +111,7 @@ public class CertificateValidation {
 	 *         value for invalid fields. If all fields are valid returns empty map
 	 */
 	public Map<ErrorCode, String> validateAllCertificateUpdatableNotNullFields(CertificateDto certificateDto) {
-		Util.checkNull(certificateDto);
+		Util.checkNull(certificateDto, EntityConstant.CERTIFICATE);
 
 		Map<ErrorCode, String> errors = new HashMap<>();
 
@@ -148,7 +148,7 @@ public class CertificateValidation {
 	 *         empty map
 	 */
 	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
-		Util.checkNull(params);
+		Util.checkNull(params, EntityConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
@@ -156,8 +156,8 @@ public class CertificateValidation {
 					EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.ORDER)) {
-			if (!POSSIBLE_SORT_FIELD.containsAll(paramsInLowerCase.get(EntityConstant.ORDER))) {
+		if (paramsInLowerCase.containsKey(EntityConstant.ORDER_BY)) {
+			if (!POSSIBLE_SORT_FIELD.containsAll(paramsInLowerCase.get(EntityConstant.ORDER_BY))) {
 				errors.put(ErrorCode.INVALID_CERTIFICATE_SORT_PARAM,
 						EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
 			}

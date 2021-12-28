@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NullEntityException;
+import com.epam.esm.repository.model.EntityConstant;
 
 /**
  * Contains common methods which help in entity validation.
@@ -19,6 +20,7 @@ import com.epam.esm.exception.NullEntityException;
 public class Util {
 	public static final String ERROR_RESOURCE_DELIMITER = " = ";
 	public static final String ERROR_RESOURCES_LIST_DELIMITER = ", ";
+	private static final String DEFAULT_OBJECT_NAME = "object";
 
 	private Util() {
 
@@ -58,7 +60,7 @@ public class Util {
 	 * @see #checkNull(Object)
 	 */
 	public static MultiValueMap<String, String> mapToLowerCase(MultiValueMap<String, String> params) {
-		checkNull(params);
+		checkNull(params, EntityConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = new LinkedMultiValueMap<>();
 		for (Map.Entry<String, List<String>> entry : params.entrySet()) {
 			String key = entry.getKey().toLowerCase();
@@ -95,11 +97,15 @@ public class Util {
 	 * Check if passed object is null.
 	 * 
 	 * @param object the object to be checked
+	 * @param objectName 
 	 * @throws NullEntityException if passed object is {@code null}
 	 */
-	public static void checkNull(Object object) {
+	public static void checkNull(Object object, String objectName) {
 		if (object == null) {
-			throw new NullEntityException("object" + ERROR_RESOURCE_DELIMITER + object, ErrorCode.NULL_PASSED_PARAMETER);
+			if(objectName == null) {
+				objectName = DEFAULT_OBJECT_NAME;
+			}
+			throw new NullEntityException(objectName + ERROR_RESOURCE_DELIMITER + object, ErrorCode.NULL_PASSED_PARAMETER);
 		}
 	}
 

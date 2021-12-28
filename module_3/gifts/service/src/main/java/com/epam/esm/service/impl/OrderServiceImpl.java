@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
+import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.OrderCertificateDto;
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
@@ -135,18 +136,17 @@ public class OrderServiceImpl implements OrderService {
 			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + userId,
 					ErrorCode.NO_USER_FOUND);
 		}
-		
+
 		Map<ErrorCode, String> errors = checkOrderCorrectness(orderDto);
 
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
 		}
 
-		List<OrderCertificateDto> orderCertificates = orderDto.getCertificates();
-		
+		List<OrderCertificateDto> orderCertificates = obtainUniqueOrderCertificates(orderDto.getCertificates());
+
 		BigDecimal cost = new BigDecimal("0");
 
-		
 		for (OrderCertificateDto orderCertificate : orderCertificates) {
 			Long certificateId = orderCertificate.getCertificate().getId();
 			Optional<CertificateModel> certificateModelOptional = certificateRepository.findById(certificateId);
@@ -156,12 +156,12 @@ public class OrderServiceImpl implements OrderService {
 
 			cost = cost.add(certificateModel.getPrice().multiply(new BigDecimal(certificateAmount)));
 		}
-
+		
+		orderDto.setId(null);
+		orderDto.setCertificates(orderCertificates);
 		OrderModel orderToSave = orderConverter.convertToModel(orderDto);
-		orderToSave.setId(null);
 		orderToSave.setCost(cost);
 		orderToSave.setUser(userModel.get());
-
 		OrderModel savedOrder = orderRepository.save(orderToSave);
 
 		return orderConverter.convertToDto(savedOrder);
@@ -221,13 +221,32 @@ public class OrderServiceImpl implements OrderService {
 		return orderDtos;
 	}
 
-	/*-private List<OrderCertificateDto> obtainUniqueOrderCertificates(List<OrderCertificateDto> initialOrderCertificates) {
-		List<OrderCertificateDto> resultOrderCertificates = new ArrayList<>();
-		Map<CertificateDto, Integer> = 
-	}*/
+	private List<OrderCertificateDto> obtainUniqueOrderCertificates(
+			List<OrderCertificateDto> initialOrderCertificates) {
+		Map<CertificateDto, Integer> orderCertificates = new HashMap<>();
+		for (OrderCertificateDto orderCertificateDto : initialOrderCertificates) {
+			CertificateDto certificateDto = orderCertificateDto.getCertificate();
+			if (orderCertificates.containsKey(certificateDto)) {
+				orderCertificates.put(certificateDto,
+						orderCertificates.get(certificateDto) + orderCertificateDto.getCertificateAmount());
+			} else {
+				orderCertificates.put(certificateDto, orderCertificateDto.getCertificateAmount());
+			}
+		}
+		List<OrderCertificateDto> resultOrderCertificates = new ArrayList<>(orderCertificates.size());
+		for (Map.Entry<CertificateDto, Integer> orderCertificate : orderCertificates.entrySet()) {
+			OrderCertificateDto orderCertificateDto = new OrderCertificateDto();
+			orderCertificateDto.setCertificate(orderCertificate.getKey());
+			orderCertificateDto.setCertificateAmount(orderCertificate.getValue());
+			resultOrderCertificates.add(orderCertificateDto);
+		}
+
+		return resultOrderCertificates;
+
+	}
 
 	private Map<ErrorCode, String> checkOrderCorrectness(OrderDto orderDto) {
-		Util.checkNull(orderDto);
+		Util.checkNull(orderDto, EntityConstant.ORDER);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		List<OrderCertificateDto> orderCertificates = orderDto.getCertificates();
 		if (orderCertificates == null || orderCertificates.isEmpty()) {
@@ -235,7 +254,9 @@ public class OrderServiceImpl implements OrderService {
 					EntityConstant.ORDER_CERTIFICATES + Util.ERROR_RESOURCE_DELIMITER + orderCertificates);
 		} else {
 			for (OrderCertificateDto orderCertificate : orderCertificates) {
-				Long certificateId = orderCertificate.getCertificate().getId();
+				CertificateDto certificateDto = orderCertificate.getCertificate();
+				Util.checkNull(certificateDto, EntityConstant.CERTIFICATE);
+				Long certificateId = certificateDto.getId();
 				if (!Util.isPositive(certificateId)) {
 					errors.put(ErrorCode.INVALID_CERTIFICATE_ID,
 							EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
@@ -244,8 +265,8 @@ public class OrderServiceImpl implements OrderService {
 							EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
 				}
 
-				int certificateAmount = orderCertificate.getCertificateAmount();
-				if (certificateAmount < 1) {
+				Integer certificateAmount = orderCertificate.getCertificateAmount();
+				if (certificateAmount == null || certificateAmount < 1) {
 					StringBuilder errorMessage = new StringBuilder();
 					errorMessage.append(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
 					errorMessage.append(Util.ERROR_RESOURCES_LIST_DELIMITER);

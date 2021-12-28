@@ -29,11 +29,12 @@ public class UserValidation {
 	 *         empty map
 	 */
 	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
-		Util.checkNull(params);
+		Util.checkNull(params, EntityConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
-			errors.put(ErrorCode.INVALID_USER_READ_PARAM, EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + params);
+			errors.put(ErrorCode.INVALID_USER_READ_PARAM,
+					EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + params);
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {

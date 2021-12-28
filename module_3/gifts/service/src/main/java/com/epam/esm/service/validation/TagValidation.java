@@ -32,7 +32,7 @@ public class TagValidation {
 	 */
 
 	public Map<ErrorCode, String> validateAllTagFields(TagDto tagDto) {
-		Util.checkNull(tagDto);
+		Util.checkNull(tagDto, EntityConstant.TAG);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!Util.checkLength(tagDto.getName(), MIN_NAME_LENGTH, MAX_NAME_LENGTH)) {
 			errors.put(ErrorCode.INVALID_TAG_NAME, EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + tagDto.getName());
@@ -49,7 +49,7 @@ public class TagValidation {
 	 *         empty map
 	 */
 	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
-		Util.checkNull(params);
+		Util.checkNull(params, EntityConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
