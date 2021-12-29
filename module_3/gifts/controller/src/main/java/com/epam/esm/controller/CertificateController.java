@@ -50,8 +50,6 @@ public class CertificateController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public CertificateDto create(@RequestBody CertificateDto certificateDto) {
 		CertificateDto createdCertificateDto = certificateService.create(certificateDto);
-		createdCertificateDto
-				.add(linkTo(CertificateController.class).slash(createdCertificateDto.getId()).withSelfRel());
 		addLinksToCertificate(createdCertificateDto);
 		return createdCertificateDto;
 	}

@@ -4,136 +4,121 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+import javax.persistence.criteria.CriteriaBuilder;
+import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Root;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlGroup;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.annotation.DirtiesContext;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.epam.esm.repository.TagRepository;
-import com.epam.esm.repository.config.JdbcTestConfiguration;
 import com.epam.esm.repository.model.TagModel;
+import com.epam.esm.repository.model.TagModel_;
 
-@SpringJUnitConfig(JdbcTestConfiguration.class)
-@SqlGroup({ @Sql(scripts = "/dropTables.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
-		@Sql(scripts = "/schema.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
-		@Sql(scripts = "/data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@EntityScan("com.epam.esm")
+@ComponentScan("com.epam.esm")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class TagRepositoryImplTest {
 
 	private static final Long TAG_ID_1 = 1L;
-	private static final Long TAG_ID_2 = 2L;
-	private static final Long TAG_ID_3 = 3L;
-	private static final String TAG_NAME = "family";
-
-	private static final Long CERTIFICATE_ID_1 = 1L;
+	private static final int OFFSET = 0;
+	private static final int LIMIT_1 = 1;
+	private static final int UPDATED_TAGS_AMOUNT = 1;
+	private static final String TAG_NAME = "Family";
+	private TagModel tag1;
+	private TagModel tag2;
+	private TagModel restoredTag1;
 
 	@Autowired
 	private TagRepository tagRepository;
-	private TagModel tag1;
-	private TagModel tag2;
-	private TagModel tag3;
+	@PersistenceContext
+	private EntityManager entityManager;
 
 	@BeforeEach
 	public void setUp() {
 		tag1 = new TagModel();
-		tag1.setId(TAG_ID_1);
 		tag1.setName("food");
-		tag1.setDeleted(false);
 
 		tag2 = new TagModel();
-		tag2.setId(TAG_ID_2);
 		tag2.setName("family");
-		tag2.setDeleted(false);
 
-		tag3 = new TagModel();
-		tag3.setId(TAG_ID_3);
-		tag3.setName("new year");
-		tag3.setDeleted(false);
-
+		restoredTag1 = new TagModel();
+		restoredTag1.setName("food");
 	}
 
 	@Test
 	void testCreate() {
-		TagModel actual = tagRepository.save(tag3);
-		Assertions.assertEquals(tag3, actual);
+		TagModel actual = tagRepository.save(tag1);
+		Assertions.assertEquals(tag1, actual);
 	}
 
 	@Test
 	void testReadById() {
+		entityManager.persist(tag1);
 		Optional<TagModel> actual = tagRepository.findById(TAG_ID_1);
 		Assertions.assertEquals(Optional.of(tag1), actual);
 	}
 
 	@Test
 	void testTagExistsById() {
+		entityManager.persist(tag1);
 		boolean actual = tagRepository.tagExistsById(TAG_ID_1);
 		Assertions.assertTrue(actual);
 	}
 
 	@Test
-	void testReadByCertificateId() {
-		List<TagModel> actual = tagRepository.readByCertificateId(TAG_ID_1);
-		List<TagModel> expected = Arrays.asList(tag1, tag2);
-		Assertions.assertEquals(expected, actual);
-	}
-
-	@Test
 	void testReadByName() {
+		entityManager.persist(tag2);
 		Optional<TagModel> actual = tagRepository.findByName(TAG_NAME);
 		Assertions.assertEquals(Optional.of(tag2), actual);
 	}
 
 	@Test
 	void testTagExistsByName() {
+		entityManager.persist(tag2);
 		boolean actual = tagRepository.tagExistsByName(TAG_NAME);
 		Assertions.assertTrue(actual);
 	}
 
 	@Test
 	void testReadAll() {
-		MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
-		tagRepository.save(tag3);
-		params.add("page", "2");
-		params.add("limit", "2");
-
-		List<TagModel> actual = tagRepository.findAll(params);
-		List<TagModel> expected = Arrays.asList(tag3);
+		entityManager.persist(tag1);
+		entityManager.persist(tag2);
+		List<TagModel> actual = tagRepository.findAll(OFFSET, LIMIT_1);
+		List<TagModel> expected = Arrays.asList(tag1);
 		Assertions.assertEquals(expected, actual);
 	}
 
 	@Test
 	void testDelete() {
+		entityManager.persist(tag1);
 		int actual = tagRepository.delete(TAG_ID_1);
-		Assertions.assertEquals(1, actual);
-	}
-
-	@Test
-	void testSaveTagsForCertificate() {
-		tagRepository.save(tag3);
-		List<TagModel> tags = Arrays.asList(tag3);
-		int actual = tagRepository.saveTagsForCertificate(CERTIFICATE_ID_1, tags);
-		Assertions.assertEquals(1, actual);
+		Assertions.assertEquals(UPDATED_TAGS_AMOUNT, actual);
 	}
 
 	@Test
 	void testRestore() {
-		TagModel expected = new TagModel();
-		expected.setId(TAG_ID_3);
-		expected.setName(TAG_NAME);
-		expected.setDeleted(true);
-		TagModel actual = tagRepository.restore(expected);
-		expected.setDeleted(false);
-		Assertions.assertEquals(expected, actual);
-	}
-
-	@Test
-	void testDeleteAllTagsForCertificate() {
-		int actual = tagRepository.deleteAllTagsForCertificate(CERTIFICATE_ID_1);
-		Assertions.assertEquals(2, actual);
+		entityManager.persist(tag1);
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaUpdate<TagModel> tagCriteria = criteriaBuilder.createCriteriaUpdate(TagModel.class);
+		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
+		tagCriteria.set(TagModel_.isDeleted, true);
+		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.id), TAG_ID_1));
+		entityManager.createQuery(tagCriteria).executeUpdate();
+		int actual = tagRepository.restore(TAG_ID_1);
+		Assertions.assertEquals(UPDATED_TAGS_AMOUNT, actual);
 	}
 
 }

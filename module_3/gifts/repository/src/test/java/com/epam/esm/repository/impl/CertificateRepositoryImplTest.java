@@ -1,142 +1,173 @@
 package com.epam.esm.repository.impl;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
+import javax.persistence.EntityManager;
+import javax.persistence.PersistenceContext;
+
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlGroup;
-import org.springframework.test.context.junit.jupiter.SpringJUnitConfig;
+import org.springframework.boot.autoconfigure.domain.EntityScan;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.CertificateRepository;
-import com.epam.esm.repository.config.JdbcTestConfiguration;
 import com.epam.esm.repository.model.CertificateModel;
+import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.TagModel;
 
-@SpringJUnitConfig(JdbcTestConfiguration.class)
-@SqlGroup({ @Sql(scripts = "/dropTables.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
-		@Sql(scripts = "/schema.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD),
-		@Sql(scripts = "/data.sql", executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD) })
+import org.springframework.test.context.junit.jupiter.SpringExtension;
+
+@ExtendWith(SpringExtension.class)
+@DataJpaTest
+@EntityScan("com.epam.esm")
+@ComponentScan("com.epam.esm")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class CertificateRepositoryImplTest {
 	private static final Long CERTIFICATE_ID_1 = 1L;
-	private static final Long CERTIFICATE_ID_2 = 2L;
-	private static final Long CERTIFICATE_ID_3 = 3L;
-	private static final Long TAG_ID_2 = 2L;
 	private static final int OFFSET = 0;
-	private static final int LIMIT = 10;
+	private static final int LIMIT_2 = 2;
+	private static final int DELETED_CERTIFICATES_AMOUNT = 1;
 
-	private static final String CERTIFICATE_NAME = "Certificate for Museum of Arts";
+	private static final String CERTIFICATE_NAME = "certificate for Museum of Arts";
+	private static final String SEARCH_PATTERN = "museum";
+	private static final String TAG_NAME = "fAmILy";
+	private static final long TAG_ID_1 = 1;
 
 	private CertificateModel certificate1;
 	private CertificateModel certificate2;
-	private CertificateModel certificate3;
+	private CertificateModel updatedCertificate1;
+	private TagModel tag1;
+	private TagModel tag2;
 
 	@Autowired
 	private CertificateRepository certificateRepository;
 
+	@PersistenceContext
+	private EntityManager entityManager;
+
 	@BeforeEach
 	public void setUp() {
+		tag1 = new TagModel();
+		tag1.setName("food");
+		entityManager.persist(tag1);
+
+		tag2 = new TagModel();
+		tag2.setName("family");
+		entityManager.persist(tag2);
+
+		List<TagModel> tagList1 = new ArrayList<>();
+		tagList1.add(tag1);
+		tagList1.add(tag2);
+
+		List<TagModel> tagList2 = new ArrayList<>();
+		tagList2.add(tag2);
+
+		List<TagModel> updatedTagList2 = new ArrayList<>();
+		updatedTagList2.add(tag1);
+
 		certificate1 = new CertificateModel();
-		certificate1.setId(CERTIFICATE_ID_1);
 		certificate1.setName("Dinner at the restaurant with unlimited pizzas");
 		certificate1.setDescription("Great present for those who loves pizza");
 		certificate1.setPrice(new BigDecimal("50.00"));
-		certificate1.setCreateDate(LocalDateTime.parse("2021-12-14T00:39:00"));
-		certificate1.setLastUpdateDate(LocalDateTime.parse("2021-12-14T00:39:00"));
 		certificate1.setDuration(30);
+		certificate1.setTags(tagList1);
 
 		certificate2 = new CertificateModel();
-		certificate2.setId(CERTIFICATE_ID_2);
 		certificate2.setName("Certificate for Museum of Arts");
 		certificate2.setDescription("Interesting journey into history of art");
 		certificate2.setPrice(new BigDecimal("45.00"));
-		certificate2.setCreateDate(LocalDateTime.parse("2021-12-10T12:45:11"));
-		certificate2.setLastUpdateDate(LocalDateTime.parse("2021-12-10T12:45:11"));
 		certificate2.setDuration(90);
+		certificate2.setTags(tagList2);
 
-		certificate3 = new CertificateModel();
-		certificate3.setId(CERTIFICATE_ID_3);
-		certificate3.setName("Certificate to the Zoo");
-		certificate3.setDescription("Wonderful trip to the Dipriz zoo in Baranovichi");
-		certificate3.setPrice(new BigDecimal("100.00"));
-		certificate3.setCreateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
-		certificate3.setLastUpdateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
-		certificate3.setDuration(365);
+		updatedCertificate1 = new CertificateModel();
+		updatedCertificate1.setId(CERTIFICATE_ID_1);
+		updatedCertificate1.setName("Dinner at the restaurant with 5 pizzas");
+		updatedCertificate1.setDescription("Great present for those who loves pizza");
+		updatedCertificate1.setPrice(new BigDecimal("50.00"));
+		updatedCertificate1.setDuration(30);
+		updatedCertificate1.setTags(updatedTagList2);
 	}
 
 	@Test
 	void testCreate() {
-		CertificateModel actual = certificateRepository.save(certificate3);
-		Assertions.assertEquals(certificate3, actual);
+		CertificateModel actual = certificateRepository.save(certificate1);
+		Assertions.assertEquals(certificate1, actual);
 	}
 
 	@Test
 	void testReadById() {
+		entityManager.persist(certificate1);
 		Optional<CertificateModel> actual = certificateRepository.findById(CERTIFICATE_ID_1);
 		Assertions.assertEquals(Optional.of(certificate1), actual);
 	}
 
 	@Test
 	void testReadByName() {
+		entityManager.persist(certificate2);
 		Optional<CertificateModel> actual = certificateRepository.findByName(CERTIFICATE_NAME);
 		Assertions.assertEquals(Optional.of(certificate2), actual);
 	}
 
 	@Test
 	void testCertificateExistsByName() {
+		entityManager.persist(certificate2);
 		boolean actual = certificateRepository.certificateExistsByName(CERTIFICATE_NAME);
 		Assertions.assertTrue(actual);
 	}
 
 	@Test
-	void testReadAll() {
+	void testReadAllWithSearch() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
-		certificateRepository.save(certificate3);
-		params.add("page", "1");
-		params.add("limit", "1");
-		params.add("sort", "price-");
-
-		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT);
-		List<CertificateModel> expected = Arrays.asList(certificate3);
+		entityManager.persist(certificate1);
+		entityManager.persist(certificate2);
+		params.add(EntityConstant.SEARCH, SEARCH_PATTERN);
+		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
+		List<CertificateModel> expected = Arrays.asList(certificate2);
 		Assertions.assertEquals(expected, actual);
 	}
 
 	@Test
-	void testUpdateCertificate() {
-		CertificateModel expected = new CertificateModel();
-		expected.setId(CERTIFICATE_ID_3);
-		expected.setName("Certificate to the Zoo");
-		expected.setDescription("Wonderful trip to the Dipriz zoo in Baranovichi");
-		expected.setPrice(new BigDecimal("100.00"));
-		expected.setCreateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
-		expected.setLastUpdateDate(LocalDateTime.parse("2021-12-14T11:45:11"));
-		expected.setDuration(365);
-		certificateRepository.save(expected);
-		expected.setDuration(50);
-		
-		CertificateModel actual = certificateRepository.updateCertificate(expected);
-
-		Assertions.assertEquals(expected, actual);
-	}
-
-	@Test
-	void testReadByTagId() {
-		List<CertificateModel> actual = certificateRepository.readByTagId(TAG_ID_2);
+	void testReadAllWithTag() {
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<String, String>();
+		entityManager.persist(certificate1);
+		entityManager.persist(certificate2);
+		params.add(EntityConstant.TAG, TAG_NAME);
+		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
 		List<CertificateModel> expected = Arrays.asList(certificate1, certificate2);
 		Assertions.assertEquals(expected, actual);
 	}
 
 	@Test
+	void testUpdateCertificate() {
+		entityManager.persist(certificate1);
+		CertificateModel actual = certificateRepository.updateCertificate(updatedCertificate1);
+		Assertions.assertEquals(certificate1, actual);
+	}
+
+	@Test
+	void testReadByTagId() {
+		entityManager.persist(certificate1);
+		List<CertificateModel> actual = certificateRepository.readByTagId(TAG_ID_1);
+		List<CertificateModel> expected = Arrays.asList(certificate1);
+		Assertions.assertEquals(expected, actual);
+	}
+
+	@Test
 	void testDelete() {
+		entityManager.persist(certificate1);
 		int actual = certificateRepository.delete(CERTIFICATE_ID_1);
-		Assertions.assertEquals(1, actual);
+		Assertions.assertEquals(DELETED_CERTIFICATES_AMOUNT, actual);
 	}
 
 }

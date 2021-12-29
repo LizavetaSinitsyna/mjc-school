@@ -1,1 +1,0 @@
-DROP TABLE tags_certificates, tags, gift_certificates

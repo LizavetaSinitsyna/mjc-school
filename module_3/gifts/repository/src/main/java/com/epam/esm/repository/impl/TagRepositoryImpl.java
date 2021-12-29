@@ -45,6 +45,7 @@ public class TagRepositoryImpl implements TagRepository {
 			+ "(SELECT find_user_subquery.id FROM (SELECT users.id, SUM(cost) FROM users INNER JOIN orders"
 			+ " ON users.id = orders.user_id GROUP BY users.id ORDER BY 2 DESC LIMIT 1) find_user_subquery) "
 			+ "GROUP BY tags.id ORDER BY 4 DESC LIMIT 1";
+
 	@PersistenceContext
 	private EntityManager entityManager;
 
@@ -150,7 +151,8 @@ public class TagRepositoryImpl implements TagRepository {
 		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
 		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
 		tagCriteria.select(tagRoot);
-		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.name), tagName));
+		tagCriteria.where(
+				criteriaBuilder.equal(criteriaBuilder.lower(tagRoot.get(TagModel_.name)), tagName.toLowerCase()));
 		return entityManager.createQuery(tagCriteria);
 	}
 

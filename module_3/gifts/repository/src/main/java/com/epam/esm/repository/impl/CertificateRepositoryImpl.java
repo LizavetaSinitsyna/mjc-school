@@ -156,7 +156,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		certificateCriteria.select(certificateRoot);
 
 		Predicate isDeletedPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false);
-		Predicate namePredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.name), certificateName);
+		Predicate namePredicate = criteriaBuilder.equal(criteriaBuilder.lower(certificateRoot.get(CertificateModel_.name)), certificateName.toLowerCase());
 		certificateCriteria.where(isDeletedPredicate, namePredicate);
 
 		return entityManager.createQuery(certificateCriteria);
@@ -192,16 +192,17 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		if (tags != null && !tags.isEmpty()) {
 			Join<CertificateModel, TagModel> join = certificateRoot.join(CertificateModel_.tags, JoinType.INNER);
 			for (String tag : tags) {
-				predicates.add(criteriaBuilder.equal(join.get(TagModel_.name), tag));
+				predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(join.get(TagModel_.name)), tag.toLowerCase()));
 			}
 		}
 
 		List<String> searchPart = params.get(EntityConstant.SEARCH);
 		if (searchPart != null) {
 			String search = StringUtils.wrap(searchPart.get(0), PROCENT);
-			Predicate nameSearchPredicate = criteriaBuilder.like(certificateRoot.get(CertificateModel_.name), search);
-			Predicate descriptionSearchPredicate = criteriaBuilder
-					.like(certificateRoot.get(CertificateModel_.description), search);
+			Predicate nameSearchPredicate = criteriaBuilder.like(
+					criteriaBuilder.lower(certificateRoot.get(CertificateModel_.name)), search.toLowerCase());
+			Predicate descriptionSearchPredicate = criteriaBuilder.like(
+					criteriaBuilder.lower(certificateRoot.get(CertificateModel_.description)), search.toLowerCase());
 			predicates.add(criteriaBuilder.or(nameSearchPredicate, descriptionSearchPredicate));
 		}
 

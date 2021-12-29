@@ -144,4 +144,12 @@ class TagServiceImplTest {
 		});
 	}
 
+	@Test
+	void testReadPopularTagByMostProfitableUser() {
+		Mockito.when(tagRepository.findPopularTagByMostProfitableUser()).thenReturn(Optional.of(tagModel1));
+		TagDto actual = tagServiceImpl.readPopularTagByMostProfitableUser();
+		Assertions.assertEquals(tagDto1, actual);
+		Mockito.verify(tagRepository).findPopularTagByMostProfitableUser();
+	}
+
 }
