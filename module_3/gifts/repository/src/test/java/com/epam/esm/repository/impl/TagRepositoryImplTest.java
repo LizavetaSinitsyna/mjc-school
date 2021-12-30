@@ -120,5 +120,11 @@ class TagRepositoryImplTest {
 		int actual = tagRepository.restore(TAG_ID_1);
 		Assertions.assertEquals(UPDATED_TAGS_AMOUNT, actual);
 	}
+	
+	@Test
+	void testFindPopularTagByMostProfitableUser() {
+		Optional<TagModel> actual = tagRepository.findPopularTagByMostProfitableUser();
+		Assertions.assertTrue(actual.isEmpty());
+	}
 
 }

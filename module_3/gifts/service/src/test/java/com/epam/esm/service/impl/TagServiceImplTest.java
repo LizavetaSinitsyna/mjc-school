@@ -19,6 +19,7 @@ import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
@@ -32,7 +33,7 @@ class TagServiceImplTest {
 
 	private CertificateRepository certificateRepository;
 
-	private static TagService tagServiceImpl;
+	private static TagService tagService;
 
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long CERTIFIATE_ID_1 = 1L;
@@ -52,7 +53,7 @@ class TagServiceImplTest {
 	public void setUp() {
 		certificateRepository = Mockito.mock(CertificateRepository.class);
 		tagRepository = Mockito.mock(TagRepository.class);
-		tagServiceImpl = new TagServiceImpl(certificateRepository, tagRepository, tagConverter, tagValidation);
+		tagService = new TagServiceImpl(certificateRepository, tagRepository, tagConverter, tagValidation);
 
 		tagModel1 = new TagModel();
 		tagModel1.setName("food");
@@ -70,7 +71,7 @@ class TagServiceImplTest {
 		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
 		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(false);
 
-		TagDto actual = tagServiceImpl.create(expected);
+		TagDto actual = tagService.create(expected);
 
 		Assertions.assertEquals(expected, actual);
 
@@ -83,7 +84,7 @@ class TagServiceImplTest {
 	void testCreateWithDublicatedName() {
 		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(true);
 		Assertions.assertThrows(ValidationException.class, () -> {
-			tagServiceImpl.create(tagDto1);
+			tagService.create(tagDto1);
 		});
 
 	}
@@ -94,7 +95,7 @@ class TagServiceImplTest {
 
 		Mockito.when(tagRepository.findById(TAG_ID_1)).thenReturn(Optional.of(tagModel1));
 
-		TagDto actual = tagServiceImpl.readById(TAG_ID_1);
+		TagDto actual = tagService.readById(TAG_ID_1);
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(tagRepository).findById(Mockito.anyLong());
@@ -103,7 +104,7 @@ class TagServiceImplTest {
 	@Test
 	void testReadByIdWithInvalidId() {
 		Assertions.assertThrows(ValidationException.class, () -> {
-			tagServiceImpl.readById(INVALID_ID);
+			tagService.readById(INVALID_ID);
 		});
 	}
 
@@ -116,10 +117,20 @@ class TagServiceImplTest {
 
 		Mockito.when(tagRepository.findAll(OFFSET, LIMIT)).thenReturn(tagModels);
 
-		List<TagDto> actual = tagServiceImpl.readAll(params);
+		List<TagDto> actual = tagService.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(tagRepository).findAll(OFFSET, LIMIT);
+	}
+	
+	@Test
+	void testReadAllWithInvalidReadParam() {
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+		params.put(EntityConstant.SEARCH, Arrays.asList("family"));
+
+		Assertions.assertThrows(ValidationException.class, () -> {
+			tagService.readAll(params);
+		});
 	}
 
 	@Test
@@ -130,7 +141,7 @@ class TagServiceImplTest {
 		Mockito.when(certificateRepository.readByTagId(TAG_ID_1)).thenReturn(certificateModels);
 		Mockito.when(tagRepository.delete(TAG_ID_1)).thenReturn(1);
 		Mockito.when(tagRepository.tagExistsById(TAG_ID_1)).thenReturn(true);
-		tagServiceImpl.delete(TAG_ID_1);
+		tagService.delete(TAG_ID_1);
 
 		Mockito.verify(tagRepository).delete(TAG_ID_1);
 		Mockito.verify(certificateRepository).delete(TAG_ID_1);
@@ -140,16 +151,18 @@ class TagServiceImplTest {
 	@Test
 	void testDeleteWithInvalidId() {
 		Assertions.assertThrows(ValidationException.class, () -> {
-			tagServiceImpl.delete(INVALID_ID);
+			tagService.delete(INVALID_ID);
 		});
 	}
 
 	@Test
 	void testReadPopularTagByMostProfitableUser() {
 		Mockito.when(tagRepository.findPopularTagByMostProfitableUser()).thenReturn(Optional.of(tagModel1));
-		TagDto actual = tagServiceImpl.readPopularTagByMostProfitableUser();
+		TagDto actual = tagService.readPopularTagByMostProfitableUser();
 		Assertions.assertEquals(tagDto1, actual);
 		Mockito.verify(tagRepository).findPopularTagByMostProfitableUser();
 	}
+	
+	
 
 }

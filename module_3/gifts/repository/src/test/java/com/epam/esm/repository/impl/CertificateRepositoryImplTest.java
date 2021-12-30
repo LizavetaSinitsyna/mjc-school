@@ -100,20 +100,20 @@ class CertificateRepositoryImplTest {
 	}
 
 	@Test
-	void testCreate() {
+	void testSave() {
 		CertificateModel actual = certificateRepository.save(certificate1);
 		Assertions.assertEquals(certificate1, actual);
 	}
 
 	@Test
-	void testReadById() {
+	void testFindById() {
 		entityManager.persist(certificate1);
 		Optional<CertificateModel> actual = certificateRepository.findById(CERTIFICATE_ID_1);
 		Assertions.assertEquals(Optional.of(certificate1), actual);
 	}
 
 	@Test
-	void testReadByName() {
+	void testFindByName() {
 		entityManager.persist(certificate2);
 		Optional<CertificateModel> actual = certificateRepository.findByName(CERTIFICATE_NAME);
 		Assertions.assertEquals(Optional.of(certificate2), actual);
@@ -144,6 +144,15 @@ class CertificateRepositoryImplTest {
 		entityManager.persist(certificate2);
 		params.add(EntityConstant.TAG, TAG_NAME);
 		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
+		List<CertificateModel> expected = Arrays.asList(certificate1, certificate2);
+		Assertions.assertEquals(expected, actual);
+	}
+	
+	@Test
+	void testFindAll() {
+		entityManager.persist(certificate1);
+		entityManager.persist(certificate2);
+		List<CertificateModel> actual = certificateRepository.findAll(OFFSET, LIMIT_2);
 		List<CertificateModel> expected = Arrays.asList(certificate1, certificate2);
 		Assertions.assertEquals(expected, actual);
 	}

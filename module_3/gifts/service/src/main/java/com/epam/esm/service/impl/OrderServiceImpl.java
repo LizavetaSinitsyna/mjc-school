@@ -53,7 +53,6 @@ public class OrderServiceImpl implements OrderService {
 	public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
 			CertificateRepository certificateRepository, OrderConverter orderConverter,
 			OrderDataConverter orderDataConverter, OrderValidation orderValidation) {
-		super();
 		this.orderRepository = orderRepository;
 		this.userRepository = userRepository;
 		this.certificateRepository = certificateRepository;
