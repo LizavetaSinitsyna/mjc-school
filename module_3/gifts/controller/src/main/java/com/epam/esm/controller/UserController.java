@@ -1,7 +1,5 @@
 package com.epam.esm.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,14 +34,14 @@ public class UserController {
 	/**
 	 * Reads user with passed id.
 	 * 
-	 * @param userId id of user to be read
+	 * @param userId id of the user to be read
 	 * @return user with passed id
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public UserDto readById(@PathVariable long id) {
 		UserDto userDto = userService.readById(id);
-		userDto.add(linkTo(UserController.class).slash(userDto.getId()).withSelfRel());
+		HateoasUtil.addLinksToUser(userDto);
 		return userDto;
 	}
 
@@ -61,7 +59,7 @@ public class UserController {
 			return new ResponseEntity<>(users, HttpStatus.NO_CONTENT);
 		} else {
 			for (UserDto userDto : users) {
-				userDto.add(linkTo(UserController.class).slash(userDto.getId()).withSelfRel());
+				HateoasUtil.addLinksToUser(userDto);
 			}
 			return new ResponseEntity<>(users, HttpStatus.OK);
 		}

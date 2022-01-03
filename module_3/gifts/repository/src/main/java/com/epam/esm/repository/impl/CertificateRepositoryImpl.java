@@ -24,6 +24,7 @@ import javax.persistence.criteria.Root;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -37,6 +38,7 @@ import com.epam.esm.repository.model.CertificateModel_;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
+import com.epam.esm.repository.quiery_builder.CertificateQueryBuilder;
 
 /**
  * 
@@ -49,13 +51,18 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	private static final List<String> UPDATABLE_FIELDS = Arrays.asList(EntityConstant.CERTIFICATE_DESCRIPTION,
 			EntityConstant.CERTIFICATE_DURATION, EntityConstant.CERTIFICATE_PRICE, EntityConstant.NAME,
 			EntityConstant.CERTIFICATE_LAST_UPDATE_DATE, EntityConstant.CERTIFICATE_TAGS);
-	private static final String PROCENT = "%";
 
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	public CertificateRepositoryImpl() {
+	@Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
+	private int batchSize;
 
+	private CertificateQueryBuilder certificateQueryBuilder;
+
+	@Autowired
+	public CertificateRepositoryImpl(CertificateQueryBuilder certificateQueryBuilder) {
+		this.certificateQueryBuilder = certificateQueryBuilder;
 	}
 
 	/**
@@ -72,15 +79,39 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	}
 
 	/**
+	 * Saves the passed certificates.
+	 * 
+	 * @param certificateModels the certificates to be saved
+	 * @return saved certificates
+	 */
+	@Override
+	@Transactional
+	public List<CertificateModel> saveCertificates(List<CertificateModel> certificateModels) {
+		int i = 0;
+		if (certificateModels != null) {
+			for (CertificateModel certificateModel : certificateModels) {
+				entityManager.persist(certificateModel);
+				++i;
+				if (i > 0 && i % batchSize == 0) {
+					entityManager.flush();
+					entityManager.clear();
+				}
+			}
+		}
+		return certificateModels;
+	}
+
+	/**
 	 * Reads certificate with passed id.
 	 * 
-	 * @param certificateId the id of certificate to be read
+	 * @param certificateId the id of the certificate to be read
 	 * @return certificate with passed id
 	 */
 	@Override
 	public Optional<CertificateModel> findById(long certificateId) {
 		try {
-			return Optional.of(obtainReadByIdQuery(certificateId).getSingleResult());
+			return Optional
+					.of(certificateQueryBuilder.obtainReadByIdQuery(entityManager, certificateId).getSingleResult());
 		} catch (NoResultException e) {
 			return Optional.empty();
 		}
@@ -89,44 +120,31 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	/**
 	 * Checks whether certificate with passed id exists.
 	 * 
-	 * @param certificateId the id of tag to be checked
+	 * @param certificateId the id of the certificate to be checked
 	 * @return {@code true} if the the certificate with passed id already exists and
 	 *         {@code false} otherwise
 	 */
 	@Override
 	public boolean certificateExistsById(long certificateId) {
 		try {
-			obtainReadByIdQuery(certificateId).getSingleResult();
+			certificateQueryBuilder.obtainReadByIdQuery(entityManager, certificateId).getSingleResult();
 		} catch (NoResultException e) {
 			return false;
 		}
 		return true;
-
-	}
-
-	private TypedQuery<CertificateModel> obtainReadByIdQuery(long tagId) {
-		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
-		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
-		certificateCriteria.select(certificateRoot);
-
-		Predicate isDeletedPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false);
-		Predicate idPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.id), tagId);
-		certificateCriteria.where(isDeletedPredicate, idPredicate);
-
-		return entityManager.createQuery(certificateCriteria);
 	}
 
 	/**
 	 * Reads certificate with passed name.
 	 * 
-	 * @param certificateName the name of certificate to be read
+	 * @param certificateName the name of the certificate to be read
 	 * @return certificate with passed name
 	 */
 	@Override
 	public Optional<CertificateModel> findByName(String certificateName) {
 		try {
-			return Optional.of(obtainReadByNameQuery(certificateName).getSingleResult());
+			return Optional.of(
+					certificateQueryBuilder.obtainReadByNameQuery(entityManager, certificateName).getSingleResult());
 		} catch (NoResultException e) {
 			return Optional.empty();
 		}
@@ -135,38 +153,27 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	/**
 	 * Checks whether the certificate with passed name already exists.
 	 * 
-	 * @param certificateName the name of certificate to check
+	 * @param certificateName the name of the certificate to check
 	 * @return {@code true} if the the certificate with passed name already exists
 	 *         and {@code false} otherwise
 	 */
 	@Override
 	public boolean certificateExistsByName(String certificateName) {
 		try {
-			obtainReadByNameQuery(certificateName).getSingleResult();
+			certificateQueryBuilder.obtainReadByNameQuery(entityManager, certificateName).getSingleResult();
 		} catch (NoResultException e) {
 			return false;
 		}
 		return true;
 	}
 
-	private TypedQuery<CertificateModel> obtainReadByNameQuery(String certificateName) {
-		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
-		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
-		certificateCriteria.select(certificateRoot);
-
-		Predicate isDeletedPredicate = criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false);
-		Predicate namePredicate = criteriaBuilder.equal(criteriaBuilder.lower(certificateRoot.get(CertificateModel_.name)), certificateName.toLowerCase());
-		certificateCriteria.where(isDeletedPredicate, namePredicate);
-
-		return entityManager.createQuery(certificateCriteria);
-	}
-
 	/**
-	 * Reads all certificates according to passed parameters.
+	 * Reads all certificates according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of certificates and their
-	 *               ordering
+	 * @param params the parameters which define the choice of certificates and
+	 *               their ordering
+	 * @param offset start position for certificates reading
+	 * @param limit  amount of certificates to be read
 	 * @return certificates which meet passed parameters
 	 */
 	@Override
@@ -175,8 +182,8 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
 		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
 		certificateCriteria.select(certificateRoot);
-		certificateCriteria.where(obtainPredicates(params, criteriaBuilder, certificateRoot));
-		certificateCriteria.orderBy(obtainOrders(params, criteriaBuilder, certificateRoot));
+		certificateCriteria.where(certificateQueryBuilder.obtainPredicates(params, criteriaBuilder, certificateRoot));
+		certificateCriteria.orderBy(certificateQueryBuilder.obtainOrders(params, criteriaBuilder, certificateRoot));
 
 		TypedQuery<CertificateModel> typedQuery = entityManager.createQuery(certificateCriteria);
 		typedQuery.setFirstResult(offset);
@@ -184,58 +191,9 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		return typedQuery.getResultList();
 	}
 
-	private Predicate[] obtainPredicates(MultiValueMap<String, String> params, CriteriaBuilder criteriaBuilder,
-			Root<CertificateModel> certificateRoot) {
-		List<Predicate> predicates = new ArrayList<>();
-
-		List<String> tags = params.get(EntityConstant.TAG);
-		if (tags != null && !tags.isEmpty()) {
-			Join<CertificateModel, TagModel> join = certificateRoot.join(CertificateModel_.tags, JoinType.INNER);
-			for (String tag : tags) {
-				predicates.add(criteriaBuilder.equal(criteriaBuilder.lower(join.get(TagModel_.name)), tag.toLowerCase()));
-			}
-		}
-
-		List<String> searchPart = params.get(EntityConstant.SEARCH);
-		if (searchPart != null) {
-			String search = StringUtils.wrap(searchPart.get(0), PROCENT);
-			Predicate nameSearchPredicate = criteriaBuilder.like(
-					criteriaBuilder.lower(certificateRoot.get(CertificateModel_.name)), search.toLowerCase());
-			Predicate descriptionSearchPredicate = criteriaBuilder.like(
-					criteriaBuilder.lower(certificateRoot.get(CertificateModel_.description)), search.toLowerCase());
-			predicates.add(criteriaBuilder.or(nameSearchPredicate, descriptionSearchPredicate));
-		}
-
-		predicates.add(criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false));
-
-		Predicate[] result = new Predicate[predicates.size()];
-		return predicates.toArray(result);
-	}
-
-	private List<Order> obtainOrders(MultiValueMap<String, String> params, CriteriaBuilder criteriaBuilder,
-			Root<CertificateModel> certificateRoot) {
-		List<Order> orderConditions = new ArrayList<>();
-
-		List<String> sortConditions = params.get(EntityConstant.ORDER_BY);
-		if (sortConditions != null) {
-			for (String sortParam : sortConditions) {
-				int lastCharIndex = sortParam.length() - 1;
-				if (sortParam.charAt(lastCharIndex) == EntityConstant.DESC_SIGN) {
-					orderConditions
-							.add(criteriaBuilder.desc(certificateRoot.get(sortParam.substring(0, lastCharIndex))));
-
-				} else {
-					orderConditions.add(criteriaBuilder.asc(certificateRoot.get(sortParam)));
-				}
-			}
-		}
-
-		return orderConditions;
-	}
-
 	/**
 	 * Updates certificate fields with passed id using not {@code null} fields of
-	 * passed certificate entity.
+	 * the passed certificate entity.
 	 * 
 	 * @param certificateToUpdate certificate entity which contains fields with new
 	 *                            values to be set
@@ -273,7 +231,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	/**
 	 * Reads certificates by passed tag id.
 	 * 
-	 * @param tagId the id of tag for certificates reading
+	 * @param tagId the id of the tag for certificates reading
 	 * @return certificates with passed tag
 	 */
 	@Override
@@ -292,7 +250,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	/**
 	 * Deletes certificate with passed id.
 	 * 
-	 * @param id the id of certificate to be deleted
+	 * @param id the id of the certificate to be deleted
 	 * @return the number of deleted certificates
 	 */
 	@Override
@@ -307,6 +265,13 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		return entityManager.createQuery(certificateCriteria).executeUpdate();
 	}
 
+	/**
+	 * Reads all certificates according to the passed parameters.
+	 * 
+	 * @param offset start position for certificates reading
+	 * @param limit  amount of certificates to be read
+	 * @return certificates which meet passed parameters
+	 */
 	@Override
 	public List<CertificateModel> findAll(int offset, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
@@ -319,5 +284,4 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		typedQuery.setMaxResults(limit);
 		return typedQuery.getResultList();
 	}
-
 }

@@ -2,6 +2,7 @@ package com.epam.esm.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -18,7 +19,6 @@ import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.TagDto;
-import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.NullEntityException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
@@ -39,6 +39,7 @@ class CertificateServiceImplTest {
 	private static final Long INVALID_ID = -1L;
 	private static final int OFFSET = 0;
 	private static final int LIMIT = 10;
+
 	private CertificateModel certificateModel1;
 	private CertificateDto certificateDto1;
 	private TagModel tagModel1;
@@ -99,7 +100,6 @@ class CertificateServiceImplTest {
 
 		certificateDto1.setTags(Arrays.asList(tagDto1));
 		certificateModel1.setTags(Arrays.asList(tagModel1));
-
 	}
 
 	@Test
@@ -125,6 +125,25 @@ class CertificateServiceImplTest {
 		Assertions.assertThrows(ValidationException.class, () -> {
 			certificateServiceImpl.create(certificateDto1);
 		});
+	}
+
+	@Test
+	void testCreateCertificates() {
+		List<CertificateDto> expected = new ArrayList<>();
+		expected.add(certificateDto1);
+
+		Mockito.when(certificateRepository.saveCertificates(Mockito.any()))
+				.thenReturn(Arrays.asList(certificateModel1));
+		Mockito.when(certificateRepository.certificateExistsByName(Mockito.any())).thenReturn(false);
+		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
+		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
+
+		List<CertificateDto> actual = certificateServiceImpl.createCertificates(expected);
+
+		Assertions.assertEquals(expected, actual);
+
+		Mockito.verify(certificateRepository).saveCertificates(Mockito.any());
+		Mockito.verify(certificateRepository).certificateExistsByName(Mockito.any());
 	}
 
 	@Test
@@ -185,7 +204,7 @@ class CertificateServiceImplTest {
 	@Test
 	void testDelete() {
 		Mockito.when(certificateRepository.delete(CERTIFICATE_ID_1)).thenReturn(1);
-		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.certificateExistsById(CERTIFICATE_ID_1)).thenReturn(true);
 		certificateServiceImpl.delete(CERTIFICATE_ID_1);
 
 		Mockito.verify(certificateRepository).delete(CERTIFICATE_ID_1);
@@ -205,6 +224,7 @@ class CertificateServiceImplTest {
 		Mockito.when(certificateRepository.updateCertificate(Mockito.any())).thenReturn(certificateModel1);
 		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.certificateExistsById(CERTIFICATE_ID_1)).thenReturn(true);
 		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
 		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
 
@@ -214,7 +234,7 @@ class CertificateServiceImplTest {
 
 		Mockito.verify(certificateRepository).updateCertificate(certificateModel1);
 		Mockito.verify(certificateRepository).findByName(Mockito.any());
-		Mockito.verify(certificateRepository, Mockito.atLeast(1)).findById(CERTIFICATE_ID_1);
+		Mockito.verify(certificateRepository).certificateExistsById(CERTIFICATE_ID_1);
 		Mockito.verify(tagRepository).findByName(Mockito.any());
 	}
 
@@ -222,9 +242,10 @@ class CertificateServiceImplTest {
 	void testUpdateEntireCertificate() {
 		CertificateDto expected = certificateDto1;
 		certificateModel1.setId(CERTIFICATE_ID_1);
+
 		Mockito.when(certificateRepository.updateCertificate(Mockito.any())).thenReturn(certificateModel1);
 		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
-		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.certificateExistsById(CERTIFICATE_ID_1)).thenReturn(true);
 		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
 		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));
 
@@ -234,23 +255,7 @@ class CertificateServiceImplTest {
 
 		Mockito.verify(certificateRepository).updateCertificate(certificateModel1);
 		Mockito.verify(certificateRepository).findByName(Mockito.any());
-		Mockito.verify(certificateRepository, Mockito.atLeast(1)).findById(CERTIFICATE_ID_1);
+		Mockito.verify(certificateRepository).certificateExistsById(CERTIFICATE_ID_1);
 		Mockito.verify(tagRepository).findByName(Mockito.any());
 	}
-
-	@Test
-	void testCheckCertificateExistenceByIdWithNoExistedCertificate() {
-		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.ofNullable(null));
-		Assertions.assertThrows(NotFoundException.class, () -> {
-			certificateServiceImpl.checkCertificateExistenceById(CERTIFICATE_ID_1);
-		});
-	}
-
-	@Test
-	void testCheckCertificateExistenceByIdWithInvalidId() {
-		Assertions.assertThrows(ValidationException.class, () -> {
-			certificateServiceImpl.checkCertificateExistenceById(INVALID_ID);
-		});
-	}
-
 }

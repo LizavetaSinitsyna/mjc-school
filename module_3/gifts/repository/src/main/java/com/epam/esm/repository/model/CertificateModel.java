@@ -43,7 +43,7 @@ public class CertificateModel {
 	private LocalDateTime lastUpdateDate;
 	@Column(name = "is_deleted", nullable = false)
 	private boolean isDeleted;
-	@ManyToMany(fetch = FetchType.LAZY)
+	@ManyToMany(fetch = FetchType.EAGER)
 	@JoinTable(name = "tags_certificates", joinColumns = @JoinColumn(name = "certificate_id", referencedColumnName = "id"), inverseJoinColumns = @JoinColumn(name = "tag_id", referencedColumnName = "id"))
 	List<TagModel> tags;
 }

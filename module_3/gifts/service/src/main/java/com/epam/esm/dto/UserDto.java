@@ -10,5 +10,5 @@ import lombok.EqualsAndHashCode;
 public class UserDto extends RepresentationModel<UserDto> {
 	private Long id;
 	private String login;
-	private Role role;
+	private RoleDto role;
 }

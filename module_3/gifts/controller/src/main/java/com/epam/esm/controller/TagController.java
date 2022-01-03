@@ -49,17 +49,19 @@ public class TagController {
 	/**
 	 * Reads tag with passed id.
 	 * 
-	 * @param tagId id of tag to be read
+	 * @param tagId id of the tag to be read
 	 * @return tag with passed id
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
 	public TagDto readById(@PathVariable long id) {
-		return tagService.readById(id);
+		TagDto tagDto = tagService.readById(id);
+		HateoasUtil.addLinksToTag(tagDto);
+		return tagDto;
 	}
 
 	/**
-	 * Reads all tags according to passed parameters.
+	 * Reads all tags according to the passed parameters.
 	 * 
 	 * @param params the parameters which define the choice of tags and their
 	 *               ordering
@@ -71,6 +73,9 @@ public class TagController {
 		if (tags.isEmpty()) {
 			return new ResponseEntity<>(tags, HttpStatus.NO_CONTENT);
 		} else {
+			for (TagDto tagDto : tags) {
+				HateoasUtil.addLinksToTag(tagDto);
+			}
 			return new ResponseEntity<>(tags, HttpStatus.OK);
 		}
 	}

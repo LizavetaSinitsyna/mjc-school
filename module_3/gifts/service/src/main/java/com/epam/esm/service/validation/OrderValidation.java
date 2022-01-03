@@ -1,20 +1,23 @@
 package com.epam.esm.service.validation;
 
+import com.epam.esm.dto.OrderCertificateDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.service.ServiceConstant;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
 
+/**
+ * Contains methods for order validation.
+ *
+ */
 @Component
 public class OrderValidation {
-	private static final Set<String> POSSIBLE_READ_PARAMS = new HashSet<String>(Arrays.asList("offset", "limit"));
 
 	public OrderValidation() {
 
@@ -29,11 +32,14 @@ public class OrderValidation {
 	 *         empty map
 	 */
 	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
-		Util.checkNull(params, EntityConstant.PARAMS);
-		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
+		ValidationUtil.checkNull(params, EntityConstant.PARAMS);
+
+		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
-		if (!POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
-			errors.put(ErrorCode.INVALID_ORDER_READ_PARAM, EntityConstant.PARAMS + Util.ERROR_RESOURCE_DELIMITER + params);
+
+		if (!ServiceConstant.GENERAL_POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
+			errors.put(ErrorCode.INVALID_ORDER_READ_PARAM,
+					EntityConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + params);
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
@@ -45,7 +51,45 @@ public class OrderValidation {
 		}
 
 		return errors;
-
 	}
 
+	/**
+	 * Validates requirements for the total amount of unique certificates in the
+	 * order and amount of each certificate in the order. Please note that method
+	 * doesn't combine equal order certificates from the passed {@code List}, it
+	 * already expects to receive the {@code List} with unique certificates.
+	 * 
+	 * @param orderCertificates the {@code List} of unique certificates in the order
+	 *                          for validation
+	 * @return {@code Map} of {@code ErrorCode} as key and invalid parameter as a
+	 *         value for invalid order certificates. If all order certificates are
+	 *         valid returns empty map
+	 */
+	public Map<ErrorCode, String> validateOrderCertificatesAmountRequirements(
+			List<OrderCertificateDto> orderCertificates) {
+		ValidationUtil.checkNull(orderCertificates, EntityConstant.ORDER_CERTIFICATES);
+
+		Map<ErrorCode, String> errors = new HashMap<>();
+		int orderCertificatesAmount = orderCertificates.size();
+
+		if (orderCertificatesAmount > ServiceConstant.ORDER_UNIQUE_CERTIFICATE_MAX_AMOUNT) {
+			errors.put(ErrorCode.INVALID_ORDER_UNIQUE_CERTIFICATES_AMOUNT, EntityConstant.CERTIFICATE_AMOUNT
+					+ ValidationUtil.ERROR_RESOURCE_DELIMITER + orderCertificatesAmount);
+		}
+
+		for (OrderCertificateDto orderCertificate : orderCertificates) {
+			Integer certificateAmount = orderCertificate.getCertificateAmount();
+			if (certificateAmount == null || certificateAmount < ServiceConstant.ORDER_CERTIFICATES_MIN_AMOUNT
+					|| certificateAmount > ServiceConstant.ORDER_CERTIFICATES_MAX_AMOUNT) {
+				StringBuilder errorMessage = new StringBuilder();
+				errorMessage.append(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER
+						+ orderCertificate.getCertificate().getId());
+				errorMessage.append(ValidationUtil.ERROR_RESOURCES_LIST_DELIMITER);
+				errorMessage.append(EntityConstant.CERTIFICATE_AMOUNT + ValidationUtil.ERROR_RESOURCE_DELIMITER
+						+ certificateAmount);
+				errors.put(ErrorCode.INVALID_ORDER_CERTIFICATE_AMOUNT, errorMessage.toString());
+			}
+		}
+		return errors;
+	}
 }

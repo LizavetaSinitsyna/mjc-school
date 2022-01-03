@@ -12,8 +12,10 @@ import com.epam.esm.repository.model.CertificateModel;
 public class CertificateConverter {
 	private ModelMapper modelMapper;
 	private Converter<String, String> spaceRemover = new AbstractConverter<String, String>() {
-	    protected String convert(String source) {
-	        return source == null ? null : source.trim().replaceAll("\\s+", " ");}};
+		protected String convert(String source) {
+			return source == null ? null : source.trim().replaceAll("\\s+", " ");
+		}
+	};
 
 	public CertificateConverter() {
 		this.modelMapper = new ModelMapper();

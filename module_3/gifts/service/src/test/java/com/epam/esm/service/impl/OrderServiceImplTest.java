@@ -22,6 +22,7 @@ import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.dto.UserDto;
+import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.OrderRepository;
@@ -29,10 +30,10 @@ import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.CertificateModel;
-import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.OrderCertificateId;
 import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.service.OrderService;
 import com.epam.esm.service.converter.OrderConverter;
 import com.epam.esm.service.converter.OrderDataConverter;
@@ -147,7 +148,6 @@ class OrderServiceImplTest {
 
 		orderDataDto1 = new OrderDataDto();
 		orderDataDto1.setCost(cost);
-
 	}
 
 	@Test
@@ -191,6 +191,26 @@ class OrderServiceImplTest {
 	}
 
 	@Test
+	void testReadAllByUserIdWithNonExistedUserId() {
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+
+		Mockito.when(userRepository.userExistsById(USER_ID_1)).thenReturn(false);
+
+		Assertions.assertThrows(NotFoundException.class, () -> {
+			orderService.readAllByUserId(USER_ID_1, params);
+		});
+	}
+
+	@Test
+	void testReadAllByUserIdWithInvalidUserId() {
+		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+
+		Assertions.assertThrows(ValidationException.class, () -> {
+			orderService.readAllByUserId(-100, params);
+		});
+	}
+
+	@Test
 	void testCreate() {
 		OrderDto expected = orderDto1;
 
@@ -207,6 +227,39 @@ class OrderServiceImplTest {
 		Mockito.verify(certificateRepository).findById(Mockito.anyLong());
 		Mockito.verify(certificateRepository).certificateExistsById(Mockito.anyLong());
 		Mockito.verify(orderRepository).save(Mockito.any());
+	}
+
+	@Test
+	void testCreateWithNullCertificatesList() {
+		orderDto1.setCertificates(null);
+
+		Mockito.when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(userModel1));
+
+		Assertions.assertThrows(ValidationException.class, () -> {
+			orderService.create(USER_ID_1, orderDto1);
+		});
+	}
+
+	@Test
+	void testCreateOrders() {
+		List<OrderDto> expected = new ArrayList<>();
+		orderDto1.getUser().setId(USER_ID_1);
+		expected.add(orderDto1);
+		userModel1.setId(USER_ID_1);
+
+		Mockito.when(userRepository.findById(USER_ID_1)).thenReturn(Optional.of(userModel1));
+		Mockito.when(certificateRepository.findById(Mockito.anyLong())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.certificateExistsById(Mockito.anyLong())).thenReturn(true);
+		Mockito.when(orderRepository.saveOrders(Mockito.any())).thenReturn(Arrays.asList(orderModel1));
+
+		List<OrderDto> actual = orderService.createOrders(expected);
+
+		Assertions.assertEquals(expected, actual);
+
+		Mockito.verify(userRepository).findById(USER_ID_1);
+		Mockito.verify(certificateRepository).findById(Mockito.anyLong());
+		Mockito.verify(certificateRepository).certificateExistsById(Mockito.anyLong());
+		Mockito.verify(orderRepository).saveOrders(Mockito.any());
 	}
 
 	@Test
@@ -271,5 +324,4 @@ class OrderServiceImplTest {
 			orderService.readAll(params);
 		});
 	}
-
 }

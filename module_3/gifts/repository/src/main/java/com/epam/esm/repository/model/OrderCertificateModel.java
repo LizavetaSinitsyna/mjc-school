@@ -24,5 +24,4 @@ public class OrderCertificateModel {
 	private CertificateModel certificate;
 	@Column(name = "certificate_amount")
 	private Integer certificateAmount;
-
 }

@@ -17,12 +17,12 @@ import com.epam.esm.repository.model.EntityConstant;
  * Contains common methods which help in entity validation.
  *
  */
-public class Util {
+public class ValidationUtil {
 	public static final String ERROR_RESOURCE_DELIMITER = " = ";
 	public static final String ERROR_RESOURCES_LIST_DELIMITER = ", ";
 	private static final String DEFAULT_OBJECT_NAME = "object";
 
-	private Util() {
+	private ValidationUtil() {
 
 	}
 
@@ -48,7 +48,7 @@ public class Util {
 		if (source != null) {
 			return source.trim().replaceAll("\\s+", " ");
 		}
-		return null;
+		return source;
 	}
 
 	/**
@@ -56,8 +56,7 @@ public class Util {
 	 * 
 	 * @param params the map which should be in lower case
 	 * @return passed map with all keys and values in lower case
-	 * @throws NullEntityException if passed object is {@code null}
-	 * @see #checkNull(Object)
+	 * @throws NullEntityException if passed params is {@code null}
 	 */
 	public static MultiValueMap<String, String> mapToLowerCase(MultiValueMap<String, String> params) {
 		checkNull(params, EntityConstant.PARAMS);
@@ -75,8 +74,8 @@ public class Util {
 	}
 
 	/**
-	 * Checks the length requirements to the passed string. Before performing
-	 * checking it removes extra spaces.
+	 * Checks the length requirements to the passed string. Before the check it
+	 * removes extra spaces.
 	 * 
 	 * @param source    the value to be checked
 	 * @param minLength the required minimum length for passed string
@@ -94,19 +93,20 @@ public class Util {
 	}
 
 	/**
-	 * Check if passed object is null.
+	 * Checks if passed object is null.
 	 * 
-	 * @param object the object to be checked
-	 * @param objectName 
+	 * @param object     the object to be checked
+	 * @param objectName the name of the object to check. It will be used as a part
+	 *                   of the exception message if passed object is {@code null}
 	 * @throws NullEntityException if passed object is {@code null}
 	 */
 	public static void checkNull(Object object, String objectName) {
 		if (object == null) {
-			if(objectName == null) {
+			if (objectName == null) {
 				objectName = DEFAULT_OBJECT_NAME;
 			}
-			throw new NullEntityException(objectName + ERROR_RESOURCE_DELIMITER + object, ErrorCode.NULL_PASSED_PARAMETER);
+			throw new NullEntityException(objectName + ERROR_RESOURCE_DELIMITER + object,
+					ErrorCode.NULL_PASSED_PARAMETER);
 		}
 	}
-
 }

@@ -28,12 +28,12 @@ public class GlobalExceptionHandler {
 	private static final String KEY_MIDDLE = ".middle_part";
 
 	private MessageSource messageSource;
-	private Environment enviroment;
+	private Environment environment;
 
 	@Autowired
-	public GlobalExceptionHandler(MessageSource messageSource, Environment enviroment) {
+	public GlobalExceptionHandler(MessageSource messageSource, Environment environment) {
 		this.messageSource = messageSource;
-		this.enviroment = enviroment;
+		this.environment = environment;
 	}
 
 	@ExceptionHandler(ValidationException.class)
@@ -110,7 +110,7 @@ public class GlobalExceptionHandler {
 	public ApiException handleException(Exception exception) {
 		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
-		if (Arrays.asList(enviroment.getActiveProfiles()).contains("dev")) {
+		if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
 			return new ApiRootCausesException(errorMessage, errorCode.getCode(),
 					Arrays.toString(exception.getStackTrace()));
 		}
@@ -129,7 +129,5 @@ public class GlobalExceptionHandler {
 		ErrorCode errorCode = ErrorCode.INVALID_JSON_FORMAT;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiRootCausesException(errorMessage, errorCode.getCode(), exception.getOriginalMessage());
-
 	}
-
 }

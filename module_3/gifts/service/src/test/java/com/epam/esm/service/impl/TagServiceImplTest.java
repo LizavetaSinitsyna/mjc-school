@@ -1,5 +1,6 @@
 package com.epam.esm.service.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -27,19 +28,18 @@ import com.epam.esm.service.validation.TagValidation;
 
 @ExtendWith(MockitoExtension.class)
 class TagServiceImplTest {
-	private static TagValidation tagValidation;
-	private static TagConverter tagConverter;
-	private TagRepository tagRepository;
-
-	private CertificateRepository certificateRepository;
-
-	private static TagService tagService;
-
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long CERTIFIATE_ID_1 = 1L;
 	private static final Long INVALID_ID = -1L;
 	private static final int OFFSET = 0;
 	private static final int LIMIT = 10;
+
+	private static TagValidation tagValidation;
+	private static TagConverter tagConverter;
+	private static TagService tagService;
+	private TagRepository tagRepository;
+	private CertificateRepository certificateRepository;
+
 	private TagModel tagModel1;
 	private TagDto tagDto1;
 
@@ -61,7 +61,6 @@ class TagServiceImplTest {
 
 		tagDto1 = new TagDto();
 		tagDto1.setName("food");
-
 	}
 
 	@Test
@@ -77,7 +76,6 @@ class TagServiceImplTest {
 
 		Mockito.verify(tagRepository).save(Mockito.any());
 		Mockito.verify(tagRepository).tagExistsByName(Mockito.any());
-
 	}
 
 	@Test
@@ -86,7 +84,22 @@ class TagServiceImplTest {
 		Assertions.assertThrows(ValidationException.class, () -> {
 			tagService.create(tagDto1);
 		});
+	}
 
+	@Test
+	void testCreateTags() {
+		List<TagDto> expected = new ArrayList<>();
+		expected.add(tagDto1);
+
+		Mockito.when(tagRepository.saveTags(Mockito.any())).thenReturn(Arrays.asList(tagModel1));
+		Mockito.when(tagRepository.tagExistsByName(Mockito.any())).thenReturn(false);
+
+		List<TagDto> actual = tagService.createTags(expected);
+
+		Assertions.assertEquals(expected, actual);
+
+		Mockito.verify(tagRepository).saveTags(Mockito.any());
+		Mockito.verify(tagRepository).tagExistsByName(Mockito.any());
 	}
 
 	@Test
@@ -122,7 +135,7 @@ class TagServiceImplTest {
 
 		Mockito.verify(tagRepository).findAll(OFFSET, LIMIT);
 	}
-	
+
 	@Test
 	void testReadAllWithInvalidReadParam() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
@@ -138,9 +151,11 @@ class TagServiceImplTest {
 		CertificateModel certificateModel = new CertificateModel();
 		certificateModel.setId(CERTIFIATE_ID_1);
 		List<CertificateModel> certificateModels = Arrays.asList(certificateModel);
+
 		Mockito.when(certificateRepository.readByTagId(TAG_ID_1)).thenReturn(certificateModels);
 		Mockito.when(tagRepository.delete(TAG_ID_1)).thenReturn(1);
 		Mockito.when(tagRepository.tagExistsById(TAG_ID_1)).thenReturn(true);
+
 		tagService.delete(TAG_ID_1);
 
 		Mockito.verify(tagRepository).delete(TAG_ID_1);
@@ -162,7 +177,4 @@ class TagServiceImplTest {
 		Assertions.assertEquals(tagDto1, actual);
 		Mockito.verify(tagRepository).findPopularTagByMostProfitableUser();
 	}
-	
-	
-
 }

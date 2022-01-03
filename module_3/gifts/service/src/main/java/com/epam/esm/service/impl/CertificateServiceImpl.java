@@ -23,33 +23,25 @@ import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
+import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.converter.CertificateConverter;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.CertificateValidation;
 import com.epam.esm.service.validation.TagValidation;
-import com.epam.esm.service.validation.Util;
+import com.epam.esm.service.validation.ValidationUtil;
 
 /**
  * 
- * Contains methods implementation for working mostly with
- * {@code CertificateDto} entity.
+ * Contains methods implementation for working mostly with certificate entities.
  *
  */
 @Service
 public class CertificateServiceImpl implements CertificateService {
-	private static final int OFFSET = 0;
-	private static final int LIMIT = 10;
-
 	private CertificateRepository certificateRepository;
-
 	private TagRepository tagRepository;
-
 	private CertificateValidation certificateValidation;
-
 	private TagValidation tagValidation;
-
 	private CertificateConverter certificateConverter;
-
 	private TagConverter tagConverter;
 
 	@Autowired
@@ -65,7 +57,8 @@ public class CertificateServiceImpl implements CertificateService {
 	}
 
 	/**
-	 * Creates and saves the passed certificate.
+	 * Creates and saves the passed certificate. If tags from the passed certificate
+	 * don't exist they will be created and saved as well.
 	 * 
 	 * @param certificateDto the certificate to be saved
 	 * @return saved certificate
@@ -74,10 +67,48 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	@Transactional
 	public CertificateDto create(CertificateDto certificateDto) {
+		CertificateModel certificateModel = obtainCertificateModelToSave(certificateDto);
+		CertificateModel createdCertificateModel = certificateRepository.save(certificateModel);
+		CertificateDto createdCertificate = certificateConverter.convertToDto(createdCertificateModel);
+		return createdCertificate;
+	}
+
+	/**
+	 * Creates and saves the passed certificates. If tags from the passed
+	 * certificates don't exist they will be created and saved as well.
+	 * 
+	 * @param certificateDtos the certificates to be saved
+	 * @return saved certificates
+	 * @throws ValidationException if any of passed certificates contains invalid
+	 *                             fields
+	 */
+	@Override
+	@Transactional
+	public List<CertificateDto> createCertificates(List<CertificateDto> certificateDtos) {
+		List<CertificateDto> createdCertificates = null;
+		if (certificateDtos != null) {
+			createdCertificates = new ArrayList<>(certificateDtos.size());
+			List<CertificateModel> certificatesToSave = new ArrayList<>(certificateDtos.size());
+			for (CertificateDto certificateDto : certificateDtos) {
+				CertificateModel certificateModel = obtainCertificateModelToSave(certificateDto);
+				certificatesToSave.add(certificateModel);
+			}
+
+			List<CertificateModel> createdCertificateModels = certificateRepository
+					.saveCertificates(certificatesToSave);
+			for (CertificateModel certificateModel : createdCertificateModels) {
+				CertificateDto createdCertificate = certificateConverter.convertToDto(certificateModel);
+				createdCertificates.add(createdCertificate);
+			}
+		}
+		return createdCertificates;
+	}
+
+	private CertificateModel obtainCertificateModelToSave(CertificateDto certificateDto) {
 		Map<ErrorCode, String> errors = certificateValidation.validateAllCertificateUpdatableFields(certificateDto);
-		if (certificateRepository.certificateExistsByName(Util.removeExtraSpaces(certificateDto.getName()))) {
+		if (certificateRepository.certificateExistsByName(ValidationUtil.removeExtraSpaces(certificateDto.getName()))) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 
 		if (!errors.isEmpty()) {
@@ -85,32 +116,28 @@ public class CertificateServiceImpl implements CertificateService {
 		}
 		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
 		certificateDto.setId(null);
-		CertificateModel certificateModel = certificateConverter.convertToModel(certificateDto);
-		CertificateModel createdCertificateModel = certificateRepository.save(certificateModel);
-		CertificateDto createdCertificate = certificateConverter.convertToDto(createdCertificateModel);
-
-		return createdCertificate;
+		return certificateConverter.convertToModel(certificateDto);
 	}
 
 	/**
 	 * Reads certificate with passed id.
 	 * 
-	 * @param certificateId the id of certificate to be read
+	 * @param certificateId the id of the certificate to be read
 	 * @return certificate with passed id
 	 * @throws ValidationException if passed certificate id is invalid
 	 * @throws NotFoundException   if certificate with passed id does not exist
 	 */
 	@Override
 	public CertificateDto readById(long certificateId) {
-		if (!Util.isPositive(certificateId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
+		if (!ValidationUtil.isPositive(certificateId)) {
+			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
 
 		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
 
 		if (certificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
+			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.NO_CERTIFICATE_FOUND);
 		}
 
@@ -120,16 +147,16 @@ public class CertificateServiceImpl implements CertificateService {
 	}
 
 	/**
-	 * Reads all certificates according to passed parameters.
+	 * Reads all certificates according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of certificates and their
-	 *               ordering
+	 * @param params the parameters which define the choice of certificates and
+	 *               their ordering
 	 * @return certificates which meet passed parameters
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
 	public List<CertificateDto> readAll(MultiValueMap<String, String> params) {
-		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
+		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 
 		Map<ErrorCode, String> errors = certificateValidation.validateReadParams(paramsInLowerCase);
 		if (!errors.isEmpty()) {
@@ -141,8 +168,8 @@ public class CertificateServiceImpl implements CertificateService {
 					convertToFieldNames(paramsInLowerCase.get(EntityConstant.ORDER_BY)));
 		}
 
-		int offset = OFFSET;
-		int limit = LIMIT;
+		int offset = ServiceConstant.OFFSET;
+		int limit = ServiceConstant.LIMIT;
 
 		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
 			offset = Integer.parseInt(paramsInLowerCase.get(EntityConstant.OFFSET).get(0));
@@ -158,6 +185,7 @@ public class CertificateServiceImpl implements CertificateService {
 			CertificateDto certificateDto = certificateConverter.convertToDto(certificateModel);
 			certificateDtos.add(certificateDto);
 		}
+
 		return certificateDtos;
 	}
 
@@ -166,7 +194,7 @@ public class CertificateServiceImpl implements CertificateService {
 		for (String sortParam : sortParams) {
 			StringBuilder fieldName = new StringBuilder();
 			String[] words = sortParam.split("_");
-			if (words.length > 1) {
+			if (words.length >= 1) {
 				fieldName.append(words[0].toLowerCase());
 				for (int i = 1; i < words.length; i++) {
 					fieldName.append(words[i].substring(0, 1).toUpperCase());
@@ -177,7 +205,7 @@ public class CertificateServiceImpl implements CertificateService {
 			}
 			sortFields.add(fieldName.toString());
 		}
-		System.out.println(sortFields);
+
 		return sortFields;
 	}
 
@@ -186,9 +214,6 @@ public class CertificateServiceImpl implements CertificateService {
 	 * 
 	 * @param certificateId the id of certificate to be deleted
 	 * @return the number of deleted certificates
-	 * @param params the parameters which define choice of certificates and their
-	 *               ordering
-	 * @return certificates which meet passed parameters
 	 * @throws ValidationException if passed certificate id is invalid
 	 * @throws NotFoundException   if certificate with passed id does not exist
 	 */
@@ -221,7 +246,7 @@ public class CertificateServiceImpl implements CertificateService {
 
 		if (!isCertificateNameUniqueForUpdate(certificateId, certificateDto)) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 
 		if (!errors.isEmpty()) {
@@ -247,7 +272,8 @@ public class CertificateServiceImpl implements CertificateService {
 	 * @param certificate   certificate entity which contains fields with new values
 	 *                      to be set
 	 * @return updated certificate
-	 * @throws ValidationException if passed certificate fields are invalid
+	 * @throws ValidationException if passed certificate id or certificate fields
+	 *                             are invalid
 	 * @throws NotFoundException   if certificate with passed id does not exist
 	 */
 	@Override
@@ -259,7 +285,7 @@ public class CertificateServiceImpl implements CertificateService {
 
 		if (!isCertificateNameUniqueForUpdate(certificateId, certificateDto)) {
 			errors.put(ErrorCode.DUPLICATED_CERTIFICATE_NAME,
-					EntityConstant.NAME + Util.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
+					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateDto.getName());
 		}
 
 		if (!errors.isEmpty()) {
@@ -277,26 +303,16 @@ public class CertificateServiceImpl implements CertificateService {
 		return updatedCertificateDto;
 	}
 
-	/**
-	 * Checks if certificate with passed id exists.
-	 * 
-	 * @param certificateId the id to be checked
-	 * @throws ValidationException if passed id is not valid
-	 * @throws NotFoundException   if certificate with passed id does not exist
-	 */
-	@Override
-	public void checkCertificateExistenceById(long certificateId) {
-		if (!Util.isPositive(certificateId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
+	private void checkCertificateExistenceById(long certificateId) {
+		if (!ValidationUtil.isPositive(certificateId)) {
+			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
-		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
 
-		if (certificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId,
+		if (!certificateRepository.certificateExistsById(certificateId)) {
+			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId,
 					ErrorCode.NO_CERTIFICATE_FOUND);
 		}
-
 	}
 
 	private List<TagDto> obtainCertificateTags(List<TagDto> initialTagDtos) {
@@ -310,7 +326,7 @@ public class CertificateServiceImpl implements CertificateService {
 		for (TagDto tagDto : tagDtos) {
 			tagDto.setId(null);
 			TagModel tagModelToSave = null;
-			Optional<TagModel> tagModel = tagRepository.findByName(Util.removeExtraSpaces(tagDto.getName()));
+			Optional<TagModel> tagModel = tagRepository.findByName(ValidationUtil.removeExtraSpaces(tagDto.getName()));
 			if (tagModel.isEmpty()) {
 				Map<ErrorCode, String> errors = tagValidation.validateAllTagFields(tagDto);
 				if (!errors.isEmpty()) {
@@ -331,10 +347,8 @@ public class CertificateServiceImpl implements CertificateService {
 	}
 
 	private boolean isCertificateNameUniqueForUpdate(Long certificateId, CertificateDto certificateDto) {
-		String testedName = Util.removeExtraSpaces(certificateDto.getName());
+		String testedName = ValidationUtil.removeExtraSpaces(certificateDto.getName());
 		Optional<CertificateModel> certificateModel = certificateRepository.findByName(testedName);
 		return certificateModel.isEmpty() || certificateModel.get().getId() == certificateId;
-
 	}
-
 }

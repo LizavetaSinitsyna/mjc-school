@@ -1,5 +1,6 @@
 package com.epam.esm.repository;
 
+import java.util.List;
 import java.util.Optional;
 
 import com.epam.esm.repository.model.UserModel;
@@ -10,17 +11,16 @@ import com.epam.esm.repository.model.UserModel;
  *
  */
 public interface UserRepository extends GeneralRepository<UserModel> {
-
 	/**
-	 * Reads user with passed name.
+	 * Reads user with passed login.
 	 * 
-	 * @param userName the name of the user to be read
-	 * @return user with passed name
+	 * @param login the name of the user to be read
+	 * @return user with passed login
 	 */
 	Optional<UserModel> findByLogin(String login);
-	
+
 	/**
-	 * Checks whether user with passed id exists.
+	 * Checks whether the user with passed id exists.
 	 * 
 	 * @param userId the id of user to be checked
 	 * @return {@code true} if the the user with passed id already exists and
@@ -28,4 +28,20 @@ public interface UserRepository extends GeneralRepository<UserModel> {
 	 */
 	boolean userExistsById(long userId);
 
+	/**
+	 * Checks whether user with passed login exists.
+	 * 
+	 * @param login the login of the user to be checked
+	 * @return {@code true} if the the user with passed login already exists and
+	 *         {@code false} otherwise
+	 */
+	boolean userExistsByLogin(String login);
+
+	/**
+	 * Saves the passed users.
+	 * 
+	 * @param userModels the users to be saved
+	 * @return saved users
+	 */
+	List<UserModel> saveUsers(List<UserModel> userModels);
 }

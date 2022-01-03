@@ -29,7 +29,6 @@ allprojects {
 }
 
 subprojects {
-	
 	dependencies {
 		compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
 		annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
@@ -43,7 +42,6 @@ subprojects {
 		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
 		
 		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"
-		implementation group: 'javax.xml.bind', name: 'jaxb-api', version: '2.3.0'
 	}
 	
 	test {
@@ -52,6 +50,5 @@ subprojects {
 }
 
 dependencies {
-		
 	implementation project(':controller')	
 }

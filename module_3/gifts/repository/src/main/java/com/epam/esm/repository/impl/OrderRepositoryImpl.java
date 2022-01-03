@@ -20,6 +20,7 @@ import javax.transaction.Transactional;
 
 import org.hibernate.Criteria;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -30,10 +31,10 @@ import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
-import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
 import com.epam.esm.repository.model.OrderModel_;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.UserModel_;
@@ -46,9 +47,11 @@ import com.epam.esm.repository.model.UserModel_;
  */
 @Repository
 public class OrderRepositoryImpl implements OrderRepository {
-
 	@PersistenceContext
 	private EntityManager entityManager;
+
+	@Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
+	private int batchSize;
 
 	public OrderRepositoryImpl() {
 
@@ -63,6 +66,36 @@ public class OrderRepositoryImpl implements OrderRepository {
 	@Override
 	@Transactional
 	public OrderModel save(OrderModel orderModel) {
+		prepareOrderModelToSave(orderModel);
+		entityManager.persist(orderModel);
+		return orderModel;
+	}
+
+	/**
+	 * Saves the passed orders.
+	 * 
+	 * @param ordersToSave the orders to be saved
+	 * @return saved orders
+	 */
+	@Override
+	@Transactional
+	public List<OrderModel> saveOrders(List<OrderModel> ordersToSave) {
+		int i = 0;
+		if (ordersToSave != null) {
+			for (OrderModel orderModel : ordersToSave) {
+				prepareOrderModelToSave(orderModel);
+				entityManager.persist(orderModel);
+				++i;
+				if (i > 0 && i % batchSize == 0) {
+					entityManager.flush();
+					entityManager.clear();
+				}
+			}
+		}
+		return ordersToSave;
+	}
+
+	private void prepareOrderModelToSave(OrderModel orderModel) {
 		List<OrderCertificateModel> orderCertificateModels = orderModel.getCertificates();
 		if (orderCertificateModels != null && !orderCertificateModels.isEmpty()) {
 			for (OrderCertificateModel orderCertificate : orderCertificateModels) {
@@ -72,29 +105,26 @@ public class OrderRepositoryImpl implements OrderRepository {
 				orderCertificate.setOrder(orderModel);
 			}
 		}
-		orderModel.setCertificates(orderCertificateModels);
 		UserModel userModel = entityManager.find(UserModel.class, orderModel.getUser().getId());
 		orderModel.setUser(userModel);
-		entityManager.persist(orderModel);
-		return orderModel;
 	}
 
 	/**
 	 * Reads order with passed id.
 	 * 
-	 * @param orderId the id of order to be read
+	 * @param orderId the id of the order to be read
 	 * @return order with passed id
 	 */
-
 	@Override
 	public Optional<OrderModel> findById(long orderId) {
 		return Optional.ofNullable(entityManager.find(OrderModel.class, orderId));
 	}
 
 	/**
-	 * Reads all orders according to passed parameters.
+	 * Reads all orders according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of orders and their ordering
+	 * @param offset start position for orders reading
+	 * @param limit  amount of orders to be read
 	 * @return orders which meet passed parameters
 	 */
 	@Override
@@ -109,6 +139,14 @@ public class OrderRepositoryImpl implements OrderRepository {
 		return typedQuery.getResultList();
 	}
 
+	/**
+	 * Reads all orders for the specified user according to the passed parameters.
+	 * 
+	 * @param userId id of the user whose orders should be read
+	 * @param offset start position for orders reading
+	 * @param limit  amount of orders to be read
+	 * @return orders which meet passed parameters
+	 */
 	@Override
 	public List<OrderModel> readAllByUserId(long userId, int offset, int limit) {
 		List<OrderModel> orders = new ArrayList<>();

@@ -32,7 +32,7 @@ public class StatisticController {
 	 * @return the most widely used tag of a user with the highest cost of all
 	 *         orders
 	 */
-	@GetMapping("/popular/tag")
+	@GetMapping("/tags/popular")
 	@ResponseStatus(HttpStatus.OK)
 	public TagDto readPopularTagByMostCostlyUser() {
 		return tagService.readPopularTagByMostProfitableUser();

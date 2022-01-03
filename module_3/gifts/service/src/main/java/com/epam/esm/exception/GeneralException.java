@@ -3,7 +3,6 @@ package com.epam.esm.exception;
 import java.util.Map;
 
 public class GeneralException extends RuntimeException {
-
 	private static final long serialVersionUID = 1L;
 
 	private String invalidResource;
@@ -31,5 +30,4 @@ public class GeneralException extends RuntimeException {
 	public Map<ErrorCode, String> getErrors() {
 		return errors;
 	}
-
 }

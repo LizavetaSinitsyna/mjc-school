@@ -9,7 +9,7 @@ import com.epam.esm.repository.model.OrderCertificateModel;
 @Component
 public class OrderCertificateConverter {
 	private ModelMapper modelMapper;
-	
+
 	public OrderCertificateConverter() {
 		this.modelMapper = new ModelMapper();
 		modelMapper.getConfiguration().setFieldMatchingEnabled(true);

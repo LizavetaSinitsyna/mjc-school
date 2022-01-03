@@ -9,6 +9,7 @@ import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
@@ -22,26 +23,23 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
-import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.OrderModel;
+import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.OrderService;
+import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.converter.OrderConverter;
 import com.epam.esm.service.converter.OrderDataConverter;
 import com.epam.esm.service.validation.OrderValidation;
-import com.epam.esm.service.validation.Util;
+import com.epam.esm.service.validation.ValidationUtil;
 
 /**
  * 
- * Contains methods implementation for working mostly with {@code UserDto}
- * entity.
+ * Contains methods implementation for working mostly with order entities.
  *
  */
 @Service
 public class OrderServiceImpl implements OrderService {
-	private static final int OFFSET = 0;
-	private static final int LIMIT = 10;
-
 	private OrderRepository orderRepository;
 	private UserRepository userRepository;
 	private CertificateRepository certificateRepository;
@@ -62,22 +60,24 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	/**
-	 * Reads user with passed id.
+	 * Reads order with passed id.
 	 * 
-	 * @param userId id of user to be read
-	 * @return user with passed id
+	 * @param orderId id of the order to be read
+	 * @return order with passed id
+	 * @throws ValidationException if passed order id is invalid
+	 * @throws NotFoundException   if the order with passed id does not exist
 	 */
 	@Override
 	public OrderDto readById(long orderId) {
-		if (!Util.isPositive(orderId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + orderId,
+		if (!ValidationUtil.isPositive(orderId)) {
+			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
 					ErrorCode.INVALID_ORDER_ID);
 		}
 
 		Optional<OrderModel> orderModel = orderRepository.findById(orderId);
 
 		if (orderModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + orderId,
+			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
 					ErrorCode.NO_ORDER_FOUND);
 		}
 
@@ -87,20 +87,25 @@ public class OrderServiceImpl implements OrderService {
 	}
 
 	/**
-	 * Reads all users according to passed parameters.
+	 * Reads all orders for the specified user according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of users and their ordering
-	 * @return users which meet passed parameters
+	 * @param userId id of the user whose orders should be read
+	 * @param params the parameters which define the choice of orders and their
+	 *               ordering
+	 * 
+	 * @return orders for specified user which meet the passed parameters
+	 * @throws NotFoundException   if user with passed id does not exist
+	 * @throws ValidationException if passed user id or read parameters are invalid
 	 */
 	@Override
 	public List<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params) {
-		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
-		if (!Util.isPositive(userId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + userId,
+		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
+		if (!ValidationUtil.isPositive(userId)) {
+			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
 					ErrorCode.INVALID_USER_ID);
 		}
 		if (!userRepository.userExistsById(userId)) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + userId,
+			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
 					ErrorCode.NO_USER_FOUND);
 		}
 		Map<ErrorCode, String> errors = orderValidation.validateReadParams(paramsInLowerCase);
@@ -109,8 +114,8 @@ public class OrderServiceImpl implements OrderService {
 			throw new ValidationException(errors, ErrorCode.INVALID_ORDER_REQUEST_PARAMS);
 		}
 
-		int offset = OFFSET;
-		int limit = LIMIT;
+		int offset = ServiceConstant.OFFSET;
+		int limit = ServiceConstant.LIMIT;
 
 		if (params.containsKey(EntityConstant.OFFSET)) {
 			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
@@ -128,21 +133,71 @@ public class OrderServiceImpl implements OrderService {
 		return orderDtos;
 	}
 
+	/**
+	 * Creates and saves the passed order for the specified user.
+	 * 
+	 * @param orderDto the order to be saved
+	 * @param userId   the id of the user whose order will be saved
+	 * @return saved order
+	 * @throws NotFoundException   if user with passed id does not exist
+	 * @throws ValidationException if passed user id is invalid or passed order
+	 *                             contains invalid fields
+	 */
 	@Override
 	public OrderDto create(long userId, OrderDto orderDto) {
+		OrderModel savedOrder = orderRepository.save(obtainOrderModelToSave(userId, orderDto));
+		return orderConverter.convertToDto(savedOrder);
+	}
+
+	/**
+	 * Creates and saves the passed orders.
+	 * 
+	 * @param orderDtos the orders to be saved
+	 * @return saved orders
+	 * @throws NotFoundException   if the user from the passed order entity does not
+	 *                             exist
+	 * @throws ValidationException if the id of the user from the passed order
+	 *                             entity is invalid or any of passed orders
+	 *                             contains invalid fields
+	 */
+	@Override
+	@Transactional
+	public List<OrderDto> createOrders(List<OrderDto> orderDtos) {
+		List<OrderDto> createdOrders = null;
+		if (orderDtos != null) {
+			createdOrders = new ArrayList<>(orderDtos.size());
+			List<OrderModel> ordersToSave = new ArrayList<>(orderDtos.size());
+			for (OrderDto orderDto : orderDtos) {
+				OrderModel orderModel = obtainOrderModelToSave(orderDto.getUser().getId(), orderDto);
+				ordersToSave.add(orderModel);
+			}
+
+			List<OrderModel> createdOrderModels = orderRepository.saveOrders(ordersToSave);
+			for (OrderModel orderModel : createdOrderModels) {
+				OrderDto createdOrder = orderConverter.convertToDto(orderModel);
+				createdOrders.add(createdOrder);
+			}
+		}
+		return createdOrders;
+	}
+
+	private OrderModel obtainOrderModelToSave(long userId, OrderDto orderDto) {
 		Optional<UserModel> userModel = userRepository.findById(userId);
 		if (userModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + userId,
+			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
 					ErrorCode.NO_USER_FOUND);
 		}
 
-		Map<ErrorCode, String> errors = checkOrderCorrectness(orderDto);
-
+		Map<ErrorCode, String> errors = checkOrderContentExistance(orderDto);
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
 		}
 
 		List<OrderCertificateDto> orderCertificates = obtainUniqueOrderCertificates(orderDto.getCertificates());
+		errors = orderValidation.validateOrderCertificatesAmountRequirements(orderCertificates);
+		if (!errors.isEmpty()) {
+			throw new ValidationException(errors, ErrorCode.INVALID_CERTIFICATE);
+		}
 
 		BigDecimal cost = new BigDecimal("0");
 
@@ -155,34 +210,41 @@ public class OrderServiceImpl implements OrderService {
 
 			cost = cost.add(certificateModel.getPrice().multiply(new BigDecimal(certificateAmount)));
 		}
-		
+
 		orderDto.setId(null);
 		orderDto.setCertificates(orderCertificates);
 		OrderModel orderToSave = orderConverter.convertToModel(orderDto);
 		orderToSave.setCost(cost);
 		orderToSave.setUser(userModel.get());
-		OrderModel savedOrder = orderRepository.save(orderToSave);
-
-		return orderConverter.convertToDto(savedOrder);
+		return orderToSave;
 	}
 
+	/**
+	 * Reads information about the order with passed id for the specified user.
+	 * 
+	 * @param userId  id of the user whose order should be read
+	 * @param orderId id of the order to be read
+	 * @return information about the order with passed id for the specified user
+	 * @throws NotFoundException   if the order with passed id does not exist
+	 * @throws ValidationException if passed order or user id is invalid
+	 */
 	@Override
 	public OrderDataDto readOrderDataByUserId(long userId, long orderId) {
-		if (!Util.isPositive(orderId)) {
-			throw new ValidationException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + orderId,
+		if (!ValidationUtil.isPositive(orderId)) {
+			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
 					ErrorCode.INVALID_ORDER_ID);
 		}
 
 		Optional<OrderModel> orderModel = orderRepository.findById(orderId);
 
 		if (orderModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + orderId,
+			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
 					ErrorCode.NO_ORDER_FOUND);
 		} else if (orderModel.get().getUser().getId() != userId) {
 			StringBuilder errorMessage = new StringBuilder();
-			errorMessage.append(EntityConstant.USER_ID + Util.ERROR_RESOURCE_DELIMITER + userId);
-			errorMessage.append(Util.ERROR_RESOURCES_LIST_DELIMITER);
-			errorMessage.append(EntityConstant.ORDER_ID + Util.ERROR_RESOURCE_DELIMITER + orderId);
+			errorMessage.append(EntityConstant.USER_ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId);
+			errorMessage.append(ValidationUtil.ERROR_RESOURCES_LIST_DELIMITER);
+			errorMessage.append(EntityConstant.ORDER_ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId);
 			throw new ValidationException(errorMessage.toString(), ErrorCode.USER_ID_MISMATCH);
 		}
 
@@ -191,17 +253,25 @@ public class OrderServiceImpl implements OrderService {
 		return orderDataDto;
 	}
 
+	/**
+	 * Reads all orders according to the passed parameters.
+	 * 
+	 * @param params the parameters which define the choice of orders and their
+	 *               ordering
+	 * @return orders which meet passed parameters
+	 * @throws ValidationException if passed parameters are invalid
+	 */
 	@Override
 	public List<OrderDto> readAll(MultiValueMap<String, String> params) {
-		MultiValueMap<String, String> paramsInLowerCase = Util.mapToLowerCase(params);
+		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = orderValidation.validateReadParams(paramsInLowerCase);
 
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_ORDER_REQUEST_PARAMS);
 		}
 
-		int offset = OFFSET;
-		int limit = LIMIT;
+		int offset = ServiceConstant.OFFSET;
+		int limit = ServiceConstant.LIMIT;
 
 		if (params.containsKey(EntityConstant.OFFSET)) {
 			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
@@ -239,43 +309,30 @@ public class OrderServiceImpl implements OrderService {
 			orderCertificateDto.setCertificateAmount(orderCertificate.getValue());
 			resultOrderCertificates.add(orderCertificateDto);
 		}
-
 		return resultOrderCertificates;
-
 	}
 
-	private Map<ErrorCode, String> checkOrderCorrectness(OrderDto orderDto) {
-		Util.checkNull(orderDto, EntityConstant.ORDER);
+	private Map<ErrorCode, String> checkOrderContentExistance(OrderDto orderDto) {
+		ValidationUtil.checkNull(orderDto, EntityConstant.ORDER);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		List<OrderCertificateDto> orderCertificates = orderDto.getCertificates();
 		if (orderCertificates == null || orderCertificates.isEmpty()) {
 			errors.put(ErrorCode.NO_ORDER_CERTIFICATES_FOUND,
-					EntityConstant.ORDER_CERTIFICATES + Util.ERROR_RESOURCE_DELIMITER + orderCertificates);
+					EntityConstant.ORDER_CERTIFICATES + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderCertificates);
 		} else {
 			for (OrderCertificateDto orderCertificate : orderCertificates) {
 				CertificateDto certificateDto = orderCertificate.getCertificate();
-				Util.checkNull(certificateDto, EntityConstant.CERTIFICATE);
+				ValidationUtil.checkNull(certificateDto, EntityConstant.CERTIFICATE);
 				Long certificateId = certificateDto.getId();
-				if (!Util.isPositive(certificateId)) {
+				if (!ValidationUtil.isPositive(certificateId)) {
 					errors.put(ErrorCode.INVALID_CERTIFICATE_ID,
-							EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
+							EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId);
 				} else if (!certificateRepository.certificateExistsById(certificateId)) {
 					errors.put(ErrorCode.NO_CERTIFICATE_FOUND,
-							EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
-				}
-
-				Integer certificateAmount = orderCertificate.getCertificateAmount();
-				if (certificateAmount == null || certificateAmount < 1) {
-					StringBuilder errorMessage = new StringBuilder();
-					errorMessage.append(EntityConstant.ID + Util.ERROR_RESOURCE_DELIMITER + certificateId);
-					errorMessage.append(Util.ERROR_RESOURCES_LIST_DELIMITER);
-					errorMessage.append(
-							EntityConstant.CERTIFICATE_AMOUNT + Util.ERROR_RESOURCE_DELIMITER + certificateAmount);
-					errors.put(ErrorCode.NEGATIVE_ORDER_CERTIFICATE_AMOUNT, errorMessage.toString());
+							EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId);
 				}
 			}
 		}
 		return errors;
 	}
-
 }

@@ -17,6 +17,7 @@ import javax.transaction.Transactional;
 
 import org.hibernate.Criteria;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
@@ -28,6 +29,8 @@ import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
+import com.epam.esm.repository.quiery_builder.CertificateQueryBuilder;
+import com.epam.esm.repository.quiery_builder.TagQueryBuilder;
 
 /**
  * 
@@ -49,8 +52,14 @@ public class TagRepositoryImpl implements TagRepository {
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	public TagRepositoryImpl() {
+	@Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
+	private int batchSize;
 
+	private TagQueryBuilder tagQueryBuilder;
+
+	@Autowired
+	public TagRepositoryImpl(TagQueryBuilder tagQueryBuilder) {
+		this.tagQueryBuilder = tagQueryBuilder;
 	}
 
 	/**
@@ -67,32 +76,54 @@ public class TagRepositoryImpl implements TagRepository {
 	}
 
 	/**
+	 * Saves the passed tags.
+	 * 
+	 * @param tagModels the tags to be saved
+	 * @return saved tags
+	 */
+	@Override
+	@Transactional
+	public List<TagModel> saveTags(List<TagModel> tagModels) {
+		int i = 0;
+		if (tagModels != null) {
+			for (TagModel tagModel : tagModels) {
+				entityManager.persist(tagModel);
+				++i;
+				if (i > 0 && i % batchSize == 0) {
+					entityManager.flush();
+					entityManager.clear();
+				}
+			}
+		}
+		return tagModels;
+	}
+
+	/**
 	 * Reads tag with passed id.
 	 * 
-	 * @param tagId the id of tag to be read
+	 * @param tagId the id of the tag to be read
 	 * @return tag with passed id
 	 */
-
 	@Override
 	public Optional<TagModel> findById(long tagId) {
 		try {
-			return Optional.of(obtainReadByIdQuery(tagId).getSingleResult());
+			return Optional.of(tagQueryBuilder.obtainReadByIdQuery(entityManager, tagId).getSingleResult());
 		} catch (NoResultException e) {
 			return Optional.empty();
 		}
 	}
 
 	/**
-	 * Checks whether tag with passed id exists.
+	 * Checks whether the tag with passed id exists.
 	 * 
-	 * @param tagId the id of tag to be checked
+	 * @param tagId the id of the tag to be checked
 	 * @return {@code true} if the the tag with passed id already exists and
 	 *         {@code false} otherwise
 	 */
 	@Override
 	public boolean tagExistsById(long tagId) {
 		try {
-			obtainReadByIdQuery(tagId).getSingleResult();
+			tagQueryBuilder.obtainReadByIdQuery(entityManager, tagId).getSingleResult();
 		} catch (NoResultException e) {
 			return false;
 		}
@@ -100,66 +131,43 @@ public class TagRepositoryImpl implements TagRepository {
 
 	}
 
-	private TypedQuery<TagModel> obtainReadByIdQuery(long tagId) {
-		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
-		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
-		tagCriteria.select(tagRoot);
-
-		Predicate isDeletedPredicate = criteriaBuilder.equal(tagRoot.get(TagModel_.isDeleted), false);
-		Predicate idPredicate = criteriaBuilder.equal(tagRoot.get(TagModel_.id), tagId);
-		tagCriteria.where(isDeletedPredicate, idPredicate);
-
-		return entityManager.createQuery(tagCriteria);
-	}
-
 	/**
 	 * Reads tag with passed name even if it is marked as deleted.
 	 * 
-	 * @param tagName the name of entity to be read
+	 * @param tagName the name of the tag to be read
 	 * @return tag with passed name
 	 */
-
 	@Override
 	public Optional<TagModel> findByName(String tagName) {
 		try {
-			return Optional.of(obtainReadByNameQuery(tagName).getSingleResult());
+			return Optional.of(tagQueryBuilder.obtainReadByNameQuery(entityManager, tagName).getSingleResult());
 		} catch (NoResultException e) {
 			return Optional.empty();
 		}
 	}
 
 	/**
-	 * Checks whether tag with passed name exists.
+	 * Checks whether the tag with passed name exists.
 	 * 
-	 * @param tagName the name of tag to be checked
+	 * @param tagName the name of the tag to be checked
 	 * @return {@code true} if the the tag with passed name already exists and
 	 *         {@code false} otherwise
 	 */
 	@Override
 	public boolean tagExistsByName(String tagName) {
 		try {
-			obtainReadByNameQuery(tagName).getSingleResult();
+			tagQueryBuilder.obtainReadByNameQuery(entityManager, tagName).getSingleResult();
 		} catch (NoResultException e) {
 			return false;
 		}
 		return true;
 	}
 
-	private TypedQuery<TagModel> obtainReadByNameQuery(String tagName) {
-		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
-		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
-		tagCriteria.select(tagRoot);
-		tagCriteria.where(
-				criteriaBuilder.equal(criteriaBuilder.lower(tagRoot.get(TagModel_.name)), tagName.toLowerCase()));
-		return entityManager.createQuery(tagCriteria);
-	}
-
 	/**
-	 * Reads all tags according to passed parameters.
+	 * Reads all tags according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of tags and their ordering
+	 * @param offset start position for tags reading
+	 * @param limit  amount of tags to be read
 	 * @return tags which meet passed parameters
 	 */
 	@Override
@@ -207,6 +215,12 @@ public class TagRepositoryImpl implements TagRepository {
 		return entityManager.createQuery(tagCriteria).executeUpdate();
 	}
 
+	/**
+	 * Finds the most widely used tag of a user with the highest cost of all orders.
+	 * 
+	 * @return the most widely used tag of a user with the highest cost of all
+	 *         orders
+	 */
 	@Override
 	public Optional<TagModel> findPopularTagByMostProfitableUser() {
 		try {

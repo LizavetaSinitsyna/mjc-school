@@ -21,17 +21,17 @@ public interface GeneralRepository<T> {
 	/**
 	 * Reads entity with passed id.
 	 * 
-	 * @param id the id of entity to be read
+	 * @param id the id of the entity to be read
 	 * @return entity with passed id
 	 */
 	Optional<T> findById(long id);
 
 	/**
-	 * Reads all entities according to passed parameters.
+	 * Reads all entities according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of tags and their ordering
-	 * @return tags which meet passed parameters
+	 * @param offset start position for entities reading
+	 * @param limit  amount of entities to be read
+	 * @return entities which meet passed parameters
 	 */
 	List<T> findAll(int offset, int limit);
-
 }

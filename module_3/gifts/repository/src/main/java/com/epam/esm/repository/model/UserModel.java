@@ -26,8 +26,8 @@ public class UserModel {
 	@Column(nullable = false, length = 25, unique = true)
 	private String login;
 	@ManyToOne
-	@JoinColumn(name = "role_id")
-	private Role role;
+	@JoinColumn(name = "role_id", nullable = false)
+	private RoleModel role;
 	@OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
 	private List<OrderModel> orders;
 }

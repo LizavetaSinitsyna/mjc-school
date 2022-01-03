@@ -8,17 +8,27 @@ import com.epam.esm.dto.CertificateDto;
 
 /**
  * 
- * Contains methods for working mostly with {@code CertificateDto} entity.
+ * Contains methods for working mostly with certificate entities.
  *
  */
 public interface CertificateService {
 	/**
-	 * Creates and saves the passed certificate.
+	 * Creates and saves the passed certificate. If tags from the passed certificate
+	 * don't exist they will be created and saved as well.
 	 * 
 	 * @param certificateDto the certificate to be saved
 	 * @return saved certificate
 	 */
 	CertificateDto create(CertificateDto certificateDto);
+
+	/**
+	 * Creates and saves the passed certificates. If tags from the passed
+	 * certificates don't exist they will be created and saved as well.
+	 * 
+	 * @param certificateDtos the certificates to be saved
+	 * @return saved certificates
+	 */
+	List<CertificateDto> createCertificates(List<CertificateDto> certificateDtos);
 
 	/**
 	 * Reads certificate with passed id.
@@ -31,7 +41,7 @@ public interface CertificateService {
 	/**
 	 * Deletes certificate with passed id.
 	 * 
-	 * @param certificateId the id of certificate to be deleted
+	 * @param certificateId the id of the certificate to be deleted
 	 * @return the number of deleted certificates
 	 */
 	int delete(long certificateId);
@@ -59,22 +69,11 @@ public interface CertificateService {
 	CertificateDto updateEntireCertificate(long certificateId, CertificateDto certificate);
 
 	/**
-	 * Reads all certificates according to passed parameters.
+	 * Reads all certificates according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of certificates and their
-	 *               ordering
+	 * @param params the parameters which define the choice of certificates and
+	 *               their ordering
 	 * @return certificates which meet passed parameters
 	 */
 	List<CertificateDto> readAll(MultiValueMap<String, String> params);
-
-	/**
-	 * Checks if certificate with passed id exists.
-	 * 
-	 * @param certificateId the id to be checked
-	 * @throws ValidationException if passed id is not valid
-	 * @throws NotFoundException   if certificate with passed id does not exist
-	 * @see #isIdValid(long)
-	 */
-	void checkCertificateExistenceById(long certificateId);
-
 }

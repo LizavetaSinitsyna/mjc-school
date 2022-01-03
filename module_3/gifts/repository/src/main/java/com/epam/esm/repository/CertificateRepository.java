@@ -13,27 +13,26 @@ import com.epam.esm.repository.model.CertificateModel;
  *
  */
 public interface CertificateRepository extends GeneralRepository<CertificateModel> {
-
 	/**
 	 * Reads certificates by passed tag id.
 	 * 
-	 * @param tagId the id of tag for certificates reading
+	 * @param tagId the id of the tag for certificates reading
 	 * @return certificates with passed tag
 	 */
 	List<CertificateModel> readByTagId(long tagId);
 
 	/**
-	 * Reads entity with passed name.
+	 * Reads certificate with passed name.
 	 * 
-	 * @param name the name of entity to be read
-	 * @return entity with passed name
+	 * @param name the name of the certificate to be read
+	 * @return certificate with passed name
 	 */
 	Optional<CertificateModel> findByName(String name);
 
 	/**
 	 * Checks whether the certificate with passed name already exists.
 	 * 
-	 * @param certificateName the name of certificate to check
+	 * @param certificateName the name of the certificate to check
 	 * @return {@code true} if the the certificate with passed name already exists
 	 *         and {@code false} otherwise
 	 */
@@ -41,7 +40,7 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 
 	/**
 	 * Updates certificate fields with passed id using not {@code null} fields of
-	 * passed certificate entity.
+	 * the passed certificate.
 	 * 
 	 * @param certificateToUpdate certificate entity which contains fields with new
 	 *                            values to be set
@@ -50,28 +49,38 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	CertificateModel updateCertificate(CertificateModel certificateToUpdate);
 
 	/**
-	 * Reads all certificates according to passed parameters.
+	 * Reads all certificates according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of certificates and their
-	 *               ordering
+	 * @param params the parameters which define the choice of certificates and
+	 *               their ordering
+	 * @param offset start position for certificates reading
+	 * @param limit  amount of certificates to be read
 	 * @return certificates which meet passed parameters
 	 */
 	List<CertificateModel> findAll(MultiValueMap<String, String> params, int offset, int limit);
 
 	/**
-	 * Deletes entity with passed id.
+	 * Deletes certificate with passed id.
 	 * 
-	 * @param id the id of entity to be deleted
-	 * @return the number of deleted entities
+	 * @param id the id of the certificate to be deleted
+	 * @return the number of deleted certificates
 	 */
 	int delete(long id);
 
 	/**
 	 * Checks whether certificate with passed id exists.
 	 * 
-	 * @param certificateId the id of tag to be checked
+	 * @param certificateId the id of the certificate to be checked
 	 * @return {@code true} if the the certificate with passed id already exists and
 	 *         {@code false} otherwise
 	 */
 	boolean certificateExistsById(long certificateId);
+
+	/**
+	 * Saves the passed certificates.
+	 * 
+	 * @param certificateModels the certificates to be saved
+	 * @return saved certificates
+	 */
+	List<CertificateModel> saveCertificates(List<CertificateModel> certificateModels);
 }

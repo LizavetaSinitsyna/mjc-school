@@ -8,7 +8,7 @@ import com.epam.esm.dto.TagDto;
 
 /**
  * 
- * Contains methods for working mostly with {@code TagDto} entity.
+ * Contains methods for working mostly with tag entities.
  *
  */
 public interface TagService {
@@ -21,17 +21,26 @@ public interface TagService {
 	TagDto create(TagDto tagDto);
 
 	/**
+	 * Creates and saves the passed tags.
+	 * 
+	 * @param tagDtos the tags to be saved
+	 * @return saved tags
+	 */
+	List<TagDto> createTags(List<TagDto> tagDtos);
+
+	/**
 	 * Reads tag with passed id.
 	 * 
-	 * @param tagId id of tag to be read
+	 * @param tagId id of the tag to be read
 	 * @return tag with passed id
 	 */
 	TagDto readById(long tagId);
 
 	/**
-	 * Reads all tags according to passed parameters.
+	 * Reads all tags according to the passed parameters.
 	 * 
-	 * @param params the parameters which define choice of tags and their ordering
+	 * @param params the parameters which define the choice of tags and their
+	 *               ordering
 	 * @return tags which meet passed parameters
 	 */
 	List<TagDto> readAll(MultiValueMap<String, String> params);
@@ -39,11 +48,17 @@ public interface TagService {
 	/**
 	 * Deletes tag with passed id.
 	 * 
-	 * @param tagId the id of tag to be deleted
+	 * @param tagId the id of the tag to be deleted
 	 * @return the number of deleted tags
 	 */
 	int delete(long tagId);
 
+	/**
+	 * Finds the most widely used tag of a user with the highest cost of all
+	 * orders.
+	 * 
+	 * @return the most widely used tag of a user with the highest cost of all
+	 *         orders
+	 */
 	TagDto readPopularTagByMostProfitableUser();
-
 }
