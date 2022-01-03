@@ -31,7 +31,6 @@ import com.epam.esm.repository.model.TagModel_;
 @ComponentScan("com.epam.esm")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class TagRepositoryImplTest {
-
 	private static final Long TAG_ID_1 = 1L;
 	private static final int OFFSET = 0;
 	private static final int LIMIT_1 = 1;
@@ -120,11 +119,10 @@ class TagRepositoryImplTest {
 		int actual = tagRepository.restore(TAG_ID_1);
 		Assertions.assertEquals(UPDATED_TAGS_AMOUNT, actual);
 	}
-	
+
 	@Test
 	void testFindPopularTagByMostProfitableUser() {
 		Optional<TagModel> actual = tagRepository.findPopularTagByMostProfitableUser();
 		Assertions.assertTrue(actual.isEmpty());
 	}
-
 }

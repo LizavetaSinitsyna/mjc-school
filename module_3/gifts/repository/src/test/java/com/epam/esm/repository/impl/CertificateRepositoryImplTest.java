@@ -147,7 +147,7 @@ class CertificateRepositoryImplTest {
 		List<CertificateModel> expected = Arrays.asList(certificate1, certificate2);
 		Assertions.assertEquals(expected, actual);
 	}
-	
+
 	@Test
 	void testFindAll() {
 		entityManager.persist(certificate1);
@@ -178,5 +178,4 @@ class CertificateRepositoryImplTest {
 		int actual = certificateRepository.delete(CERTIFICATE_ID_1);
 		Assertions.assertEquals(DELETED_CERTIFICATES_AMOUNT, actual);
 	}
-
 }
