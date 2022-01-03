@@ -14,6 +14,8 @@ import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaBuilder;
 import javax.persistence.criteria.CriteriaQuery;
 import javax.persistence.criteria.CriteriaUpdate;
+import javax.persistence.criteria.Join;
+import javax.persistence.criteria.JoinType;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
@@ -149,11 +151,17 @@ public class OrderRepositoryImpl implements OrderRepository {
 	 */
 	@Override
 	public List<OrderModel> readAllByUserId(long userId, int offset, int limit) {
-		List<OrderModel> orders = new ArrayList<>();
-		UserModel userModel = entityManager.find(UserModel.class, userId);
-		if (userModel != null) {
-			orders = userModel.getOrders();
-		}
-		return orders;
+		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+		CriteriaQuery<OrderModel> orderCriteria = criteriaBuilder.createQuery(OrderModel.class);
+		Root<OrderModel> orderRoot = orderCriteria.from(OrderModel.class);
+		orderCriteria.select(orderRoot);
+
+		Join<OrderModel, UserModel> join = orderRoot.join(OrderModel_.user, JoinType.INNER);
+		orderCriteria.where(criteriaBuilder.equal(join.get(UserModel_.id), userId));
+
+		TypedQuery<OrderModel> typedQuery = entityManager.createQuery(orderCriteria);
+		typedQuery.setFirstResult(offset);
+		typedQuery.setMaxResults(limit);
+		return typedQuery.getResultList();
 	}
 }

@@ -106,6 +106,15 @@ class CertificateRepositoryImplTest {
 	}
 
 	@Test
+	void testSaveCertificates() {
+		List<CertificateModel> expected = new ArrayList<>();
+		expected.add(certificate1);
+		expected.add(certificate2);
+		List<CertificateModel> actual = certificateRepository.saveCertificates(expected);
+		Assertions.assertEquals(expected, actual);
+	}
+
+	@Test
 	void testFindById() {
 		entityManager.persist(certificate1);
 		Optional<CertificateModel> actual = certificateRepository.findById(CERTIFICATE_ID_1);

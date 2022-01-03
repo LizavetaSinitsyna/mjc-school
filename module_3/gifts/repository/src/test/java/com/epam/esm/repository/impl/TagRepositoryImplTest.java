@@ -1,5 +1,6 @@
 package com.epam.esm.repository.impl;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
+import com.epam.esm.repository.model.UserModel;
 
 @ExtendWith(SpringExtension.class)
 @DataJpaTest
@@ -58,9 +60,18 @@ class TagRepositoryImplTest {
 	}
 
 	@Test
-	void testCreate() {
+	void testSave() {
 		TagModel actual = tagRepository.save(tag1);
 		Assertions.assertEquals(tag1, actual);
+	}
+
+	@Test
+	void testSaveTags() {
+		List<TagModel> expected = new ArrayList<>();
+		expected.add(tag1);
+		expected.add(tag2);
+		List<TagModel> actual = tagRepository.saveTags(expected);
+		Assertions.assertEquals(expected, actual);
 	}
 
 	@Test

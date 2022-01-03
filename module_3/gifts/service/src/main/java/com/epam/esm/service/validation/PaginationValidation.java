@@ -32,7 +32,7 @@ public class PaginationValidation {
 			errors.put(ErrorCode.INVALID_LIMIT_FORMAT,
 					EntityConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialLimit);
 		}
-		if (limit <= 0) {
+		if (errors.isEmpty() && limit <= 0) {
 			errors.put(ErrorCode.NEGATIVE_LIMIT,
 					EntityConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + limit);
 		}
@@ -55,7 +55,7 @@ public class PaginationValidation {
 			errors.put(ErrorCode.INVALID_OFFSET_FORMAT,
 					EntityConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialOffset);
 		}
-		if (offset < 0) {
+		if (errors.isEmpty() && offset < 0) {
 			errors.put(ErrorCode.NEGATIVE_OFFSET,
 					EntityConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + offset);
 		}
