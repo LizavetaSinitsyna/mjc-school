@@ -11,12 +11,13 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
-import org.springframework.web.servlet.NoHandlerFoundException;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
@@ -74,12 +75,13 @@ public class GlobalExceptionHandler {
 		return new ApiRootCausesException(errorMessage, errorCode.getCode(), error.toString());
 	}
 
-	@ExceptionHandler(NoHandlerFoundException.class)
+	@ExceptionHandler(HttpRequestMethodNotSupportedException.class)
 	@ResponseStatus(HttpStatus.BAD_REQUEST)
-	public ApiException handleNoHandlerFoundException(NoHandlerFoundException exception) {
-		ErrorCode errorCode = ErrorCode.NO_HANDLER_FOUND_ERROR_CODE;
-		String errorMessage = obtainExceptionMessage(errorCode.getCode(), exception.getRequestURL());
-		return new ApiException(errorMessage, errorCode.getCode());
+	public ApiException handleNoHandlerFoundException(HttpRequestMethodNotSupportedException exception) {
+		ErrorCode errorCode = ErrorCode.NO_METHOD_FOUND;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		String error = exception.getLocalizedMessage();
+		return new ApiRootCausesException(errorMessage, errorCode.getCode(), error.toString());
 	}
 
 	private ApiException handleException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode,
@@ -105,18 +107,6 @@ public class GlobalExceptionHandler {
 		return messageSource.getMessage(KEY_PREFIX + key, null, locale);
 	}
 
-	@ExceptionHandler(Exception.class)
-	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-	public ApiException handleException(Exception exception) {
-		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
-		String errorMessage = obtainExceptionMessage(errorCode.getCode());
-		if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
-			return new ApiRootCausesException(errorMessage, errorCode.getCode(),
-					Arrays.toString(exception.getStackTrace()));
-		}
-		return new ApiException(errorMessage, errorCode.getCode());
-	}
-
 	@ExceptionHandler(NotFoundException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ApiException handleNotFoundException(NotFoundException exception) {
@@ -129,5 +119,34 @@ public class GlobalExceptionHandler {
 		ErrorCode errorCode = ErrorCode.INVALID_JSON_FORMAT;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiRootCausesException(errorMessage, errorCode.getCode(), exception.getOriginalMessage());
+	}
+
+	@ExceptionHandler(HttpMessageNotReadableException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	public ApiException handleJsonProcessingException(HttpMessageNotReadableException exception) {
+		Throwable cause = exception.getRootCause();
+		if (cause == null) {
+			return handleException(exception);
+		} else if (cause instanceof InvalidFormatException) {
+			return handleInvalidFormatException((InvalidFormatException) cause);
+		} else if (cause instanceof JsonProcessingException) {
+			return handleJsonProcessingException((JsonProcessingException) cause);
+		} else {
+			return handleException(exception);
+		}
+	}
+
+	@ExceptionHandler(Exception.class)
+	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+	public ApiException handleException(Exception exception) {
+		System.out.println(exception.getClass());
+		System.out.println(exception.getCause());
+		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {
+			return new ApiRootCausesException(errorMessage, errorCode.getCode(),
+					Arrays.toString(exception.getStackTrace()));
+		}
+		return new ApiException(errorMessage, errorCode.getCode());
 	}
 }
