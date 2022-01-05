@@ -18,7 +18,7 @@ import com.epam.esm.service.TagService;
 @RequestMapping("/api/v1/statistics")
 public class StatisticController {
 
-	private TagService tagService;
+	private final TagService tagService;
 
 	@Autowired
 	public StatisticController(TagService tagService) {

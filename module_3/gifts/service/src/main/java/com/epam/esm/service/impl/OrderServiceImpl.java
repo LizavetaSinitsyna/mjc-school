@@ -40,12 +40,12 @@ import com.epam.esm.service.validation.ValidationUtil;
  */
 @Service
 public class OrderServiceImpl implements OrderService {
-	private OrderRepository orderRepository;
-	private UserRepository userRepository;
-	private CertificateRepository certificateRepository;
-	private OrderConverter orderConverter;
-	private OrderDataConverter orderDataConverter;
-	private OrderValidation orderValidation;
+	private final OrderRepository orderRepository;
+	private final UserRepository userRepository;
+	private final CertificateRepository certificateRepository;
+	private final OrderConverter orderConverter;
+	private final OrderDataConverter orderDataConverter;
+	private final OrderValidation orderValidation;
 
 	@Autowired
 	public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
@@ -74,16 +74,12 @@ public class OrderServiceImpl implements OrderService {
 					ErrorCode.INVALID_ORDER_ID);
 		}
 
-		Optional<OrderModel> orderModel = orderRepository.findById(orderId);
+		OrderModel orderModel = orderRepository.findById(orderId)
+				.orElseThrow(() -> new NotFoundException(
+						EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
+						ErrorCode.NO_ORDER_FOUND));
 
-		if (orderModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
-					ErrorCode.NO_ORDER_FOUND);
-		}
-
-		OrderDto orderDto = orderConverter.convertToDto(orderModel.get());
-
-		return orderDto;
+		return orderConverter.convertToDto(orderModel);
 	}
 
 	/**
@@ -127,9 +123,9 @@ public class OrderServiceImpl implements OrderService {
 
 		List<OrderModel> orderModels = orderRepository.readAllByUserId(userId, offset, limit);
 		List<OrderDto> orderDtos = new ArrayList<>(orderModels.size());
-		for (OrderModel orderModel : orderModels) {
-			orderDtos.add(orderConverter.convertToDto(orderModel));
-		}
+
+		orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
+
 		return orderDtos;
 	}
 
@@ -163,30 +159,23 @@ public class OrderServiceImpl implements OrderService {
 	@Override
 	@Transactional
 	public List<OrderDto> createOrders(List<OrderDto> orderDtos) {
-		List<OrderDto> createdOrders = null;
+		List<OrderDto> createdOrders = new ArrayList<>();
 		if (orderDtos != null) {
-			createdOrders = new ArrayList<>(orderDtos.size());
 			List<OrderModel> ordersToSave = new ArrayList<>(orderDtos.size());
-			for (OrderDto orderDto : orderDtos) {
-				OrderModel orderModel = obtainOrderModelToSave(orderDto.getUser().getId(), orderDto);
-				ordersToSave.add(orderModel);
-			}
+
+			orderDtos.forEach(
+					orderDto -> ordersToSave.add(obtainOrderModelToSave(orderDto.getUser().getId(), orderDto)));
 
 			List<OrderModel> createdOrderModels = orderRepository.saveOrders(ordersToSave);
-			for (OrderModel orderModel : createdOrderModels) {
-				OrderDto createdOrder = orderConverter.convertToDto(orderModel);
-				createdOrders.add(createdOrder);
-			}
+
+			createdOrderModels.forEach(orderModel -> createdOrders.add(orderConverter.convertToDto(orderModel)));
 		}
 		return createdOrders;
 	}
 
 	private OrderModel obtainOrderModelToSave(long userId, OrderDto orderDto) {
-		Optional<UserModel> userModel = userRepository.findById(userId);
-		if (userModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
-					ErrorCode.NO_USER_FOUND);
-		}
+		UserModel userModel = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(
+				EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId, ErrorCode.NO_USER_FOUND));
 
 		Map<ErrorCode, String> errors = checkOrderContentExistance(orderDto);
 		if (!errors.isEmpty()) {
@@ -215,7 +204,7 @@ public class OrderServiceImpl implements OrderService {
 		orderDto.setCertificates(orderCertificates);
 		OrderModel orderToSave = orderConverter.convertToModel(orderDto);
 		orderToSave.setCost(cost);
-		orderToSave.setUser(userModel.get());
+		orderToSave.setUser(userModel);
 		return orderToSave;
 	}
 
@@ -235,12 +224,12 @@ public class OrderServiceImpl implements OrderService {
 					ErrorCode.INVALID_ORDER_ID);
 		}
 
-		Optional<OrderModel> orderModel = orderRepository.findById(orderId);
+		OrderModel orderModel = orderRepository.findById(orderId)
+				.orElseThrow(() -> new NotFoundException(
+						EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
+						ErrorCode.NO_ORDER_FOUND));
 
-		if (orderModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + orderId,
-					ErrorCode.NO_ORDER_FOUND);
-		} else if (orderModel.get().getUser().getId() != userId) {
+		if (orderModel.getUser().getId() != userId) {
 			StringBuilder errorMessage = new StringBuilder();
 			errorMessage.append(EntityConstant.USER_ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId);
 			errorMessage.append(ValidationUtil.ERROR_RESOURCES_LIST_DELIMITER);
@@ -248,9 +237,7 @@ public class OrderServiceImpl implements OrderService {
 			throw new ValidationException(errorMessage.toString(), ErrorCode.USER_ID_MISMATCH);
 		}
 
-		OrderDataDto orderDataDto = orderDataConverter.convertToDto(orderModel.get());
-
-		return orderDataDto;
+		return orderDataConverter.convertToDto(orderModel);
 	}
 
 	/**
@@ -284,9 +271,8 @@ public class OrderServiceImpl implements OrderService {
 		List<OrderModel> orderModels = orderRepository.findAll(offset, limit);
 		List<OrderDto> orderDtos = new ArrayList<>(orderModels.size());
 
-		for (OrderModel orderModel : orderModels) {
-			orderDtos.add(orderConverter.convertToDto(orderModel));
-		}
+		orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
+
 		return orderDtos;
 	}
 

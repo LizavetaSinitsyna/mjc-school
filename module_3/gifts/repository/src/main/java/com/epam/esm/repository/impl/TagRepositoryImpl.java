@@ -55,7 +55,7 @@ public class TagRepositoryImpl implements TagRepository {
 	@Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
 	private int batchSize;
 
-	private TagQueryBuilder tagQueryBuilder;
+	private final TagQueryBuilder tagQueryBuilder;
 
 	@Autowired
 	public TagRepositoryImpl(TagQueryBuilder tagQueryBuilder) {

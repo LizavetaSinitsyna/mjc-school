@@ -37,12 +37,12 @@ import com.epam.esm.service.validation.ValidationUtil;
  */
 @Service
 public class CertificateServiceImpl implements CertificateService {
-	private CertificateRepository certificateRepository;
-	private TagRepository tagRepository;
-	private CertificateValidation certificateValidation;
-	private TagValidation tagValidation;
-	private CertificateConverter certificateConverter;
-	private TagConverter tagConverter;
+	private final CertificateRepository certificateRepository;
+	private final TagRepository tagRepository;
+	private final CertificateValidation certificateValidation;
+	private final TagValidation tagValidation;
+	private final CertificateConverter certificateConverter;
+	private final TagConverter tagConverter;
 
 	@Autowired
 	public CertificateServiceImpl(CertificateRepository certificateRepository, TagRepository tagRepository,
@@ -85,21 +85,18 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	@Transactional
 	public List<CertificateDto> createCertificates(List<CertificateDto> certificateDtos) {
-		List<CertificateDto> createdCertificates = null;
+		List<CertificateDto> createdCertificates = new ArrayList<>();
 		if (certificateDtos != null) {
-			createdCertificates = new ArrayList<>(certificateDtos.size());
 			List<CertificateModel> certificatesToSave = new ArrayList<>(certificateDtos.size());
-			for (CertificateDto certificateDto : certificateDtos) {
-				CertificateModel certificateModel = obtainCertificateModelToSave(certificateDto);
-				certificatesToSave.add(certificateModel);
-			}
+
+			certificateDtos
+					.forEach(certificateDto -> certificatesToSave.add(obtainCertificateModelToSave(certificateDto)));
 
 			List<CertificateModel> createdCertificateModels = certificateRepository
 					.saveCertificates(certificatesToSave);
-			for (CertificateModel certificateModel : createdCertificateModels) {
-				CertificateDto createdCertificate = certificateConverter.convertToDto(certificateModel);
-				createdCertificates.add(createdCertificate);
-			}
+
+			createdCertificateModels.forEach(
+					certificateModel -> createdCertificates.add(certificateConverter.convertToDto(certificateModel)));
 		}
 		return createdCertificates;
 	}
@@ -134,16 +131,12 @@ public class CertificateServiceImpl implements CertificateService {
 					ErrorCode.INVALID_CERTIFICATE_ID);
 		}
 
-		Optional<CertificateModel> certificateModel = certificateRepository.findById(certificateId);
+		CertificateModel certificateModel = certificateRepository.findById(certificateId)
+				.orElseThrow(() -> new NotFoundException(
+						EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId,
+						ErrorCode.NO_CERTIFICATE_FOUND));
 
-		if (certificateModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + certificateId,
-					ErrorCode.NO_CERTIFICATE_FOUND);
-		}
-
-		CertificateDto certificateDto = certificateConverter.convertToDto(certificateModel.get());
-
-		return certificateDto;
+		return certificateConverter.convertToDto(certificateModel);
 	}
 
 	/**
@@ -181,10 +174,9 @@ public class CertificateServiceImpl implements CertificateService {
 
 		List<CertificateModel> certificateModels = certificateRepository.findAll(paramsInLowerCase, offset, limit);
 		List<CertificateDto> certificateDtos = new ArrayList<>(certificateModels.size());
-		for (CertificateModel certificateModel : certificateModels) {
-			CertificateDto certificateDto = certificateConverter.convertToDto(certificateModel);
-			certificateDtos.add(certificateDto);
-		}
+
+		certificateModels
+				.forEach(certificateModel -> certificateDtos.add(certificateConverter.convertToDto(certificateModel)));
 
 		return certificateDtos;
 	}
@@ -220,8 +212,7 @@ public class CertificateServiceImpl implements CertificateService {
 	@Override
 	public int delete(long certificateId) {
 		checkCertificateExistenceById(certificateId);
-		int deletedCertificatesAmount = certificateRepository.delete(certificateId);
-		return deletedCertificatesAmount;
+		return certificateRepository.delete(certificateId);
 	}
 
 	/**
@@ -317,7 +308,7 @@ public class CertificateServiceImpl implements CertificateService {
 
 	private List<TagDto> obtainCertificateTags(List<TagDto> initialTagDtos) {
 		if (initialTagDtos == null) {
-			return null;
+			return new ArrayList<>();
 		}
 		Set<TagDto> tagDtos = new HashSet<>(initialTagDtos);
 		List<TagModel> tagModels = new ArrayList<>(tagDtos.size());

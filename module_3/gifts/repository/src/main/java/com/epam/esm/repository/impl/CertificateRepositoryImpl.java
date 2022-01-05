@@ -58,7 +58,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	@Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
 	private int batchSize;
 
-	private CertificateQueryBuilder certificateQueryBuilder;
+	private final CertificateQueryBuilder certificateQueryBuilder;
 
 	@Autowired
 	public CertificateRepositoryImpl(CertificateQueryBuilder certificateQueryBuilder) {
@@ -72,7 +72,6 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return saved certificate
 	 */
 	@Override
-	@Transactional
 	public CertificateModel save(CertificateModel certificateModel) {
 		entityManager.persist(certificateModel);
 		return certificateModel;
@@ -204,9 +203,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	public CertificateModel updateCertificate(CertificateModel certificateModel) {
 		CertificateModel existedCertificate = entityManager.find(CertificateModel.class, certificateModel.getId());
 		setNotNullFields(existedCertificate, certificateModel);
-		entityManager.merge(existedCertificate);
-		entityManager.refresh(existedCertificate);
-		return existedCertificate;
+		return entityManager.merge(existedCertificate);
 	}
 
 	private void setNotNullFields(CertificateModel existedCertificate, CertificateModel certificateWithUpdatedFields) {

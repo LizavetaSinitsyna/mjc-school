@@ -20,7 +20,7 @@ import com.epam.esm.service.ServiceConstant;
 
 @Component
 public class CertificateGenerator {
-	private CertificateService certificateService;
+	private final CertificateService certificateService;
 
 	@Autowired
 	public CertificateGenerator(CertificateService certificateService) {

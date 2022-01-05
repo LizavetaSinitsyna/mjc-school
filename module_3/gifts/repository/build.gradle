@@ -1,19 +1,10 @@
-ext {
-	hikariCPVersion = '5.0.0'
-	commonsLangVersion = '3.12.0'
-	h2DatabaseVersion = '1.4.200'
-	springBootVersion = '2.6.1'
-	mySQLConnectorVersion = '8.0.25' 
-	jpaModelgenVersion = '5.6.3.Final'
-}
-
 dependencies {
-	implementation group: 'org.springframework.boot', name: 'spring-boot-starter-data-jpa', version: "${springBootVersion}"
-	implementation group: 'mysql', name: 'mysql-connector-java', version: "${mySQLConnectorVersion}"
-	implementation group: 'org.apache.commons', name: 'commons-lang3', version: "${commonsLangVersion}"
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'mysql:mysql-connector-java'
+	implementation 'org.apache.commons:commons-lang3'
 	
-	compileOnly group: 'org.hibernate', name: 'hibernate-jpamodelgen', version: "${jpaModelgenVersion}"	
-	annotationProcessor group: 'org.hibernate', name: 'hibernate-jpamodelgen', version: "${jpaModelgenVersion}"
+	compileOnly 'org.hibernate:hibernate-jpamodelgen'	
+	annotationProcessor 'org.hibernate:hibernate-jpamodelgen'
 		
-	testImplementation group: 'com.h2database', name: 'h2', version: "${h2DatabaseVersion}"
+	testImplementation 'com.h2database:h2'
 }

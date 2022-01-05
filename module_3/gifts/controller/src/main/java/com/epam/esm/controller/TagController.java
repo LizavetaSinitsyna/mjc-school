@@ -27,7 +27,7 @@ import com.epam.esm.service.TagService;
 @RequestMapping("/api/v1/tags")
 public class TagController {
 
-	private TagService tagService;
+	private final TagService tagService;
 
 	@Autowired
 	public TagController(TagService tagService) {
@@ -73,9 +73,7 @@ public class TagController {
 		if (tags.isEmpty()) {
 			return new ResponseEntity<>(tags, HttpStatus.NO_CONTENT);
 		} else {
-			for (TagDto tagDto : tags) {
-				HateoasUtil.addLinksToTag(tagDto);
-			}
+			tags.forEach(tagDto -> HateoasUtil.addLinksToTag(tagDto));
 			return new ResponseEntity<>(tags, HttpStatus.OK);
 		}
 	}

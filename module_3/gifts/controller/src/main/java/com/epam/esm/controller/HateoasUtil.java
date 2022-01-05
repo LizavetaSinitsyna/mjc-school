@@ -33,9 +33,7 @@ public class HateoasUtil {
 			certificateDto.add(linkTo(CertificateController.class).slash(certificateDto.getId()).withSelfRel());
 			List<TagDto> tags = certificateDto.getTags();
 			if (tags != null && !tags.isEmpty()) {
-				for (TagDto tagDto : tags) {
-					addLinksToTag(tagDto);
-				}
+				tags.forEach(tagDto -> addLinksToTag(tagDto));
 			}
 		}
 	}
@@ -55,10 +53,8 @@ public class HateoasUtil {
 			userDto.add(linkTo(UserController.class).slash(userDto.getId()).withSelfRel());
 			List<OrderCertificateDto> orderCertificateDtos = orderDto.getCertificates();
 			if (orderCertificateDtos != null && !orderCertificateDtos.isEmpty()) {
-				for (OrderCertificateDto orderCertificateDto : orderCertificateDtos) {
-					CertificateDto certificateDto = orderCertificateDto.getCertificate();
-					addLinksToCertificate(certificateDto);
-				}
+				orderCertificateDtos
+						.forEach(orderCertificateDto -> addLinksToCertificate(orderCertificateDto.getCertificate()));
 			}
 		}
 	}

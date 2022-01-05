@@ -4,14 +4,6 @@ plugins {
 	id "war"
 }
 
-ext {
-	lombokVersion = '1.18.22'
-	jupiterVersion = '5.8.2'
-	mockitoVersion = '4.1.0'
-	jacksonDataVersion = '2.13.0'
-	springBootVersion = '2.6.1'
-}
-
 springBoot {
     mainClass = 'com.epam.esm.Application'
 }
@@ -20,28 +12,27 @@ allprojects {
 	group = 'com.epam.esm'
 	version = ''
 	sourceCompatibility = '15'
-
-	apply plugin: 'java-library'
 	
 	repositories {
 		mavenCentral()
 	}
 }
 
-subprojects {
+subprojects {  
+	apply plugin: 'org.springframework.boot'
+    apply plugin: 'io.spring.dependency-management'
+    apply plugin: 'java-library'
+    
 	dependencies {
-		compileOnly group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
-		annotationProcessor group: 'org.projectlombok', name: 'lombok', version: "${lombokVersion}"
+		compileOnly 'org.projectlombok:lombok'
+		annotationProcessor 'org.projectlombok:lombok'
 		
-		implementation group: 'org.springframework.boot', name: 'spring-boot-starter-parent', version: "${springBootVersion}"
-		implementation group: 'org.springframework.boot', name: 'spring-boot-starter', version: "${springBootVersion}"
-		implementation group: 'org.springframework.boot', name: 'spring-boot-starter-jdbc', version: "${springBootVersion}"	
-		implementation group: 'org.springframework.boot', name: 'spring-boot-starter-hateoas', version: "${springBootVersion}"
+		implementation 'org.springframework.boot:spring-boot-starter-hateoas'
 		
-		testImplementation group: 'org.springframework.boot', name: 'spring-boot-starter-test', version: "${springBootVersion}"
-		testImplementation group: 'org.mockito', name: 'mockito-junit-jupiter', version: "${mockitoVersion}"
+		testImplementation 'org.springframework.boot:spring-boot-starter-test'
+		testImplementation 'org.mockito:mockito-junit-jupiter'
 		
-		implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: "${jacksonDataVersion}"
+		implementation 'com.fasterxml.jackson.core:jackson-databind'
 	}
 	
 	test {

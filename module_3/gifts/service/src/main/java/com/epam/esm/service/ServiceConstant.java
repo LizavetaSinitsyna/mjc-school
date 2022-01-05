@@ -29,7 +29,8 @@ public class ServiceConstant {
 	public static final BigDecimal CERTIFICATE_MIN_PRICE = new BigDecimal("0.01");
 	public static final int CERTIFICATE_PRICE_SCALE = 2;
 	public static final Set<String> CERTIFICATE_POSSIBLE_READ_PARAMS = new HashSet<String>(
-			Arrays.asList(EntityConstant.SEARCH, EntityConstant.ORDER_BY, EntityConstant.TAG));
+			Arrays.asList(EntityConstant.SEARCH, EntityConstant.ORDER_BY, EntityConstant.TAG, EntityConstant.OFFSET,
+					EntityConstant.LIMIT));
 	public static final Set<String> CERTIFICATE_POSSIBLE_SORT_FIELD = new HashSet<String>(Arrays.asList(
 			EntityConstant.NAME, EntityConstant.CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_CREATE_DATE,
 			EntityConstant.NAME + EntityConstant.DESC_SIGN, EntityConstant.CERTIFICATE_PRICE + EntityConstant.DESC_SIGN,
@@ -53,6 +54,6 @@ public class ServiceConstant {
 	public static final int ORDER_CERTIFICATES_MIN_AMOUNT = 1;
 
 	private ServiceConstant() {
-		CERTIFICATE_POSSIBLE_READ_PARAMS.addAll(GENERAL_POSSIBLE_READ_PARAMS);
+
 	}
 }

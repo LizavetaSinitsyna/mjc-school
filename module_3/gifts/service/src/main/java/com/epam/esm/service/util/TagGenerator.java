@@ -16,7 +16,7 @@ import com.epam.esm.service.TagService;
 
 @Component
 public class TagGenerator {
-	private TagService tagService;
+	private final TagService tagService;
 
 	@Autowired
 	public TagGenerator(TagService tagService) {

@@ -3,7 +3,6 @@ package com.epam.esm.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,10 +31,10 @@ import com.epam.esm.service.validation.ValidationUtil;
  */
 @Service
 public class UserServiceImpl implements UserService {
-	private UserRepository userRepository;
-	private RoleRepository roleRepository;
-	private UserConverter userConverter;
-	private UserValidation userValidation;
+	private final UserRepository userRepository;
+	private final RoleRepository roleRepository;
+	private final UserConverter userConverter;
+	private final UserValidation userValidation;
 
 	@Autowired
 	public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, UserConverter userConverter,
@@ -61,16 +60,10 @@ public class UserServiceImpl implements UserService {
 					ErrorCode.INVALID_USER_ID);
 		}
 
-		Optional<UserModel> userModel = userRepository.findById(userId);
+		UserModel userModel = userRepository.findById(userId).orElseThrow(() -> new NotFoundException(
+				EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId, ErrorCode.NO_USER_FOUND));
 
-		if (userModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
-					ErrorCode.NO_USER_FOUND);
-		}
-
-		UserDto userDto = userConverter.convertToDto(userModel.get());
-
-		return userDto;
+		return userConverter.convertToDto(userModel);
 	}
 
 	/**
@@ -103,9 +96,8 @@ public class UserServiceImpl implements UserService {
 
 		List<UserModel> userModels = userRepository.findAll(offset, limit);
 		List<UserDto> userDtos = new ArrayList<>(userModels.size());
-		for (UserModel userModel : userModels) {
-			userDtos.add(userConverter.convertToDto(userModel));
-		}
+		userModels.forEach(userModel -> userDtos.add(userConverter.convertToDto(userModel)));
+
 		return userDtos;
 	}
 
@@ -135,19 +127,13 @@ public class UserServiceImpl implements UserService {
 	@Override
 	@Transactional
 	public List<UserDto> createUsers(List<UserDto> userDtos) {
-		List<UserDto> createdUsers = null;
+		List<UserDto> createdUsers = new ArrayList<>();
 		if (userDtos != null) {
-			createdUsers = new ArrayList<>(userDtos.size());
 			List<UserModel> usersToSave = new ArrayList<>(userDtos.size());
-			for (UserDto userDto : userDtos) {
-				UserModel userModelToSave = obtainUserModelToSave(userDto);
-				usersToSave.add(userModelToSave);
-			}
+			userDtos.forEach(userDto -> usersToSave.add(obtainUserModelToSave(userDto)));
+
 			List<UserModel> createdUserModels = userRepository.saveUsers(usersToSave);
-			for (UserModel userModel : createdUserModels) {
-				UserDto createdUser = userConverter.convertToDto(userModel);
-				createdUsers.add(createdUser);
-			}
+			createdUserModels.forEach(userModel -> createdUsers.add(userConverter.convertToDto(userModel)));
 		}
 		return createdUsers;
 	}

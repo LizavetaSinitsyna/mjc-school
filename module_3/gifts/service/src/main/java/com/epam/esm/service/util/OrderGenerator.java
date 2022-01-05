@@ -14,7 +14,7 @@ import com.epam.esm.service.OrderService;
 
 @Component
 public class OrderGenerator {
-	private OrderService orderService;
+	private final OrderService orderService;
 
 	@Autowired
 	public OrderGenerator(OrderService orderService) {

@@ -28,8 +28,8 @@ public class GlobalExceptionHandler {
 	private static final String KEY_PREFIX = "exception.";
 	private static final String KEY_MIDDLE = ".middle_part";
 
-	private MessageSource messageSource;
-	private Environment environment;
+	private final MessageSource messageSource;
+	private final Environment environment;
 
 	@Autowired
 	public GlobalExceptionHandler(MessageSource messageSource, Environment environment) {
@@ -89,9 +89,8 @@ public class GlobalExceptionHandler {
 		String errorMessage = obtainExceptionMessage(generalErrorCode.getCode(), invalidResource);
 		List<String> subErrors = new ArrayList<>();
 		if (errors != null) {
-			for (Map.Entry<ErrorCode, String> error : errors.entrySet()) {
-				subErrors.add(obtainExceptionMessage(error.getKey().getCode(), error.getValue()));
-			}
+			errors.entrySet().forEach(
+					error -> subErrors.add(obtainExceptionMessage(error.getKey().getCode(), error.getValue())));
 			return new ApiRootCausesException(errorMessage, generalErrorCode.getCode(), subErrors);
 		}
 		return new ApiException(errorMessage, generalErrorCode.getCode());

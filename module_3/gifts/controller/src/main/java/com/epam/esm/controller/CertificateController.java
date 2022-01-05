@@ -29,7 +29,7 @@ import com.epam.esm.service.CertificateService;
 @RequestMapping("/api/v1/certificates")
 public class CertificateController {
 
-	private CertificateService certificateService;
+	private final CertificateService certificateService;
 
 	@Autowired
 	public CertificateController(CertificateService certificateService) {
@@ -77,9 +77,7 @@ public class CertificateController {
 		if (certificates == null || certificates.isEmpty()) {
 			return new ResponseEntity<>(certificates, HttpStatus.NO_CONTENT);
 		} else {
-			for (CertificateDto certificateDto : certificates) {
-				HateoasUtil.addLinksToCertificate(certificateDto);
-			}
+			certificates.forEach(certificateDto -> HateoasUtil.addLinksToCertificate(certificateDto));
 			return new ResponseEntity<>(certificates, HttpStatus.OK);
 		}
 	}

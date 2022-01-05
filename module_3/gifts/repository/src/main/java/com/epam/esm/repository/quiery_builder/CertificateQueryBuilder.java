@@ -1,6 +1,7 @@
 package com.epam.esm.repository.quiery_builder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.persistence.EntityManager;
@@ -62,11 +63,11 @@ public class CertificateQueryBuilder {
 	public Predicate[] obtainPredicates(MultiValueMap<String, String> params, CriteriaBuilder criteriaBuilder,
 			Root<CertificateModel> certificateRoot) {
 		List<Predicate> predicates = new ArrayList<>();
-
+		System.out.println(params);
 		List<String> tags = params.get(EntityConstant.TAG);
 		if (tags != null && !tags.isEmpty()) {
-			Join<CertificateModel, TagModel> join = certificateRoot.join(CertificateModel_.tags, JoinType.INNER);
 			for (String tag : tags) {
+				Join<CertificateModel, TagModel> join = certificateRoot.join(CertificateModel_.tags, JoinType.INNER);
 				predicates
 						.add(criteriaBuilder.equal(criteriaBuilder.lower(join.get(TagModel_.name)), tag.toLowerCase()));
 			}
@@ -85,7 +86,8 @@ public class CertificateQueryBuilder {
 		predicates.add(criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false));
 
 		Predicate[] result = new Predicate[predicates.size()];
-		return predicates.toArray(result);
+		System.out.println(Arrays.toString(predicates.toArray(new Predicate[0])));
+		return predicates.toArray(new Predicate[0]);
 	}
 
 	public List<Order> obtainOrders(MultiValueMap<String, String> params, CriteriaBuilder criteriaBuilder,

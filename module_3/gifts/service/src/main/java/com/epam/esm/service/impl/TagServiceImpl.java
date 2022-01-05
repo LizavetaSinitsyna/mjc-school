@@ -3,7 +3,6 @@ package com.epam.esm.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -32,10 +31,10 @@ import com.epam.esm.service.validation.ValidationUtil;
  */
 @Service
 public class TagServiceImpl implements TagService {
-	private CertificateRepository certificateRepository;
-	private TagRepository tagRepository;
-	private TagConverter tagConverter;
-	private TagValidation tagValidation;
+	private final CertificateRepository certificateRepository;
+	private final TagRepository tagRepository;
+	private final TagConverter tagConverter;
+	private final TagValidation tagValidation;
 
 	@Autowired
 	public TagServiceImpl(CertificateRepository certificateRepository, TagRepository tagRepository,
@@ -70,20 +69,12 @@ public class TagServiceImpl implements TagService {
 	@Override
 	@Transactional
 	public List<TagDto> createTags(List<TagDto> tagDtos) {
-		List<TagDto> createdTags = null;
+		List<TagDto> createdTags = new ArrayList<>();
 		if (tagDtos != null) {
-			createdTags = new ArrayList<>(tagDtos.size());
 			List<TagModel> tagsToSave = new ArrayList<>(tagDtos.size());
-			for (TagDto tagDto : tagDtos) {
-				TagModel tagModel = obtainTagModelToSave(tagDto);
-				tagsToSave.add(tagModel);
-			}
-
+			tagDtos.forEach(tagDto -> tagsToSave.add(obtainTagModelToSave(tagDto)));
 			List<TagModel> createdTagModels = tagRepository.saveTags(tagsToSave);
-			for (TagModel tagModel : createdTagModels) {
-				TagDto createdTag = tagConverter.convertToDto(tagModel);
-				createdTags.add(createdTag);
-			}
+			createdTagModels.forEach(tagModel -> createdTags.add(tagConverter.convertToDto(tagModel)));
 		}
 		return createdTags;
 	}
@@ -116,16 +107,10 @@ public class TagServiceImpl implements TagService {
 					ErrorCode.INVALID_TAG_ID);
 		}
 
-		Optional<TagModel> tagModel = tagRepository.findById(tagId);
+		TagModel tagModel = tagRepository.findById(tagId).orElseThrow(() -> new NotFoundException(
+				EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + tagId, ErrorCode.NO_TAG_FOUND));
 
-		if (tagModel.isEmpty()) {
-			throw new NotFoundException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + tagId,
-					ErrorCode.NO_TAG_FOUND);
-		}
-
-		TagDto tagDto = tagConverter.convertToDto(tagModel.get());
-
-		return tagDto;
+		return tagConverter.convertToDto(tagModel);
 	}
 
 	/**
@@ -158,9 +143,8 @@ public class TagServiceImpl implements TagService {
 
 		List<TagModel> tagModels = tagRepository.findAll(offset, limit);
 		List<TagDto> tagDtos = new ArrayList<>(tagModels.size());
-		for (TagModel tagModel : tagModels) {
-			tagDtos.add(tagConverter.convertToDto(tagModel));
-		}
+		tagModels.forEach(tagModel -> tagDtos.add(tagConverter.convertToDto(tagModel)));
+
 		return tagDtos;
 	}
 
@@ -187,9 +171,7 @@ public class TagServiceImpl implements TagService {
 		List<CertificateModel> certificates = certificateRepository.readByTagId(tagId);
 		int deletedTagsAmount = tagRepository.delete(tagId);
 		if (certificates != null) {
-			for (CertificateModel certificate : certificates) {
-				certificateRepository.delete(certificate.getId());
-			}
+			certificates.forEach(certificate -> certificateRepository.delete(certificate.getId()));
 		}
 		return deletedTagsAmount;
 	}
@@ -203,10 +185,8 @@ public class TagServiceImpl implements TagService {
 	 */
 	@Override
 	public TagDto readPopularTagByMostProfitableUser() {
-		Optional<TagModel> popularTag = tagRepository.findPopularTagByMostProfitableUser();
-		if (popularTag.isEmpty()) {
-			throw new NotFoundException(ServiceConstant.NO_POPULAR_TAG_FOUND_MESSAGE, ErrorCode.NO_TAG_FOUND);
-		}
-		return tagConverter.convertToDto(popularTag.get());
+		TagModel popularTag = tagRepository.findPopularTagByMostProfitableUser().orElseThrow(
+				() -> new NotFoundException(ServiceConstant.NO_POPULAR_TAG_FOUND_MESSAGE, ErrorCode.NO_TAG_FOUND));
+		return tagConverter.convertToDto(popularTag);
 	}
 }

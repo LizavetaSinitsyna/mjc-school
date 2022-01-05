@@ -16,7 +16,7 @@ import com.epam.esm.service.UserService;
 
 @Component
 public class UserGenerator {
-	private UserService userService;
+	private final UserService userService;
 
 	@Autowired
 	public UserGenerator(UserService userService) {

@@ -27,7 +27,7 @@ import com.epam.esm.service.OrderService;
 @RequestMapping("/api/v1/orders")
 public class OrderController {
 
-	private OrderService orderService;
+	private final OrderService orderService;
 
 	@Autowired
 	public OrderController(OrderService orderService) {
@@ -61,9 +61,7 @@ public class OrderController {
 		if (orders == null || orders.isEmpty()) {
 			return new ResponseEntity<>(orders, HttpStatus.NO_CONTENT);
 		} else {
-			for (OrderDto orderDto : orders) {
-				HateoasUtil.addLinksToOrder(orderDto);
-			}
+			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderDto));
 			return new ResponseEntity<>(orders, HttpStatus.OK);
 		}
 	}
@@ -83,9 +81,7 @@ public class OrderController {
 		if (orders == null || orders.isEmpty()) {
 			return new ResponseEntity<>(orders, HttpStatus.NO_CONTENT);
 		} else {
-			for (OrderDto orderDto : orders) {
-				HateoasUtil.addLinksToOrder(orderDto);
-			}
+			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderDto));
 			return new ResponseEntity<>(orders, HttpStatus.OK);
 		}
 	}

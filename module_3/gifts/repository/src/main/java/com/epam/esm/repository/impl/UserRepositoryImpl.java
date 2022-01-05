@@ -49,7 +49,7 @@ public class UserRepositoryImpl implements UserRepository {
 	@Value("${spring.jpa.properties.hibernate.jdbc.batch_size}")
 	private int batchSize;
 
-	private UserQueryBuilder userQueryBuilder;
+	private final UserQueryBuilder userQueryBuilder;
 
 	@Autowired
 	public UserRepositoryImpl(UserQueryBuilder userQueryBuilder) {

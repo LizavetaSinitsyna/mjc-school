@@ -16,11 +16,11 @@ import com.epam.esm.dto.UserDto;
 @Service
 @PropertySource("classpath:generator.properties")
 public class DataGenerator {
-	private UserGenerator userGenerator;
-	private Environment environment;
-	private TagGenerator tagGenerator;
-	private CertificateGenerator certificateGenerator;
-	private OrderGenerator orderGenerator;
+	private final UserGenerator userGenerator;
+	private final Environment environment;
+	private final TagGenerator tagGenerator;
+	private final CertificateGenerator certificateGenerator;
+	private final OrderGenerator orderGenerator;
 
 	@Autowired
 	public DataGenerator(UserGenerator userGenerator, Environment environment, TagGenerator tagGenerator,
