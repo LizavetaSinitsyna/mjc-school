@@ -1,4 +1,4 @@
-package com.epam.esm.repository.quiery_builder;
+package com.epam.esm.repository.query_builder;
 
 import java.util.ArrayList;
 import java.util.List;

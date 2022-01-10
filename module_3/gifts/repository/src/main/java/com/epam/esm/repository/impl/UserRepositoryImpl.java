@@ -28,12 +28,14 @@ import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.OrderModel;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.RoleModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.UserModel_;
-import com.epam.esm.repository.quiery_builder.UserQueryBuilder;
+import com.epam.esm.repository.query_builder.QueryBuilderUtil;
+import com.epam.esm.repository.query_builder.UserQueryBuilder;
 
 /**
  * 
@@ -151,19 +153,30 @@ public class UserRepositoryImpl implements UserRepository {
 	/**
 	 * Reads all users according to passed parameters.
 	 * 
-	 * @param offset start position for users reading
-	 * @param limit  amount of users to be read
+	 * @param pageNumber start position for users reading
+	 * @param limit      amount of users to be read
 	 * @return users which meet passed parameters
 	 */
 	@Override
-	public List<UserModel> findAll(int offset, int limit) {
+	public PageModel<UserModel> findAll(int pageNumber, int limit) {
+		PageModel<UserModel> pageModel = new PageModel<>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
+		Root<UserModel> counterRoot = counterCriteria.from(UserModel.class);
+		counterCriteria.select(criteriaBuilder.count(counterRoot));
+		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
+		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
+
 		CriteriaQuery<UserModel> userCriteria = criteriaBuilder.createQuery(UserModel.class);
 		Root<UserModel> userRoot = userCriteria.from(UserModel.class);
 		userCriteria.select(userRoot);
 		TypedQuery<UserModel> typedQuery = entityManager.createQuery(userCriteria);
-		typedQuery.setFirstResult(offset);
+		typedQuery.setFirstResult(pageNumber);
 		typedQuery.setMaxResults(limit);
-		return typedQuery.getResultList();
+		pageModel.setEntities(typedQuery.getResultList());
+		pageModel.setCurrentPage(pageNumber);
+		
+		return pageModel;
 	}
 }

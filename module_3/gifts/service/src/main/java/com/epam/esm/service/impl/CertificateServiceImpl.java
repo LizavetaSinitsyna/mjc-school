@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
@@ -21,10 +22,12 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.converter.CertificateConverter;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.CertificateValidation;
 import com.epam.esm.service.validation.TagValidation;
@@ -43,17 +46,20 @@ public class CertificateServiceImpl implements CertificateService {
 	private final TagValidation tagValidation;
 	private final CertificateConverter certificateConverter;
 	private final TagConverter tagConverter;
+	private final PageConverter<CertificateDto, CertificateModel> pageConverter;
 
 	@Autowired
 	public CertificateServiceImpl(CertificateRepository certificateRepository, TagRepository tagRepository,
 			CertificateValidation certificateValidation, TagValidation tagValidation,
-			CertificateConverter certificateConverter, TagConverter tagConverter) {
+			CertificateConverter certificateConverter, TagConverter tagConverter,
+			PageConverter<CertificateDto, CertificateModel> pageConverter) {
 		this.certificateRepository = certificateRepository;
 		this.tagRepository = tagRepository;
 		this.certificateValidation = certificateValidation;
 		this.tagValidation = tagValidation;
 		this.certificateConverter = certificateConverter;
 		this.tagConverter = tagConverter;
+		this.pageConverter = pageConverter;
 	}
 
 	/**
@@ -148,7 +154,7 @@ public class CertificateServiceImpl implements CertificateService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public List<CertificateDto> readAll(MultiValueMap<String, String> params) {
+	public PageDto<CertificateDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 
 		Map<ErrorCode, String> errors = certificateValidation.validateReadParams(paramsInLowerCase);
@@ -161,24 +167,26 @@ public class CertificateServiceImpl implements CertificateService {
 					convertToFieldNames(paramsInLowerCase.get(EntityConstant.ORDER_BY)));
 		}
 
-		int offset = ServiceConstant.OFFSET;
-		int limit = ServiceConstant.LIMIT;
+		int pageNumber = ServiceConstant.DEFAULT_PAGE_NUMBER;
+		int limit = ServiceConstant.DEFAULT_LIMIT;
 
-		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
-			offset = Integer.parseInt(paramsInLowerCase.get(EntityConstant.OFFSET).get(0));
+		if (paramsInLowerCase.containsKey(ServiceConstant.OFFSET)) {
+			pageNumber = Integer.parseInt(paramsInLowerCase.get(ServiceConstant.OFFSET).get(0));
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
-			limit = Integer.parseInt(paramsInLowerCase.get(EntityConstant.LIMIT).get(0));
+		if (paramsInLowerCase.containsKey(ServiceConstant.LIMIT)) {
+			limit = Integer.parseInt(paramsInLowerCase.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		List<CertificateModel> certificateModels = certificateRepository.findAll(paramsInLowerCase, offset, limit);
-		List<CertificateDto> certificateDtos = new ArrayList<>(certificateModels.size());
+		PageModel<CertificateModel> pageModel = certificateRepository.findAll(paramsInLowerCase, pageNumber, limit);
+		List<CertificateModel> certificateModels = pageModel.getEntities();
+		List<CertificateDto> certificateDtos = new ArrayList<>(limit);
+		if (certificateModels != null) {
+			certificateModels.forEach(
+					certificateModel -> certificateDtos.add(certificateConverter.convertToDto(certificateModel)));
+		}
 
-		certificateModels
-				.forEach(certificateModel -> certificateDtos.add(certificateConverter.convertToDto(certificateModel)));
-
-		return certificateDtos;
+		return pageConverter.convertToDto(pageModel, certificateDtos);
 	}
 
 	private static List<String> convertToFieldNames(List<String> sortParams) {
@@ -338,7 +346,11 @@ public class CertificateServiceImpl implements CertificateService {
 	}
 
 	private boolean isCertificateNameUniqueForUpdate(Long certificateId, CertificateDto certificateDto) {
-		String testedName = ValidationUtil.removeExtraSpaces(certificateDto.getName());
+		String name = certificateDto.getName();
+		if (name == null) {
+			return true;
+		}
+		String testedName = ValidationUtil.removeExtraSpaces(name);
 		Optional<CertificateModel> certificateModel = certificateRepository.findByName(testedName);
 		return certificateModel.isEmpty() || certificateModel.get().getId() == certificateId;
 	}

@@ -5,6 +5,7 @@ import java.util.Map;
 
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.service.ServiceConstant;
 
 /**
  * Contains methods for pagination validation.
@@ -30,11 +31,14 @@ public class PaginationValidation {
 			limit = Integer.parseInt(initialLimit);
 		} catch (NumberFormatException e) {
 			errors.put(ErrorCode.INVALID_LIMIT_FORMAT,
-					EntityConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialLimit);
+					ServiceConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialLimit);
 		}
-		if (errors.isEmpty() && limit <= 0) {
+		if (errors.isEmpty() && limit < ServiceConstant.MIN_LIMIT_NUMBER) {
 			errors.put(ErrorCode.NEGATIVE_LIMIT,
-					EntityConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + limit);
+					ServiceConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + limit);
+		} else if (limit > ServiceConstant.MAX_LIMIT) {
+			errors.put(ErrorCode.TOO_LARGE_LIMIT,
+					ServiceConstant.LIMIT + ValidationUtil.ERROR_RESOURCE_DELIMITER + limit);
 		}
 		return errors;
 	}
@@ -42,22 +46,22 @@ public class PaginationValidation {
 	/**
 	 * Validates offset pagination parameter.
 	 * 
-	 * @param initialOffset the offset for validation
+	 * @param initialPageNumber the offset for validation
 	 * @return {@code Map} of {@code ErrorCode} as key and invalid parameter as a
 	 *         value for invalid offset. If offset is valid returns empty map
 	 */
-	public static Map<ErrorCode, String> validateOffset(String initialOffset) {
+	public static Map<ErrorCode, String> validateOffset(String initialPageNumber) {
 		Map<ErrorCode, String> errors = new HashMap<>();
-		int offset = -1;
+		int pageNumber = -1;
 		try {
-			offset = Integer.parseInt(initialOffset);
+			pageNumber = Integer.parseInt(initialPageNumber);
 		} catch (NumberFormatException e) {
 			errors.put(ErrorCode.INVALID_OFFSET_FORMAT,
-					EntityConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialOffset);
+					ServiceConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialPageNumber);
 		}
-		if (errors.isEmpty() && offset < 0) {
+		if (errors.isEmpty() && pageNumber <  ServiceConstant.MIN_PAGE_NUMBER) {
 			errors.put(ErrorCode.NEGATIVE_OFFSET,
-					EntityConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + offset);
+					ServiceConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + pageNumber);
 		}
 		return errors;
 	}

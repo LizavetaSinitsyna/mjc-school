@@ -6,6 +6,7 @@ import java.util.Optional;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.model.CertificateModel;
+import com.epam.esm.repository.model.PageModel;
 
 /**
  * 
@@ -57,7 +58,7 @@ public interface CertificateRepository extends GeneralRepository<CertificateMode
 	 * @param limit  amount of certificates to be read
 	 * @return certificates which meet passed parameters
 	 */
-	List<CertificateModel> findAll(MultiValueMap<String, String> params, int offset, int limit);
+	PageModel<CertificateModel> findAll(MultiValueMap<String, String> params, int offset, int limit);
 
 	/**
 	 * Deletes certificate with passed id.

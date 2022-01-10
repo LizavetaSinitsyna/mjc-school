@@ -11,7 +11,7 @@ import org.springframework.util.StringUtils;
 
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NullEntityException;
-import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.service.ServiceConstant;
 
 /**
  * Contains common methods which help in entity validation.
@@ -59,7 +59,7 @@ public class ValidationUtil {
 	 * @throws NullEntityException if passed params is {@code null}
 	 */
 	public static MultiValueMap<String, String> mapToLowerCase(MultiValueMap<String, String> params) {
-		checkNull(params, EntityConstant.PARAMS);
+		checkNull(params, ServiceConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = new LinkedMultiValueMap<>();
 		for (Map.Entry<String, List<String>> entry : params.entrySet()) {
 			String key = entry.getKey().toLowerCase();

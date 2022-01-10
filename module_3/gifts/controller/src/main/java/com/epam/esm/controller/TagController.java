@@ -1,5 +1,9 @@
 package com.epam.esm.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +20,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.epam.esm.controller.converter.PageViewConverter;
+import com.epam.esm.controller.converter.TagViewConverter;
+import com.epam.esm.controller.view.PageView;
+import com.epam.esm.controller.view.TagView;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.service.TagService;
 
@@ -28,22 +37,30 @@ import com.epam.esm.service.TagService;
 public class TagController {
 
 	private final TagService tagService;
+	private final PageViewConverter<TagView, TagDto> pageConverter;
+	private final TagViewConverter tagConverter;
 
 	@Autowired
-	public TagController(TagService tagService) {
+	public TagController(TagService tagService, TagViewConverter tagConverter,
+			PageViewConverter<TagView, TagDto> pageConverter) {
 		this.tagService = tagService;
+		this.pageConverter = pageConverter;
+		this.tagConverter = tagConverter;
 	}
 
 	/**
 	 * Creates and saves the passed tag.
 	 * 
-	 * @param tagDto the tag to be saved
+	 * @param tagView the tag to be saved
 	 * @return saved tag
 	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public TagDto create(@RequestBody TagDto tagDto) {
-		return tagService.create(tagDto);
+	public TagView create(@RequestBody TagView tagView) {
+		TagDto createdTag = tagService.create(tagConverter.convertToDto(tagView));
+		TagView createdTagView = tagConverter.convertToView(createdTag);
+		HateoasUtil.addLinksToTag(createdTagView);
+		return createdTagView;
 	}
 
 	/**
@@ -54,10 +71,11 @@ public class TagController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public TagDto readById(@PathVariable long id) {
+	public TagView readById(@PathVariable long id) {
 		TagDto tagDto = tagService.readById(id);
-		HateoasUtil.addLinksToTag(tagDto);
-		return tagDto;
+		TagView tagView = tagConverter.convertToView(tagDto);
+		HateoasUtil.addLinksToTag(tagView);
+		return tagView;
 	}
 
 	/**
@@ -68,13 +86,19 @@ public class TagController {
 	 * @return tags which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<List<TagDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		List<TagDto> tags = tagService.readAll(params);
-		if (tags.isEmpty()) {
-			return new ResponseEntity<>(tags, HttpStatus.NO_CONTENT);
+	public ResponseEntity<PageView<TagView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		PageDto<TagDto> tagPage = tagService.readAll(params);
+		List<TagDto> tags = tagPage.getEntities();
+
+		if (tagPage == null || tags == null || tags.isEmpty()) {
+			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
 		} else {
-			tags.forEach(tagDto -> HateoasUtil.addLinksToTag(tagDto));
-			return new ResponseEntity<>(tags, HttpStatus.OK);
+			List<TagView> tagsView = new ArrayList<>(tags.size());
+			tags.forEach(tagDto -> tagsView.add(tagConverter.convertToView(tagDto)));
+			PageView<TagView> tagPageView = pageConverter.convertToView(tagPage, tagsView);
+			tagsView.forEach(tagView -> HateoasUtil.addLinksToTag(tagView));
+			HateoasUtil.addLinksToPage(tagPageView, linkTo(methodOn(TagController.class).readAll(params)));
+			return new ResponseEntity<>(tagPageView, HttpStatus.OK);
 		}
 	}
 

@@ -9,9 +9,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -26,7 +24,6 @@ import com.epam.esm.service.TagService;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.TagValidation;
 
-@ExtendWith(MockitoExtension.class)
 class TagServiceImplTest {
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long CERTIFIATE_ID_1 = 1L;

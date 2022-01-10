@@ -139,27 +139,27 @@ public class CertificateValidation {
 	 *         empty map
 	 */
 	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
-		ValidationUtil.checkNull(params, EntityConstant.PARAMS);
+		ValidationUtil.checkNull(params, ServiceConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!ServiceConstant.CERTIFICATE_POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
 			errors.put(ErrorCode.INVALID_CERTIFICATE_READ_PARAM,
-					EntityConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
+					ServiceConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
 		}
 
 		if (paramsInLowerCase.containsKey(EntityConstant.ORDER_BY)) {
 			if (!ServiceConstant.CERTIFICATE_POSSIBLE_SORT_FIELD
 					.containsAll(paramsInLowerCase.get(EntityConstant.ORDER_BY))) {
 				errors.put(ErrorCode.INVALID_CERTIFICATE_SORT_PARAM,
-						EntityConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
+						ServiceConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + paramsInLowerCase);
 			}
 		}
-		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
-			errors.putAll(PaginationValidation.validateOffset(paramsInLowerCase.get(EntityConstant.OFFSET).get(0)));
+		if (paramsInLowerCase.containsKey(ServiceConstant.OFFSET)) {
+			errors.putAll(PaginationValidation.validateOffset(paramsInLowerCase.get(ServiceConstant.OFFSET).get(0)));
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
-			errors.putAll(PaginationValidation.validateLimit(paramsInLowerCase.get(EntityConstant.LIMIT).get(0)));
+		if (paramsInLowerCase.containsKey(ServiceConstant.LIMIT)) {
+			errors.putAll(PaginationValidation.validateLimit(paramsInLowerCase.get(ServiceConstant.LIMIT).get(0)));
 		}
 		return errors;
 	}

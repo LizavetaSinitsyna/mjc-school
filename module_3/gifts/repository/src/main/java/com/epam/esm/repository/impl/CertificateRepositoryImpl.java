@@ -36,9 +36,11 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.CertificateModel_;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
-import com.epam.esm.repository.quiery_builder.CertificateQueryBuilder;
+import com.epam.esm.repository.query_builder.CertificateQueryBuilder;
+import com.epam.esm.repository.query_builder.QueryBuilderUtil;
 
 /**
  * 
@@ -169,15 +171,24 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	/**
 	 * Reads all certificates according to the passed parameters.
 	 * 
-	 * @param params the parameters which define the choice of certificates and
-	 *               their ordering
-	 * @param offset start position for certificates reading
-	 * @param limit  amount of certificates to be read
+	 * @param params     the parameters which define the choice of certificates and
+	 *                   their ordering
+	 * @param pageNumber start position for certificates reading
+	 * @param limit      amount of certificates to be read
 	 * @return certificates which meet passed parameters
 	 */
 	@Override
-	public List<CertificateModel> findAll(MultiValueMap<String, String> params, int offset, int limit) {
+	public PageModel<CertificateModel> findAll(MultiValueMap<String, String> params, int pageNumber, int limit) {
+		PageModel<CertificateModel> pageModel = new PageModel<>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
+		Root<CertificateModel> counterRoot = counterCriteria.from(CertificateModel.class);
+		counterCriteria.select(criteriaBuilder.count(counterRoot));
+		counterCriteria.where(certificateQueryBuilder.obtainPredicates(params, criteriaBuilder, counterRoot));
+		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
+		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
+
 		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
 		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
 		certificateCriteria.select(certificateRoot);
@@ -185,9 +196,12 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		certificateCriteria.orderBy(certificateQueryBuilder.obtainOrders(params, criteriaBuilder, certificateRoot));
 
 		TypedQuery<CertificateModel> typedQuery = entityManager.createQuery(certificateCriteria);
-		typedQuery.setFirstResult(offset);
+		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		return typedQuery.getResultList();
+		pageModel.setEntities(typedQuery.getResultList());
+		pageModel.setCurrentPage(pageNumber);
+
+		return pageModel;
 	}
 
 	/**
@@ -265,20 +279,33 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	/**
 	 * Reads all certificates according to the passed parameters.
 	 * 
-	 * @param offset start position for certificates reading
-	 * @param limit  amount of certificates to be read
+	 * @param pageNumber start position for certificates reading
+	 * @param limit      amount of certificates to be read
 	 * @return certificates which meet passed parameters
 	 */
 	@Override
-	public List<CertificateModel> findAll(int offset, int limit) {
+	public PageModel<CertificateModel> findAll(int pageNumber, int limit) {
+		PageModel<CertificateModel> pageModel = new PageModel<>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
+		Root<CertificateModel> counterRoot = counterCriteria.from(CertificateModel.class);
+		counterCriteria.select(criteriaBuilder.count(counterRoot));
+		counterCriteria.where(criteriaBuilder.equal(counterRoot.get(CertificateModel_.isDeleted), false));
+		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
+		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
+
 		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
-		Root<CertificateModel> tagRoot = certificateCriteria.from(CertificateModel.class);
-		certificateCriteria.select(tagRoot);
-		certificateCriteria.where(criteriaBuilder.equal(tagRoot.get(CertificateModel_.isDeleted), false));
+		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
+		certificateCriteria.select(certificateRoot);
+		certificateCriteria.where(criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false));
+
 		TypedQuery<CertificateModel> typedQuery = entityManager.createQuery(certificateCriteria);
-		typedQuery.setFirstResult(offset);
+		typedQuery.setFirstResult(pageNumber);
 		typedQuery.setMaxResults(limit);
-		return typedQuery.getResultList();
+		pageModel.setEntities(typedQuery.getResultList());
+		pageModel.setCurrentPage(pageNumber);
+		
+		return pageModel;
 	}
 }

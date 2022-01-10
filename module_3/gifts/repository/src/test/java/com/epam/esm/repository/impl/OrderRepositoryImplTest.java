@@ -12,13 +12,11 @@ import javax.persistence.PersistenceContext;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.model.CertificateModel;
@@ -29,7 +27,6 @@ import com.epam.esm.repository.model.RoleModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 
-@ExtendWith(SpringExtension.class)
 @DataJpaTest
 @EntityScan("com.epam.esm")
 @ComponentScan("com.epam.esm")

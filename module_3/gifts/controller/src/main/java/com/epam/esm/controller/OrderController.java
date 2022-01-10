@@ -1,5 +1,9 @@
 package com.epam.esm.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,8 +19,15 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.epam.esm.controller.converter.OrderViewConverter;
+import com.epam.esm.controller.converter.OrderDataViewConverter;
+import com.epam.esm.controller.converter.PageViewConverter;
+import com.epam.esm.controller.view.OrderDataView;
+import com.epam.esm.controller.view.OrderView;
+import com.epam.esm.controller.view.PageView;
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.service.OrderService;
 
 /**
@@ -28,10 +39,17 @@ import com.epam.esm.service.OrderService;
 public class OrderController {
 
 	private final OrderService orderService;
+	private final OrderViewConverter orderConverter;
+	private final OrderDataViewConverter orderDataConverter;
+	private final PageViewConverter<OrderView, OrderDto> pageConverter;
 
 	@Autowired
-	public OrderController(OrderService orderService) {
+	public OrderController(OrderService orderService, PageViewConverter<OrderView, OrderDto> pageConverter,
+			OrderViewConverter orderConverter, OrderDataViewConverter orderDataConverter) {
 		this.orderService = orderService;
+		this.orderConverter = orderConverter;
+		this.orderDataConverter = orderDataConverter;
+		this.pageConverter = pageConverter;
 	}
 
 	/**
@@ -42,10 +60,11 @@ public class OrderController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public OrderDto readById(@PathVariable long id) {
+	public OrderView readById(@PathVariable long id) {
 		OrderDto orderDto = orderService.readById(id);
-		HateoasUtil.addLinksToOrder(orderDto);
-		return orderDto;
+		OrderView orderView = orderConverter.convertToView(orderDto);
+		HateoasUtil.addLinksToOrder(orderView);
+		return orderView;
 	}
 
 	/**
@@ -56,13 +75,20 @@ public class OrderController {
 	 * @return orders which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<List<OrderDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		List<OrderDto> orders = orderService.readAll(params);
-		if (orders == null || orders.isEmpty()) {
-			return new ResponseEntity<>(orders, HttpStatus.NO_CONTENT);
+	public ResponseEntity<PageView<OrderView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		PageDto<OrderDto> orderPage = orderService.readAll(params);
+		List<OrderDto> orders = orderPage.getEntities();
+		if (orderPage == null || orders == null || orders.isEmpty()) {
+			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
 		} else {
-			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderDto));
-			return new ResponseEntity<>(orders, HttpStatus.OK);
+			List<OrderView> ordersView = new ArrayList<>(orders.size());
+			orders.forEach(orderDto -> ordersView.add(orderConverter.convertToView(orderDto)));
+			PageView<OrderView> orderPageView = pageConverter.convertToView(orderPage, ordersView);
+			ordersView.forEach(orderView -> HateoasUtil.addLinksToOrder(orderView));
+			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(CertificateController.class).readAll(params)));
+			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderConverter.convertToView(orderDto)));
+			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(OrderController.class).readAll(params)));
+			return new ResponseEntity<>(orderPageView, HttpStatus.OK);
 		}
 	}
 
@@ -75,14 +101,21 @@ public class OrderController {
 	 * @return orders for specified user which meet the passed parameters
 	 */
 	@GetMapping("/users/{userId}")
-	public ResponseEntity<List<OrderDto>> readByUserId(@PathVariable long userId,
+	public ResponseEntity<PageView<OrderView>> readByUserId(@PathVariable long userId,
 			@RequestParam MultiValueMap<String, String> params) {
-		List<OrderDto> orders = orderService.readAllByUserId(userId, params);
-		if (orders == null || orders.isEmpty()) {
-			return new ResponseEntity<>(orders, HttpStatus.NO_CONTENT);
+		PageDto<OrderDto> orderPage = orderService.readAllByUserId(userId, params);
+		List<OrderDto> orders = orderPage.getEntities();
+		if (orderPage == null || orders == null || orders.isEmpty()) {
+			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
 		} else {
-			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderDto));
-			return new ResponseEntity<>(orders, HttpStatus.OK);
+			List<OrderView> ordersView = new ArrayList<>(orders.size());
+			orders.forEach(orderDto -> ordersView.add(orderConverter.convertToView(orderDto)));
+			PageView<OrderView> orderPageView = pageConverter.convertToView(orderPage, ordersView);
+			ordersView.forEach(orderView -> HateoasUtil.addLinksToOrder(orderView));
+			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(CertificateController.class).readAll(params)));
+			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderConverter.convertToView(orderDto)));
+			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(OrderController.class).readAll(params)));
+			return new ResponseEntity<>(orderPageView, HttpStatus.OK);
 		}
 	}
 
@@ -94,10 +127,11 @@ public class OrderController {
 	 * @return information about the order with passed id for the specified user
 	 */
 	@GetMapping("/{orderId}/users/{userId}")
-	public OrderDataDto readOrderDataByUserId(@PathVariable long userId, @PathVariable long orderId) {
+	public OrderDataView readOrderDataByUserId(@PathVariable long userId, @PathVariable long orderId) {
 		OrderDataDto orderDataDto = orderService.readOrderDataByUserId(userId, orderId);
-		HateoasUtil.addLinksToOrderData(orderId, orderDataDto);
-		return orderService.readOrderDataByUserId(userId, orderId);
+		OrderDataView orderDataView = orderDataConverter.convertToView(orderDataDto);
+		HateoasUtil.addLinksToOrderData(orderId, orderDataView);
+		return orderDataView;
 	}
 
 	/**
@@ -108,9 +142,10 @@ public class OrderController {
 	 * @return saved order
 	 */
 	@PostMapping("/users/{userId}")
-	public OrderDto create(@PathVariable long userId, @RequestBody OrderDto orderDto) {
-		OrderDto createdOrderDto = orderService.create(userId, orderDto);
-		HateoasUtil.addLinksToOrder(createdOrderDto);
-		return createdOrderDto;
+	public OrderView create(@PathVariable long userId, @RequestBody OrderView orderView) {
+		OrderDto createdOrderDto = orderService.create(userId, orderConverter.convertToDto(orderView));
+		OrderView createdOrderView = orderConverter.convertToView(createdOrderDto);
+		HateoasUtil.addLinksToOrder(createdOrderView);
+		return createdOrderView;
 	}
 }

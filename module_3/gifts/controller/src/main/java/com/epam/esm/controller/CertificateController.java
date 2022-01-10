@@ -1,5 +1,9 @@
 package com.epam.esm.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -18,7 +22,12 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.epam.esm.controller.converter.CertificateViewConverter;
+import com.epam.esm.controller.converter.PageViewConverter;
+import com.epam.esm.controller.view.CertificateView;
+import com.epam.esm.controller.view.PageView;
 import com.epam.esm.dto.CertificateDto;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.service.CertificateService;
 
 /**
@@ -30,24 +39,31 @@ import com.epam.esm.service.CertificateService;
 public class CertificateController {
 
 	private final CertificateService certificateService;
+	private final CertificateViewConverter certificateConverter;
+	private final PageViewConverter<CertificateView, CertificateDto> pageConverter;
 
 	@Autowired
-	public CertificateController(CertificateService certificateService) {
+	public CertificateController(CertificateService certificateService,
+			PageViewConverter<CertificateView, CertificateDto> pageConverter, CertificateViewConverter certificateConverter) {
 		this.certificateService = certificateService;
+		this.certificateConverter = certificateConverter;
+		this.pageConverter = pageConverter;
 	}
 
 	/**
 	 * Creates and saves passed certificate.
 	 * 
-	 * @param certificateDto the certificate to be saved
+	 * @param certificateView the certificate to be saved
 	 * @return saved certificate
 	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
-	public CertificateDto create(@RequestBody CertificateDto certificateDto) {
-		CertificateDto createdCertificateDto = certificateService.create(certificateDto);
-		HateoasUtil.addLinksToCertificate(createdCertificateDto);
-		return createdCertificateDto;
+	public CertificateView create(@RequestBody CertificateView certificateView) {
+		CertificateDto createdCertificateDto = certificateService
+				.create(certificateConverter.convertToDto(certificateView));
+		CertificateView createdCertificateView = certificateConverter.convertToView(createdCertificateDto);
+		HateoasUtil.addLinksToCertificate(createdCertificateView);
+		return createdCertificateView;
 	}
 
 	/**
@@ -58,10 +74,11 @@ public class CertificateController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto readById(@PathVariable long id) {
+	public CertificateView readById(@PathVariable long id) {
 		CertificateDto certificateDto = certificateService.readById(id);
-		HateoasUtil.addLinksToCertificate(certificateDto);
-		return certificateDto;
+		CertificateView certificateView = certificateConverter.convertToView(certificateDto);
+		HateoasUtil.addLinksToCertificate(certificateView);
+		return certificateView;
 	}
 
 	/**
@@ -72,13 +89,22 @@ public class CertificateController {
 	 * @return certificates which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<List<CertificateDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		List<CertificateDto> certificates = certificateService.readAll(params);
-		if (certificates == null || certificates.isEmpty()) {
-			return new ResponseEntity<>(certificates, HttpStatus.NO_CONTENT);
+	public ResponseEntity<PageView<CertificateView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		PageDto<CertificateDto> certificatePage = certificateService.readAll(params);
+		List<CertificateDto> certificates = certificatePage.getEntities();
+
+		if (certificatePage == null || certificates == null || certificates.isEmpty()) {
+			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
 		} else {
-			certificates.forEach(certificateDto -> HateoasUtil.addLinksToCertificate(certificateDto));
-			return new ResponseEntity<>(certificates, HttpStatus.OK);
+			List<CertificateView> certificatesView = new ArrayList<>(certificates.size());
+			certificates.forEach(
+					certificateDto -> certificatesView.add(certificateConverter.convertToView(certificateDto)));
+			PageView<CertificateView> certificatePageView = pageConverter.convertToView(certificatePage,
+					certificatesView);
+			certificatesView.forEach(certificateView -> HateoasUtil.addLinksToCertificate(certificateView));
+			HateoasUtil.addLinksToPage(certificatePageView,
+					linkTo(methodOn(CertificateController.class).readAll(params)));
+			return new ResponseEntity<>(certificatePageView, HttpStatus.OK);
 		}
 	}
 
@@ -86,34 +112,40 @@ public class CertificateController {
 	 * Updates certificate fields with passed id using not {@code null} fields of
 	 * the passed certificate entity.
 	 * 
-	 * @param id          the id of the certificate to be updated
-	 * @param certificate certificate entity which contains fields with new values
-	 *                    to be set
+	 * @param id              the id of the certificate to be updated
+	 * @param certificateView certificate entity which contains fields with new
+	 *                        values to be set
 	 * @return updated certificate
 	 */
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto updateCertificateFields(@RequestBody CertificateDto certificate, @PathVariable long id) {
-		CertificateDto updatedCertificateDto = certificateService.updateCertificateFields(id, certificate);
-		HateoasUtil.addLinksToCertificate(updatedCertificateDto);
-		return updatedCertificateDto;
+	public CertificateView updateCertificateFields(@RequestBody CertificateView certificateView,
+			@PathVariable long id) {
+		CertificateDto updatedCertificateDto = certificateService.updateCertificateFields(id,
+				certificateConverter.convertToDto(certificateView));
+		CertificateView updatedCertificateView = certificateConverter.convertToView(updatedCertificateDto);
+		HateoasUtil.addLinksToCertificate(updatedCertificateView);
+		return updatedCertificateView;
 	}
 
 	/**
 	 * Updates entire certificate with passed id using all fields of the passed
 	 * certificate.
 	 * 
-	 * @param id          the id of the certificate to be updated
-	 * @param certificate certificate entity which contains fields with new values
-	 *                    to be set
+	 * @param id              the id of the certificate to be updated
+	 * @param certificateView certificate entity which contains fields with new
+	 *                        values to be set
 	 * @return updated certificate
 	 */
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public CertificateDto updateEntireCertificate(@RequestBody CertificateDto certificate, @PathVariable long id) {
-		CertificateDto updatedCertificateDto = certificateService.updateEntireCertificate(id, certificate);
-		HateoasUtil.addLinksToCertificate(updatedCertificateDto);
-		return updatedCertificateDto;
+	public CertificateView updateEntireCertificate(@RequestBody CertificateView certificateView,
+			@PathVariable long id) {
+		CertificateDto updatedCertificateDto = certificateService.updateEntireCertificate(id,
+				certificateConverter.convertToDto(certificateView));
+		CertificateView updatedCertificateView = certificateConverter.convertToView(updatedCertificateDto);
+		HateoasUtil.addLinksToCertificate(updatedCertificateView);
+		return updatedCertificateView;
 	}
 
 	/**

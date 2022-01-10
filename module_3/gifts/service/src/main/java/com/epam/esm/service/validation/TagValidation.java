@@ -50,20 +50,20 @@ public class TagValidation {
 	 *         empty map
 	 */
 	public Map<ErrorCode, String> validateReadParams(MultiValueMap<String, String> params) {
-		ValidationUtil.checkNull(params, EntityConstant.PARAMS);
+		ValidationUtil.checkNull(params, ServiceConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = new HashMap<>();
 		if (!ServiceConstant.GENERAL_POSSIBLE_READ_PARAMS.containsAll(paramsInLowerCase.keySet())) {
 			errors.put(ErrorCode.INVALID_TAG_READ_PARAM,
-					EntityConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + params);
+					ServiceConstant.PARAMS + ValidationUtil.ERROR_RESOURCE_DELIMITER + params);
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.OFFSET)) {
-			errors.putAll(PaginationValidation.validateOffset(paramsInLowerCase.get(EntityConstant.OFFSET).get(0)));
+		if (paramsInLowerCase.containsKey(ServiceConstant.OFFSET)) {
+			errors.putAll(PaginationValidation.validateOffset(paramsInLowerCase.get(ServiceConstant.OFFSET).get(0)));
 		}
 
-		if (paramsInLowerCase.containsKey(EntityConstant.LIMIT)) {
-			errors.putAll(PaginationValidation.validateLimit(paramsInLowerCase.get(EntityConstant.LIMIT).get(0)));
+		if (paramsInLowerCase.containsKey(ServiceConstant.LIMIT)) {
+			errors.putAll(PaginationValidation.validateLimit(paramsInLowerCase.get(ServiceConstant.LIMIT).get(0)));
 		}
 
 		return errors;

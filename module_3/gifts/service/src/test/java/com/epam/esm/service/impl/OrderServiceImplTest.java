@@ -10,9 +10,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -39,7 +37,6 @@ import com.epam.esm.service.converter.OrderConverter;
 import com.epam.esm.service.converter.OrderDataConverter;
 import com.epam.esm.service.validation.OrderValidation;
 
-@ExtendWith(MockitoExtension.class)
 class OrderServiceImplTest {
 	private static final int OFFSET = 0;
 	private static final int LIMIT = 1;

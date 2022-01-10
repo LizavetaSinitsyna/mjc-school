@@ -16,6 +16,7 @@ import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.OrderCertificateDto;
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
@@ -24,12 +25,14 @@ import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.OrderModel;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.OrderService;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.converter.OrderConverter;
 import com.epam.esm.service.converter.OrderDataConverter;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.validation.OrderValidation;
 import com.epam.esm.service.validation.ValidationUtil;
 
@@ -45,17 +48,20 @@ public class OrderServiceImpl implements OrderService {
 	private final CertificateRepository certificateRepository;
 	private final OrderConverter orderConverter;
 	private final OrderDataConverter orderDataConverter;
+	private final PageConverter<OrderDto, OrderModel> pageConverter;
 	private final OrderValidation orderValidation;
 
 	@Autowired
 	public OrderServiceImpl(OrderRepository orderRepository, UserRepository userRepository,
 			CertificateRepository certificateRepository, OrderConverter orderConverter,
-			OrderDataConverter orderDataConverter, OrderValidation orderValidation) {
+			OrderDataConverter orderDataConverter, OrderValidation orderValidation,
+			PageConverter<OrderDto, OrderModel> pageConverter) {
 		this.orderRepository = orderRepository;
 		this.userRepository = userRepository;
 		this.certificateRepository = certificateRepository;
 		this.orderConverter = orderConverter;
 		this.orderDataConverter = orderDataConverter;
+		this.pageConverter = pageConverter;
 		this.orderValidation = orderValidation;
 	}
 
@@ -94,7 +100,7 @@ public class OrderServiceImpl implements OrderService {
 	 * @throws ValidationException if passed user id or read parameters are invalid
 	 */
 	@Override
-	public List<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params) {
+	public PageDto<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		if (!ValidationUtil.isPositive(userId)) {
 			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
@@ -110,23 +116,25 @@ public class OrderServiceImpl implements OrderService {
 			throw new ValidationException(errors, ErrorCode.INVALID_ORDER_REQUEST_PARAMS);
 		}
 
-		int offset = ServiceConstant.OFFSET;
-		int limit = ServiceConstant.LIMIT;
+		int offset = ServiceConstant.DEFAULT_PAGE_NUMBER;
+		int limit = ServiceConstant.DEFAULT_LIMIT;
 
-		if (params.containsKey(EntityConstant.OFFSET)) {
-			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
+		if (params.containsKey(ServiceConstant.OFFSET)) {
+			offset = Integer.parseInt(params.get(ServiceConstant.OFFSET).get(0));
 		}
 
-		if (params.containsKey(EntityConstant.LIMIT)) {
-			limit = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
+		if (params.containsKey(ServiceConstant.LIMIT)) {
+			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		List<OrderModel> orderModels = orderRepository.readAllByUserId(userId, offset, limit);
-		List<OrderDto> orderDtos = new ArrayList<>(orderModels.size());
+		PageModel<OrderModel> pageModel = orderRepository.readAllByUserId(userId, offset, limit);
+		List<OrderModel> orderModels = pageModel.getEntities();
+		List<OrderDto> orderDtos = new ArrayList<>(limit);
+		if (orderModels != null) {
+			orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
+		}
 
-		orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
-
-		return orderDtos;
+		return pageConverter.convertToDto(pageModel, orderDtos);
 	}
 
 	/**
@@ -249,7 +257,7 @@ public class OrderServiceImpl implements OrderService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public List<OrderDto> readAll(MultiValueMap<String, String> params) {
+	public PageDto<OrderDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = orderValidation.validateReadParams(paramsInLowerCase);
 
@@ -257,23 +265,25 @@ public class OrderServiceImpl implements OrderService {
 			throw new ValidationException(errors, ErrorCode.INVALID_ORDER_REQUEST_PARAMS);
 		}
 
-		int offset = ServiceConstant.OFFSET;
-		int limit = ServiceConstant.LIMIT;
+		int offset = ServiceConstant.DEFAULT_PAGE_NUMBER;
+		int limit = ServiceConstant.DEFAULT_LIMIT;
 
-		if (params.containsKey(EntityConstant.OFFSET)) {
-			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
+		if (params.containsKey(ServiceConstant.OFFSET)) {
+			offset = Integer.parseInt(params.get(ServiceConstant.OFFSET).get(0));
 		}
 
-		if (params.containsKey(EntityConstant.LIMIT)) {
-			limit = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
+		if (params.containsKey(ServiceConstant.LIMIT)) {
+			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		List<OrderModel> orderModels = orderRepository.findAll(offset, limit);
-		List<OrderDto> orderDtos = new ArrayList<>(orderModels.size());
+		PageModel<OrderModel> pageModel = orderRepository.findAll(offset, limit);
+		List<OrderModel> orderModels = pageModel.getEntities();
+		List<OrderDto> orderDtos = new ArrayList<>(limit);
+		if (orderModels != null) {
+			orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
+		}
 
-		orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
-
-		return orderDtos;
+		return pageConverter.convertToDto(pageModel, orderDtos);
 	}
 
 	private List<OrderCertificateDto> obtainUniqueOrderCertificates(

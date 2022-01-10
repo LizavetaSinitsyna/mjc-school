@@ -1,4 +1,4 @@
-package com.epam.esm.repository.quiery_builder;
+package com.epam.esm.repository.query_builder;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -63,7 +63,6 @@ public class CertificateQueryBuilder {
 	public Predicate[] obtainPredicates(MultiValueMap<String, String> params, CriteriaBuilder criteriaBuilder,
 			Root<CertificateModel> certificateRoot) {
 		List<Predicate> predicates = new ArrayList<>();
-		System.out.println(params);
 		List<String> tags = params.get(EntityConstant.TAG);
 		if (tags != null && !tags.isEmpty()) {
 			for (String tag : tags) {
@@ -86,7 +85,6 @@ public class CertificateQueryBuilder {
 		predicates.add(criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false));
 
 		Predicate[] result = new Predicate[predicates.size()];
-		System.out.println(Arrays.toString(predicates.toArray(new Predicate[0])));
 		return predicates.toArray(new Predicate[0]);
 	}
 

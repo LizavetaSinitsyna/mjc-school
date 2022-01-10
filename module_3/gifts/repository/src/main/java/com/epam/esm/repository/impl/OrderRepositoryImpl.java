@@ -36,10 +36,12 @@ import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
 import com.epam.esm.repository.model.OrderModel_;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.UserModel_;
+import com.epam.esm.repository.query_builder.QueryBuilderUtil;
 
 /**
  * 
@@ -125,43 +127,67 @@ public class OrderRepositoryImpl implements OrderRepository {
 	/**
 	 * Reads all orders according to the passed parameters.
 	 * 
-	 * @param offset start position for orders reading
-	 * @param limit  amount of orders to be read
+	 * @param pageNumber start position for orders reading
+	 * @param limit      amount of orders to be read
 	 * @return orders which meet passed parameters
 	 */
 	@Override
-	public List<OrderModel> findAll(int offset, int limit) {
+	public PageModel<OrderModel> findAll(int pageNumber, int limit) {
+		PageModel<OrderModel> pageModel = new PageModel<>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
+		Root<OrderModel> counterRoot = counterCriteria.from(OrderModel.class);
+		counterCriteria.select(criteriaBuilder.count(counterRoot));
+		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
+		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
+
 		CriteriaQuery<OrderModel> orderCriteria = criteriaBuilder.createQuery(OrderModel.class);
 		Root<OrderModel> orderRoot = orderCriteria.from(OrderModel.class);
 		orderCriteria.select(orderRoot);
+
 		TypedQuery<OrderModel> typedQuery = entityManager.createQuery(orderCriteria);
-		typedQuery.setFirstResult(offset);
+		typedQuery.setFirstResult(pageNumber);
 		typedQuery.setMaxResults(limit);
-		return typedQuery.getResultList();
+		pageModel.setEntities(typedQuery.getResultList());
+		pageModel.setCurrentPage(pageNumber);
+		
+		return pageModel;
 	}
 
 	/**
 	 * Reads all orders for the specified user according to the passed parameters.
 	 * 
-	 * @param userId id of the user whose orders should be read
-	 * @param offset start position for orders reading
-	 * @param limit  amount of orders to be read
+	 * @param userId     id of the user whose orders should be read
+	 * @param pageNumber start position for orders reading
+	 * @param limit      amount of orders to be read
 	 * @return orders which meet passed parameters
 	 */
 	@Override
-	public List<OrderModel> readAllByUserId(long userId, int offset, int limit) {
+	public PageModel<OrderModel> readAllByUserId(long userId, int pageNumber, int limit) {
+		PageModel<OrderModel> pageModel = new PageModel<>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
+		Root<OrderModel> counterRoot = counterCriteria.from(OrderModel.class);
+		counterCriteria.select(criteriaBuilder.count(counterRoot));
+		counterCriteria.where(
+				criteriaBuilder.equal(counterRoot.join(OrderModel_.user, JoinType.INNER).get(UserModel_.id), userId));
+		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
+		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
+
 		CriteriaQuery<OrderModel> orderCriteria = criteriaBuilder.createQuery(OrderModel.class);
 		Root<OrderModel> orderRoot = orderCriteria.from(OrderModel.class);
 		orderCriteria.select(orderRoot);
-
 		Join<OrderModel, UserModel> join = orderRoot.join(OrderModel_.user, JoinType.INNER);
 		orderCriteria.where(criteriaBuilder.equal(join.get(UserModel_.id), userId));
 
 		TypedQuery<OrderModel> typedQuery = entityManager.createQuery(orderCriteria);
-		typedQuery.setFirstResult(offset);
+		typedQuery.setFirstResult(pageNumber);
 		typedQuery.setMaxResults(limit);
-		return typedQuery.getResultList();
+		pageModel.setEntities(typedQuery.getResultList());
+		pageModel.setCurrentPage(pageNumber);
+
+		return pageModel;
 	}
 }

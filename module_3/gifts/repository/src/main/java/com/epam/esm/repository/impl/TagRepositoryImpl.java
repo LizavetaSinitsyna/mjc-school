@@ -27,10 +27,12 @@ import org.springframework.util.MultiValueMap;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
-import com.epam.esm.repository.quiery_builder.CertificateQueryBuilder;
-import com.epam.esm.repository.quiery_builder.TagQueryBuilder;
+import com.epam.esm.repository.query_builder.CertificateQueryBuilder;
+import com.epam.esm.repository.query_builder.QueryBuilderUtil;
+import com.epam.esm.repository.query_builder.TagQueryBuilder;
 
 /**
  * 
@@ -166,21 +168,33 @@ public class TagRepositoryImpl implements TagRepository {
 	/**
 	 * Reads all tags according to the passed parameters.
 	 * 
-	 * @param offset start position for tags reading
-	 * @param limit  amount of tags to be read
+	 * @param pageNumber start position for tags reading
+	 * @param limit      amount of tags to be read
 	 * @return tags which meet passed parameters
 	 */
 	@Override
-	public List<TagModel> findAll(int offset, int limit) {
+	public PageModel<TagModel> findAll(int pageNumber, int limit) {
+		PageModel<TagModel> pageModel = new PageModel<>();
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
+
+		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
+		Root<TagModel> counterRoot = counterCriteria.from(TagModel.class);
+		counterCriteria.select(criteriaBuilder.count(counterRoot));
+		counterCriteria.where(criteriaBuilder.equal(counterRoot.get(TagModel_.isDeleted), false));
+		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
+		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
+
 		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
 		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
 		tagCriteria.select(tagRoot);
 		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.isDeleted), false));
 		TypedQuery<TagModel> typedQuery = entityManager.createQuery(tagCriteria);
-		typedQuery.setFirstResult(offset);
+		typedQuery.setFirstResult(pageNumber);
 		typedQuery.setMaxResults(limit);
-		return typedQuery.getResultList();
+		pageModel.setEntities(typedQuery.getResultList());
+		pageModel.setCurrentPage(pageNumber);
+		
+		return pageModel;
 	}
 
 	/**

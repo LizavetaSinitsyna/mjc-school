@@ -6,6 +6,7 @@ import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
+import com.epam.esm.dto.PageDto;
 
 /**
  * 
@@ -46,7 +47,7 @@ public interface OrderService {
 	 *               ordering
 	 * @return orders for specified user which meet the passed parameters
 	 */
-	List<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params);
+	PageDto<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params);
 
 	/**
 	 * Reads information about the order with passed id for the specified user.
@@ -64,5 +65,5 @@ public interface OrderService {
 	 *               ordering
 	 * @return orders which meet passed parameters
 	 */
-	List<OrderDto> readAll(MultiValueMap<String, String> params);
+	PageDto<OrderDto> readAll(MultiValueMap<String, String> params);
 }

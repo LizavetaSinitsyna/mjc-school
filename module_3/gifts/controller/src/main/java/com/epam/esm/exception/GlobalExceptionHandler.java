@@ -138,8 +138,6 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(Exception.class)
 	@ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
 	public ApiException handleException(Exception exception) {
-		System.out.println(exception.getClass());
-		System.out.println(exception.getCause());
 		ErrorCode errorCode = ErrorCode.INTERNAL_ERROR;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		if (Arrays.asList(environment.getActiveProfiles()).contains("dev")) {

@@ -5,9 +5,6 @@ package com.epam.esm.repository.model;
  *
  */
 public class EntityConstant {
-	public static final String PARAMS = "params";
-	public static final String OFFSET = "offset";
-	public static final String LIMIT = "limit";
 	public static final String SEARCH = "search";
 	public static final String ORDER_BY = "sort";
 	public static final String TAG = "tag";

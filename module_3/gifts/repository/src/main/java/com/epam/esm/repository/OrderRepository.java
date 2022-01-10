@@ -3,6 +3,7 @@ package com.epam.esm.repository;
 import java.util.List;
 
 import com.epam.esm.repository.model.OrderModel;
+import com.epam.esm.repository.model.PageModel;
 
 /**
  * 
@@ -18,7 +19,7 @@ public interface OrderRepository extends GeneralRepository<OrderModel> {
 	 * @param limit  amount of orders to be read
 	 * @return orders which meet passed parameters
 	 */
-	List<OrderModel> readAllByUserId(long userId, int offset, int limit);
+	PageModel<OrderModel> readAllByUserId(long userId, int offset, int limit);
 
 	/**
 	 * Saves the passed orders.

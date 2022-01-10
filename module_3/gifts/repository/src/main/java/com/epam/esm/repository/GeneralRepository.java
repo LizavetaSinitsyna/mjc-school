@@ -1,7 +1,8 @@
 package com.epam.esm.repository;
 
-import java.util.List;
 import java.util.Optional;
+
+import com.epam.esm.repository.model.PageModel;
 
 /**
  * 
@@ -33,5 +34,5 @@ public interface GeneralRepository<T> {
 	 * @param limit  amount of entities to be read
 	 * @return entities which meet passed parameters
 	 */
-	List<T> findAll(int offset, int limit);
+	PageModel<T> findAll(int offset, int limit);
 }

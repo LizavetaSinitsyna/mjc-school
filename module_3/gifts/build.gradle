@@ -4,6 +4,10 @@ plugins {
 	id "war"
 }
 
+ext {
+	modelmapperVersion = '2.4.5'
+}
+
 springBoot {
     mainClass = 'com.epam.esm.Application'
 }
@@ -27,11 +31,12 @@ subprojects {
 		compileOnly 'org.projectlombok:lombok'
 		annotationProcessor 'org.projectlombok:lombok'
 		
-		implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+		implementation group: 'org.modelmapper', name: 'modelmapper', version: "${modelmapperVersion}"
 		
 		testImplementation 'org.springframework.boot:spring-boot-starter-test'
 		testImplementation 'org.mockito:mockito-junit-jupiter'
 		
+		implementation 'org.springframework.boot:spring-boot-starter-actuator'
 		implementation 'com.fasterxml.jackson.core:jackson-databind'
 	}
 	

@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.util.MultiValueMap;
 
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.UserDto;
 
 /**
@@ -27,7 +28,7 @@ public interface UserService {
 	 *               ordering
 	 * @return users which meet passed parameters
 	 */
-	List<UserDto> readAll(MultiValueMap<String, String> params);
+	PageDto<UserDto> readAll(MultiValueMap<String, String> params);
 
 	/**
 	 * Creates and saves the passed user.

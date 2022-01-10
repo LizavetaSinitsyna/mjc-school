@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
+import com.epam.esm.dto.PageDto;
 
 /**
  * 
@@ -75,5 +76,5 @@ public interface CertificateService {
 	 *               their ordering
 	 * @return certificates which meet passed parameters
 	 */
-	List<CertificateDto> readAll(MultiValueMap<String, String> params);
+	PageDto<CertificateDto> readAll(MultiValueMap<String, String> params);
 }

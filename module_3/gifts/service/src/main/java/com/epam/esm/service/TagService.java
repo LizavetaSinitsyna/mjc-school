@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.util.MultiValueMap;
 
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 
 /**
@@ -43,7 +44,7 @@ public interface TagService {
 	 *               ordering
 	 * @return tags which meet passed parameters
 	 */
-	List<TagDto> readAll(MultiValueMap<String, String> params);
+	PageDto<TagDto> readAll(MultiValueMap<String, String> params);
 
 	/**
 	 * Deletes tag with passed id.

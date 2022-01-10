@@ -13,10 +13,16 @@ import com.epam.esm.repository.model.EntityConstant;
  */
 public class ServiceConstant {
 	// General
-	public static final int OFFSET = 0;
-	public static final int LIMIT = 10;
+	public static final String PARAMS = "params";
+	public static final String OFFSET = "page";
+	public static final String LIMIT = "limit";
+	public static final int DEFAULT_PAGE_NUMBER = 1;
+	public static final int DEFAULT_LIMIT = 10;
+	public static final int MIN_PAGE_NUMBER = 1;
+	public static final int MIN_LIMIT_NUMBER = 1;
+	public static final int MAX_LIMIT = 100;
 	public static final Set<String> GENERAL_POSSIBLE_READ_PARAMS = new HashSet<String>(
-			Arrays.asList(EntityConstant.OFFSET, EntityConstant.LIMIT));
+			Arrays.asList(OFFSET, LIMIT));
 
 	// Certificate
 	public static final int CERTIFICATE_MIN_NAME_LENGTH = 5;
@@ -29,8 +35,8 @@ public class ServiceConstant {
 	public static final BigDecimal CERTIFICATE_MIN_PRICE = new BigDecimal("0.01");
 	public static final int CERTIFICATE_PRICE_SCALE = 2;
 	public static final Set<String> CERTIFICATE_POSSIBLE_READ_PARAMS = new HashSet<String>(
-			Arrays.asList(EntityConstant.SEARCH, EntityConstant.ORDER_BY, EntityConstant.TAG, EntityConstant.OFFSET,
-					EntityConstant.LIMIT));
+			Arrays.asList(EntityConstant.SEARCH, EntityConstant.ORDER_BY, EntityConstant.TAG, ServiceConstant.OFFSET,
+					ServiceConstant.LIMIT));
 	public static final Set<String> CERTIFICATE_POSSIBLE_SORT_FIELD = new HashSet<String>(Arrays.asList(
 			EntityConstant.NAME, EntityConstant.CERTIFICATE_PRICE, EntityConstant.CERTIFICATE_CREATE_DATE,
 			EntityConstant.NAME + EntityConstant.DESC_SIGN, EntityConstant.CERTIFICATE_PRICE + EntityConstant.DESC_SIGN,

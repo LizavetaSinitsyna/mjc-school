@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
@@ -17,9 +18,11 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.TagService;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.TagValidation;
 import com.epam.esm.service.validation.ValidationUtil;
@@ -34,14 +37,16 @@ public class TagServiceImpl implements TagService {
 	private final CertificateRepository certificateRepository;
 	private final TagRepository tagRepository;
 	private final TagConverter tagConverter;
+	private final PageConverter<TagDto, TagModel> pageConverter;
 	private final TagValidation tagValidation;
 
 	@Autowired
 	public TagServiceImpl(CertificateRepository certificateRepository, TagRepository tagRepository,
-			TagConverter tagConverter, TagValidation tagValidation) {
+			TagConverter tagConverter, TagValidation tagValidation, PageConverter<TagDto, TagModel> pageConverter) {
 		this.certificateRepository = certificateRepository;
 		this.tagRepository = tagRepository;
 		this.tagConverter = tagConverter;
+		this.pageConverter = pageConverter;
 		this.tagValidation = tagValidation;
 	}
 
@@ -122,7 +127,7 @@ public class TagServiceImpl implements TagService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public List<TagDto> readAll(MultiValueMap<String, String> params) {
+	public PageDto<TagDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = tagValidation.validateReadParams(paramsInLowerCase);
 
@@ -130,22 +135,25 @@ public class TagServiceImpl implements TagService {
 			throw new ValidationException(errors, ErrorCode.INVALID_TAG_REQUEST_PARAMS);
 		}
 
-		int offset = ServiceConstant.OFFSET;
-		int limit = ServiceConstant.LIMIT;
+		int offset = ServiceConstant.DEFAULT_PAGE_NUMBER;
+		int limit = ServiceConstant.DEFAULT_LIMIT;
 
-		if (params.containsKey(EntityConstant.OFFSET)) {
-			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
+		if (params.containsKey(ServiceConstant.OFFSET)) {
+			offset = Integer.parseInt(params.get(ServiceConstant.OFFSET).get(0));
 		}
 
-		if (params.containsKey(EntityConstant.LIMIT)) {
-			limit = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
+		if (params.containsKey(ServiceConstant.LIMIT)) {
+			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		List<TagModel> tagModels = tagRepository.findAll(offset, limit);
-		List<TagDto> tagDtos = new ArrayList<>(tagModels.size());
-		tagModels.forEach(tagModel -> tagDtos.add(tagConverter.convertToDto(tagModel)));
+		PageModel<TagModel> pageModel = tagRepository.findAll(offset, limit);
+		List<TagModel> tagModels = pageModel.getEntities();
+		List<TagDto> tagDtos = new ArrayList<>(limit);
+		if (tagModels != null) {
+			tagModels.forEach(tagModel -> tagDtos.add(tagConverter.convertToDto(tagModel)));
+		}
 
-		return tagDtos;
+		return pageConverter.convertToDto(pageModel, tagDtos);
 	}
 
 	/**

@@ -11,13 +11,12 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mockito;
-import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.NullEntityException;
 import com.epam.esm.exception.ValidationException;
@@ -25,25 +24,29 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
+import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.converter.CertificateConverter;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.CertificateValidation;
 import com.epam.esm.service.validation.TagValidation;
 
-@ExtendWith(MockitoExtension.class)
 class CertificateServiceImplTest {
 	private static final Long CERTIFICATE_ID_1 = 1L;
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long INVALID_ID = -1L;
-	private static final int OFFSET = 0;
+	private static final int PAGE_NUMBER = 1;
 	private static final int LIMIT = 10;
 
 	private CertificateModel certificateModel1;
 	private CertificateDto certificateDto1;
 	private TagModel tagModel1;
 	private TagDto tagDto1;
+	private PageModel<CertificateModel> certificateModelsPage;
+	private PageDto<CertificateDto> certificateDtosPage;
 
 	private CertificateRepository certificateRepository;
 	private TagRepository tagRepository;
@@ -52,6 +55,7 @@ class CertificateServiceImplTest {
 	private static TagValidation tagValidation;
 	private static CertificateConverter certificateConverter;
 	private static TagConverter tagConverter;
+	private static PageConverter<CertificateDto, CertificateModel> pageConverter;
 	private static LocalDateTime localDateTime;
 
 	private CertificateService certificateServiceImpl;
@@ -62,6 +66,7 @@ class CertificateServiceImplTest {
 		tagValidation = new TagValidation();
 		certificateConverter = new CertificateConverter();
 		tagConverter = new TagConverter();
+		pageConverter = new PageConverter<>();
 		localDateTime = LocalDateTime.now();
 	}
 
@@ -71,7 +76,7 @@ class CertificateServiceImplTest {
 		tagRepository = Mockito.mock(TagRepository.class);
 
 		certificateServiceImpl = new CertificateServiceImpl(certificateRepository, tagRepository, certificateValidation,
-				tagValidation, certificateConverter, tagConverter);
+				tagValidation, certificateConverter, tagConverter, pageConverter);
 
 		certificateModel1 = new CertificateModel();
 		certificateModel1.setName("Dinner at the restaurant with unlimited pizzas");
@@ -100,6 +105,15 @@ class CertificateServiceImplTest {
 
 		certificateDto1.setTags(Arrays.asList(tagDto1));
 		certificateModel1.setTags(Arrays.asList(tagModel1));
+
+		List<CertificateModel> certificateModels = new ArrayList<>();
+		certificateModels.add(certificateModel1);
+		List<CertificateDto> certificateDtos = new ArrayList<>();
+		certificateDtos.add(certificateDto1);
+		certificateModelsPage = new PageModel<>();
+		certificateModelsPage.setEntities(certificateModels);
+		certificateDtosPage = new PageDto<>();
+		certificateDtosPage.setEntities(certificateDtos);
 	}
 
 	@Test
@@ -169,29 +183,29 @@ class CertificateServiceImplTest {
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
-		List<CertificateModel> certificateModels = Arrays.asList(certificateModel1);
-		List<CertificateDto> expected = Arrays.asList(certificateDto1);
+		PageDto<CertificateDto> expected = certificateDtosPage;
 
-		Mockito.when(certificateRepository.findAll(params, OFFSET, LIMIT)).thenReturn(certificateModels);
-		List<CertificateDto> actual = certificateServiceImpl.readAll(params);
+		Mockito.when(certificateRepository.findAll(params, PAGE_NUMBER, LIMIT)).thenReturn(certificateModelsPage);
+		PageDto<CertificateDto> actual = certificateServiceImpl.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(certificateRepository).findAll(params, OFFSET, LIMIT);
+		Mockito.verify(certificateRepository).findAll(params, PAGE_NUMBER, LIMIT);
 	}
 
 	@Test
 	void testReadAllWithOrderBy() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 		params.put(EntityConstant.ORDER_BY, Arrays.asList(EntityConstant.CERTIFICATE_CREATE_DATE));
-		List<CertificateModel> certificateModels = Arrays.asList(certificateModel1);
-		List<CertificateDto> expected = Arrays.asList(certificateDto1);
 
-		Mockito.when(certificateRepository.findAll(Mockito.any(), Mockito.eq(OFFSET), Mockito.eq(LIMIT)))
-				.thenReturn(certificateModels);
-		List<CertificateDto> actual = certificateServiceImpl.readAll(params);
+		PageDto<CertificateDto> expected = certificateDtosPage;
+
+		Mockito.when(certificateRepository.findAll(Mockito.any(), Mockito.eq(ServiceConstant.DEFAULT_PAGE_NUMBER),
+				Mockito.eq(ServiceConstant.DEFAULT_LIMIT))).thenReturn(certificateModelsPage);
+		PageDto<CertificateDto> actual = certificateServiceImpl.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(certificateRepository).findAll(Mockito.any(), Mockito.eq(OFFSET), Mockito.eq(LIMIT));
+		Mockito.verify(certificateRepository).findAll(Mockito.any(), Mockito.eq(ServiceConstant.DEFAULT_PAGE_NUMBER),
+				Mockito.eq(ServiceConstant.DEFAULT_LIMIT));
 	}
 
 	@Test

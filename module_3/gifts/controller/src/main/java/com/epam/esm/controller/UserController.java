@@ -1,5 +1,9 @@
 package com.epam.esm.controller;
 
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
+import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +17,11 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.epam.esm.controller.converter.PageViewConverter;
+import com.epam.esm.controller.converter.UserViewConverter;
+import com.epam.esm.controller.view.PageView;
+import com.epam.esm.controller.view.UserView;
+import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.UserDto;
 import com.epam.esm.service.UserService;
 
@@ -25,10 +34,15 @@ import com.epam.esm.service.UserService;
 public class UserController {
 
 	private final UserService userService;
+	private final UserViewConverter userConverter;
+	private final PageViewConverter<UserView, UserDto> pageConverter;
 
 	@Autowired
-	public UserController(UserService userService) {
+	public UserController(UserService userService, UserViewConverter userConverter,
+			PageViewConverter<UserView, UserDto> pageConverter) {
 		this.userService = userService;
+		this.userConverter = userConverter;
+		this.pageConverter = pageConverter;
 	}
 
 	/**
@@ -39,10 +53,11 @@ public class UserController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	public UserDto readById(@PathVariable long id) {
+	public UserView readById(@PathVariable long id) {
 		UserDto userDto = userService.readById(id);
-		HateoasUtil.addLinksToUser(userDto);
-		return userDto;
+		UserView userView = userConverter.convertToView(userDto);
+		HateoasUtil.addLinksToUser(userView);
+		return userView;
 	}
 
 	/**
@@ -53,15 +68,18 @@ public class UserController {
 	 * @return users which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<List<UserDto>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		List<UserDto> users = userService.readAll(params);
-		if (users == null || users.isEmpty()) {
-			return new ResponseEntity<>(users, HttpStatus.NO_CONTENT);
+	public ResponseEntity<PageView<UserView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		PageDto<UserDto> userPage = userService.readAll(params);
+		List<UserDto> users = userPage.getEntities();
+		if (userPage == null || users == null || users.isEmpty()) {
+			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
 		} else {
-			for (UserDto userDto : users) {
-				HateoasUtil.addLinksToUser(userDto);
-			}
-			return new ResponseEntity<>(users, HttpStatus.OK);
+			List<UserView> usersView = new ArrayList<>(users.size());
+			users.forEach(userDto -> usersView.add(userConverter.convertToView(userDto)));
+			PageView<UserView> userPageView = pageConverter.convertToView(userPage, usersView);
+			usersView.forEach(userView -> HateoasUtil.addLinksToUser(userView));
+			HateoasUtil.addLinksToPage(userPageView, linkTo(methodOn(TagController.class).readAll(params)));
+			return new ResponseEntity<>(userPageView, HttpStatus.OK);
 		}
 	}
 }

@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
+import com.epam.esm.dto.PageDto;
+import com.epam.esm.dto.TagDto;
 import com.epam.esm.dto.UserDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
@@ -16,10 +18,13 @@ import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.RoleRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.EntityConstant;
+import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.RoleModel;
+import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.UserService;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.converter.UserConverter;
 import com.epam.esm.service.validation.UserValidation;
 import com.epam.esm.service.validation.ValidationUtil;
@@ -34,14 +39,16 @@ public class UserServiceImpl implements UserService {
 	private final UserRepository userRepository;
 	private final RoleRepository roleRepository;
 	private final UserConverter userConverter;
+	private final PageConverter<UserDto, UserModel> pageConverter;
 	private final UserValidation userValidation;
 
 	@Autowired
 	public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, UserConverter userConverter,
-			UserValidation userValidation) {
+			UserValidation userValidation, PageConverter<UserDto, UserModel> pageConverter) {
 		this.userRepository = userRepository;
 		this.roleRepository = roleRepository;
 		this.userConverter = userConverter;
+		this.pageConverter = pageConverter;
 		this.userValidation = userValidation;
 	}
 
@@ -75,7 +82,7 @@ public class UserServiceImpl implements UserService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public List<UserDto> readAll(MultiValueMap<String, String> params) {
+	public PageDto<UserDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = userValidation.validateReadParams(paramsInLowerCase);
 
@@ -83,22 +90,25 @@ public class UserServiceImpl implements UserService {
 			throw new ValidationException(errors, ErrorCode.INVALID_USER_REQUEST_PARAMS);
 		}
 
-		int offset = ServiceConstant.OFFSET;
-		int limit = ServiceConstant.LIMIT;
+		int offset = ServiceConstant.DEFAULT_PAGE_NUMBER;
+		int limit = ServiceConstant.DEFAULT_LIMIT;
 
-		if (params.containsKey(EntityConstant.OFFSET)) {
-			offset = Integer.parseInt(params.get(EntityConstant.OFFSET).get(0));
+		if (params.containsKey(ServiceConstant.OFFSET)) {
+			offset = Integer.parseInt(params.get(ServiceConstant.OFFSET).get(0));
 		}
 
-		if (params.containsKey(EntityConstant.LIMIT)) {
-			limit = Integer.parseInt(params.get(EntityConstant.LIMIT).get(0));
+		if (params.containsKey(ServiceConstant.LIMIT)) {
+			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		List<UserModel> userModels = userRepository.findAll(offset, limit);
-		List<UserDto> userDtos = new ArrayList<>(userModels.size());
-		userModels.forEach(userModel -> userDtos.add(userConverter.convertToDto(userModel)));
+		PageModel<UserModel> pageModel = userRepository.findAll(offset, limit);
+		List<UserModel> userModels = pageModel.getEntities();
+		List<UserDto> userDtos = new ArrayList<>(limit);
+		if (userModels != null) {
+			userModels.forEach(userModel -> userDtos.add(userConverter.convertToDto(userModel)));
+		}
 
-		return userDtos;
+		return pageConverter.convertToDto(pageModel, userDtos);
 	}
 
 	/**

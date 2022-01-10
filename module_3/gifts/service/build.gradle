@@ -1,9 +1,4 @@
-ext {
-	modelmapperVersion = '2.4.5'
-}
-
 dependencies {
-	implementation group: 'org.modelmapper', name: 'modelmapper', version: "${modelmapperVersion}"
 	implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 	
 	implementation 'org.springframework.boot:spring-boot-starter-jdbc'
