@@ -15,17 +15,10 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
-import org.hibernate.Criteria;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.RoleRepository;
-import com.epam.esm.repository.TagRepository;
-import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.RoleModel;
 import com.epam.esm.repository.model.RoleModel_;

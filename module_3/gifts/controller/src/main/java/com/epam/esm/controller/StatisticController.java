@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.epam.esm.controller.converter.TagViewConverter;
+import com.epam.esm.controller.assembler.TagViewAssembler;
 import com.epam.esm.controller.view.TagView;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.service.TagService;
@@ -21,12 +21,12 @@ import com.epam.esm.service.TagService;
 public class StatisticController {
 
 	private final TagService tagService;
-	private final TagViewConverter tagConverter;
+	private final TagViewAssembler tagViewAssembler;
 
 	@Autowired
-	public StatisticController(TagService tagService, TagViewConverter tagConverter) {
+	public StatisticController(TagService tagService, TagViewAssembler tagViewAssembler) {
 		this.tagService = tagService;
-		this.tagConverter = tagConverter;
+		this.tagViewAssembler = tagViewAssembler;
 	}
 
 	/**
@@ -40,8 +40,6 @@ public class StatisticController {
 	@ResponseStatus(HttpStatus.OK)
 	public TagView readPopularTagByMostCostlyUser() {
 		TagDto popularTag = tagService.readPopularTagByMostProfitableUser();
-		TagView popularTagView = tagConverter.convertToView(popularTag);
-		HateoasUtil.addLinksToTag(popularTagView);
-		return popularTagView;
+		return tagViewAssembler.toModel(popularTag);
 	}
 }

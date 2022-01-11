@@ -22,12 +22,12 @@ import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -36,7 +36,6 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.CertificateModel_;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
 import com.epam.esm.repository.query_builder.CertificateQueryBuilder;
@@ -178,8 +177,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return certificates which meet passed parameters
 	 */
 	@Override
-	public PageModel<CertificateModel> findAll(MultiValueMap<String, String> params, int pageNumber, int limit) {
-		PageModel<CertificateModel> pageModel = new PageModel<>();
+	public Page<CertificateModel> findAll(MultiValueMap<String, String> params, int pageNumber, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
 		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
@@ -187,7 +185,6 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		counterCriteria.select(criteriaBuilder.count(counterRoot));
 		counterCriteria.where(certificateQueryBuilder.obtainPredicates(params, criteriaBuilder, counterRoot));
 		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
 
 		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
 		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
@@ -198,8 +195,10 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		TypedQuery<CertificateModel> typedQuery = entityManager.createQuery(certificateCriteria);
 		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		pageModel.setEntities(typedQuery.getResultList());
-		pageModel.setCurrentPage(pageNumber);
+		List<CertificateModel> certificates = typedQuery.getResultList();
+
+		Pageable pageable = PageRequest.of(pageNumber, limit);
+		Page<CertificateModel> pageModel = new PageImpl<>(certificates, pageable, totalEntriesAmount);
 
 		return pageModel;
 	}
@@ -284,8 +283,7 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 	 * @return certificates which meet passed parameters
 	 */
 	@Override
-	public PageModel<CertificateModel> findAll(int pageNumber, int limit) {
-		PageModel<CertificateModel> pageModel = new PageModel<>();
+	public Page<CertificateModel> findAll(int pageNumber, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
 		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
@@ -293,7 +291,6 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		counterCriteria.select(criteriaBuilder.count(counterRoot));
 		counterCriteria.where(criteriaBuilder.equal(counterRoot.get(CertificateModel_.isDeleted), false));
 		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
 
 		CriteriaQuery<CertificateModel> certificateCriteria = criteriaBuilder.createQuery(CertificateModel.class);
 		Root<CertificateModel> certificateRoot = certificateCriteria.from(CertificateModel.class);
@@ -301,11 +298,13 @@ public class CertificateRepositoryImpl implements CertificateRepository {
 		certificateCriteria.where(criteriaBuilder.equal(certificateRoot.get(CertificateModel_.isDeleted), false));
 
 		TypedQuery<CertificateModel> typedQuery = entityManager.createQuery(certificateCriteria);
-		typedQuery.setFirstResult(pageNumber);
+		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		pageModel.setEntities(typedQuery.getResultList());
-		pageModel.setCurrentPage(pageNumber);
-		
+		List<CertificateModel> certificates = typedQuery.getResultList();
+
+		Pageable pageable = PageRequest.of(pageNumber, limit);
+		Page<CertificateModel> pageModel = new PageImpl<>(certificates, pageable, totalEntriesAmount);
+
 		return pageModel;
 	}
 }

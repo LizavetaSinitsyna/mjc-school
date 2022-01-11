@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import com.epam.esm.exception.ErrorCode;
-import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.service.ServiceConstant;
 
 /**
@@ -59,7 +58,7 @@ public class PaginationValidation {
 			errors.put(ErrorCode.INVALID_OFFSET_FORMAT,
 					ServiceConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + initialPageNumber);
 		}
-		if (errors.isEmpty() && pageNumber <  ServiceConstant.MIN_PAGE_NUMBER) {
+		if (errors.isEmpty() && pageNumber < ServiceConstant.MIN_PAGE_NUMBER) {
 			errors.put(ErrorCode.NEGATIVE_OFFSET,
 					ServiceConstant.OFFSET + ValidationUtil.ERROR_RESOURCE_DELIMITER + pageNumber);
 		}

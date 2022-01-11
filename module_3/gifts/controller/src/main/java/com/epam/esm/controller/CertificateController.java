@@ -1,12 +1,9 @@
 package com.epam.esm.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -22,12 +19,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.epam.esm.controller.assembler.CertificateViewAssembler;
 import com.epam.esm.controller.converter.CertificateViewConverter;
-import com.epam.esm.controller.converter.PageViewConverter;
 import com.epam.esm.controller.view.CertificateView;
-import com.epam.esm.controller.view.PageView;
 import com.epam.esm.dto.CertificateDto;
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.service.CertificateService;
 
 /**
@@ -40,14 +35,17 @@ public class CertificateController {
 
 	private final CertificateService certificateService;
 	private final CertificateViewConverter certificateConverter;
-	private final PageViewConverter<CertificateView, CertificateDto> pageConverter;
+	private final PagedResourcesAssembler<CertificateDto> pagedResourcesAssembler;
+	private final CertificateViewAssembler certificateViewAssembler;
 
 	@Autowired
-	public CertificateController(CertificateService certificateService,
-			PageViewConverter<CertificateView, CertificateDto> pageConverter, CertificateViewConverter certificateConverter) {
+	public CertificateController(CertificateService certificateService, CertificateViewConverter certificateConverter,
+			PagedResourcesAssembler<CertificateDto> pagedResourcesAssembler,
+			CertificateViewAssembler certificateViewAssembler) {
 		this.certificateService = certificateService;
 		this.certificateConverter = certificateConverter;
-		this.pageConverter = pageConverter;
+		this.pagedResourcesAssembler = pagedResourcesAssembler;
+		this.certificateViewAssembler = certificateViewAssembler;
 	}
 
 	/**
@@ -61,9 +59,7 @@ public class CertificateController {
 	public CertificateView create(@RequestBody CertificateView certificateView) {
 		CertificateDto createdCertificateDto = certificateService
 				.create(certificateConverter.convertToDto(certificateView));
-		CertificateView createdCertificateView = certificateConverter.convertToView(createdCertificateDto);
-		HateoasUtil.addLinksToCertificate(createdCertificateView);
-		return createdCertificateView;
+		return certificateViewAssembler.toModel(createdCertificateDto);
 	}
 
 	/**
@@ -76,9 +72,7 @@ public class CertificateController {
 	@ResponseStatus(HttpStatus.OK)
 	public CertificateView readById(@PathVariable long id) {
 		CertificateDto certificateDto = certificateService.readById(id);
-		CertificateView certificateView = certificateConverter.convertToView(certificateDto);
-		HateoasUtil.addLinksToCertificate(certificateView);
-		return certificateView;
+		return certificateViewAssembler.toModel(certificateDto);
 	}
 
 	/**
@@ -89,23 +83,11 @@ public class CertificateController {
 	 * @return certificates which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<PageView<CertificateView>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		PageDto<CertificateDto> certificatePage = certificateService.readAll(params);
-		List<CertificateDto> certificates = certificatePage.getEntities();
+	public ResponseEntity<PagedModel<CertificateView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		Page<CertificateDto> certificatePage = certificateService.readAll(params);
+		PagedModel<CertificateView> page = pagedResourcesAssembler.toModel(certificatePage, certificateViewAssembler);
+		return new ResponseEntity<>(page, HttpStatus.OK);
 
-		if (certificatePage == null || certificates == null || certificates.isEmpty()) {
-			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
-		} else {
-			List<CertificateView> certificatesView = new ArrayList<>(certificates.size());
-			certificates.forEach(
-					certificateDto -> certificatesView.add(certificateConverter.convertToView(certificateDto)));
-			PageView<CertificateView> certificatePageView = pageConverter.convertToView(certificatePage,
-					certificatesView);
-			certificatesView.forEach(certificateView -> HateoasUtil.addLinksToCertificate(certificateView));
-			HateoasUtil.addLinksToPage(certificatePageView,
-					linkTo(methodOn(CertificateController.class).readAll(params)));
-			return new ResponseEntity<>(certificatePageView, HttpStatus.OK);
-		}
 	}
 
 	/**
@@ -123,9 +105,7 @@ public class CertificateController {
 			@PathVariable long id) {
 		CertificateDto updatedCertificateDto = certificateService.updateCertificateFields(id,
 				certificateConverter.convertToDto(certificateView));
-		CertificateView updatedCertificateView = certificateConverter.convertToView(updatedCertificateDto);
-		HateoasUtil.addLinksToCertificate(updatedCertificateView);
-		return updatedCertificateView;
+		return certificateViewAssembler.toModel(updatedCertificateDto);
 	}
 
 	/**
@@ -143,9 +123,7 @@ public class CertificateController {
 			@PathVariable long id) {
 		CertificateDto updatedCertificateDto = certificateService.updateEntireCertificate(id,
 				certificateConverter.convertToDto(certificateView));
-		CertificateView updatedCertificateView = certificateConverter.convertToView(updatedCertificateDto);
-		HateoasUtil.addLinksToCertificate(updatedCertificateView);
-		return updatedCertificateView;
+		return certificateViewAssembler.toModel(updatedCertificateDto);
 	}
 
 	/**

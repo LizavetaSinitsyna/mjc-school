@@ -2,7 +2,7 @@ package com.epam.esm.repository;
 
 import java.util.Optional;
 
-import com.epam.esm.repository.model.PageModel;
+import org.springframework.data.domain.Page;
 
 /**
  * 
@@ -34,5 +34,5 @@ public interface GeneralRepository<T> {
 	 * @param limit  amount of entities to be read
 	 * @return entities which meet passed parameters
 	 */
-	PageModel<T> findAll(int offset, int limit);
+	Page<T> findAll(int offset, int limit);
 }

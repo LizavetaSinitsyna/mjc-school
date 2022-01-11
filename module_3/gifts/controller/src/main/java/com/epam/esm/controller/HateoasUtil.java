@@ -5,26 +5,18 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 
 import java.util.List;
 
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.server.mvc.WebMvcLinkBuilder;
-import org.springframework.web.util.UriComponentsBuilder;
-
 import com.epam.esm.controller.view.CertificateView;
 import com.epam.esm.controller.view.OrderCertificateView;
 import com.epam.esm.controller.view.OrderDataView;
 import com.epam.esm.controller.view.OrderView;
-import com.epam.esm.controller.view.PageView;
 import com.epam.esm.controller.view.TagView;
 import com.epam.esm.controller.view.UserView;
-import com.epam.esm.service.ServiceConstant;
 
 /**
  * Contains methods for adding HATEOAS links to the entities in response
  *
  */
 public class HateoasUtil {
-	private static final String NEXT_PAGE = "nextPage";
-	private static final String PREVIOUS_PAGE = "prevPage";
 
 	private HateoasUtil() {
 
@@ -72,7 +64,7 @@ public class HateoasUtil {
 	 * Adds link to the order with passed id. If passed order data entity is
 	 * {@code null} does nothing.
 	 * 
-	 * @param orderId      the id of the order to which the link should be added
+	 * @param orderId       the id of the order to which the link should be added
 	 * @param orderDataView the order data entity to which the link should be added
 	 */
 
@@ -101,21 +93,6 @@ public class HateoasUtil {
 	public static void addLinksToTag(TagView tagView) {
 		if (tagView != null) {
 			tagView.add(linkTo(methodOn(TagController.class).readById(tagView.getId())).withSelfRel());
-		}
-	}
-
-	public static void addLinksToPage(PageView<?> pageView, WebMvcLinkBuilder controllerMethodLink) {
-		if (pageView != null && controllerMethodLink != null) {
-			pageView.add(controllerMethodLink.withSelfRel());
-			UriComponentsBuilder builder = controllerMethodLink.toUriComponentsBuilder();
-			builder.replaceQueryParam(ServiceConstant.OFFSET, pageView.getCurrentPage() + 1);
-			Link nextPageLink = Link.of(builder.build().toString(), NEXT_PAGE);
-			pageView.add(nextPageLink);
-			if (pageView.getCurrentPage() > ServiceConstant.MIN_PAGE_NUMBER) {
-				builder.replaceQueryParam(ServiceConstant.OFFSET, pageView.getCurrentPage() - 1);
-				Link prevPageLink = Link.of(builder.build().toString(), PREVIOUS_PAGE);
-				pageView.add(prevPageLink);
-			}
 		}
 	}
 }

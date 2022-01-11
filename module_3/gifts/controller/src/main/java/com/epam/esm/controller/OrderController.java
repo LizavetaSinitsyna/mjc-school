@@ -1,12 +1,9 @@
 package com.epam.esm.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -20,14 +17,12 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.epam.esm.controller.converter.OrderViewConverter;
+import com.epam.esm.controller.assembler.OrderViewAssembler;
 import com.epam.esm.controller.converter.OrderDataViewConverter;
-import com.epam.esm.controller.converter.PageViewConverter;
 import com.epam.esm.controller.view.OrderDataView;
 import com.epam.esm.controller.view.OrderView;
-import com.epam.esm.controller.view.PageView;
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.service.OrderService;
 
 /**
@@ -41,15 +36,18 @@ public class OrderController {
 	private final OrderService orderService;
 	private final OrderViewConverter orderConverter;
 	private final OrderDataViewConverter orderDataConverter;
-	private final PageViewConverter<OrderView, OrderDto> pageConverter;
+	private final PagedResourcesAssembler<OrderDto> pagedResourcesAssembler;
+	private final OrderViewAssembler orderViewAssembler;
 
 	@Autowired
-	public OrderController(OrderService orderService, PageViewConverter<OrderView, OrderDto> pageConverter,
-			OrderViewConverter orderConverter, OrderDataViewConverter orderDataConverter) {
+	public OrderController(OrderService orderService, OrderViewConverter orderConverter,
+			OrderDataViewConverter orderDataConverter, PagedResourcesAssembler<OrderDto> pagedResourcesAssembler,
+			OrderViewAssembler orderViewAssembler) {
 		this.orderService = orderService;
 		this.orderConverter = orderConverter;
 		this.orderDataConverter = orderDataConverter;
-		this.pageConverter = pageConverter;
+		this.pagedResourcesAssembler = pagedResourcesAssembler;
+		this.orderViewAssembler = orderViewAssembler;
 	}
 
 	/**
@@ -62,9 +60,7 @@ public class OrderController {
 	@ResponseStatus(HttpStatus.OK)
 	public OrderView readById(@PathVariable long id) {
 		OrderDto orderDto = orderService.readById(id);
-		OrderView orderView = orderConverter.convertToView(orderDto);
-		HateoasUtil.addLinksToOrder(orderView);
-		return orderView;
+		return orderViewAssembler.toModel(orderDto);
 	}
 
 	/**
@@ -75,21 +71,10 @@ public class OrderController {
 	 * @return orders which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<PageView<OrderView>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		PageDto<OrderDto> orderPage = orderService.readAll(params);
-		List<OrderDto> orders = orderPage.getEntities();
-		if (orderPage == null || orders == null || orders.isEmpty()) {
-			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
-		} else {
-			List<OrderView> ordersView = new ArrayList<>(orders.size());
-			orders.forEach(orderDto -> ordersView.add(orderConverter.convertToView(orderDto)));
-			PageView<OrderView> orderPageView = pageConverter.convertToView(orderPage, ordersView);
-			ordersView.forEach(orderView -> HateoasUtil.addLinksToOrder(orderView));
-			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(CertificateController.class).readAll(params)));
-			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderConverter.convertToView(orderDto)));
-			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(OrderController.class).readAll(params)));
-			return new ResponseEntity<>(orderPageView, HttpStatus.OK);
-		}
+	public ResponseEntity<PagedModel<OrderView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		Page<OrderDto> orderPage = orderService.readAll(params);
+		PagedModel<OrderView> page = pagedResourcesAssembler.toModel(orderPage, orderViewAssembler);
+		return new ResponseEntity<>(page, HttpStatus.OK);
 	}
 
 	/**
@@ -101,22 +86,11 @@ public class OrderController {
 	 * @return orders for specified user which meet the passed parameters
 	 */
 	@GetMapping("/users/{userId}")
-	public ResponseEntity<PageView<OrderView>> readByUserId(@PathVariable long userId,
+	public ResponseEntity<PagedModel<OrderView>> readByUserId(@PathVariable long userId,
 			@RequestParam MultiValueMap<String, String> params) {
-		PageDto<OrderDto> orderPage = orderService.readAllByUserId(userId, params);
-		List<OrderDto> orders = orderPage.getEntities();
-		if (orderPage == null || orders == null || orders.isEmpty()) {
-			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
-		} else {
-			List<OrderView> ordersView = new ArrayList<>(orders.size());
-			orders.forEach(orderDto -> ordersView.add(orderConverter.convertToView(orderDto)));
-			PageView<OrderView> orderPageView = pageConverter.convertToView(orderPage, ordersView);
-			ordersView.forEach(orderView -> HateoasUtil.addLinksToOrder(orderView));
-			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(CertificateController.class).readAll(params)));
-			orders.forEach(orderDto -> HateoasUtil.addLinksToOrder(orderConverter.convertToView(orderDto)));
-			HateoasUtil.addLinksToPage(orderPageView, linkTo(methodOn(OrderController.class).readAll(params)));
-			return new ResponseEntity<>(orderPageView, HttpStatus.OK);
-		}
+		Page<OrderDto> orderPage = orderService.readAllByUserId(userId, params);
+		PagedModel<OrderView> page = pagedResourcesAssembler.toModel(orderPage, orderViewAssembler);
+		return new ResponseEntity<>(page, HttpStatus.OK);
 	}
 
 	/**

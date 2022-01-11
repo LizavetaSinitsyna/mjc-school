@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
@@ -16,7 +17,6 @@ import com.epam.esm.dto.CertificateDto;
 import com.epam.esm.dto.OrderCertificateDto;
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
@@ -25,7 +25,6 @@ import com.epam.esm.repository.OrderRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.OrderModel;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.OrderService;
@@ -100,7 +99,7 @@ public class OrderServiceImpl implements OrderService {
 	 * @throws ValidationException if passed user id or read parameters are invalid
 	 */
 	@Override
-	public PageDto<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params) {
+	public Page<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		if (!ValidationUtil.isPositive(userId)) {
 			throw new ValidationException(EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId,
@@ -127,8 +126,8 @@ public class OrderServiceImpl implements OrderService {
 			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		PageModel<OrderModel> pageModel = orderRepository.readAllByUserId(userId, offset, limit);
-		List<OrderModel> orderModels = pageModel.getEntities();
+		Page<OrderModel> pageModel = orderRepository.readAllByUserId(userId, offset, limit);
+		List<OrderModel> orderModels = pageModel.getContent();
 		List<OrderDto> orderDtos = new ArrayList<>(limit);
 		if (orderModels != null) {
 			orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));
@@ -257,7 +256,7 @@ public class OrderServiceImpl implements OrderService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public PageDto<OrderDto> readAll(MultiValueMap<String, String> params) {
+	public Page<OrderDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = orderValidation.validateReadParams(paramsInLowerCase);
 
@@ -276,8 +275,8 @@ public class OrderServiceImpl implements OrderService {
 			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		PageModel<OrderModel> pageModel = orderRepository.findAll(offset, limit);
-		List<OrderModel> orderModels = pageModel.getEntities();
+		Page<OrderModel> pageModel = orderRepository.findAll(offset, limit);
+		List<OrderModel> orderModels = pageModel.getContent();
 		List<OrderDto> orderDtos = new ArrayList<>(limit);
 		if (orderModels != null) {
 			orderModels.forEach(orderModel -> orderDtos.add(orderConverter.convertToDto(orderModel)));

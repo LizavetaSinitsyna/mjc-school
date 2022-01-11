@@ -20,25 +20,20 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
-import org.hibernate.Criteria;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.OrderRepository;
-import com.epam.esm.repository.TagRepository;
-import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
 import com.epam.esm.repository.model.OrderModel_;
 import com.epam.esm.repository.model.PageModel;
-import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.UserModel_;
 import com.epam.esm.repository.query_builder.QueryBuilderUtil;
@@ -132,26 +127,26 @@ public class OrderRepositoryImpl implements OrderRepository {
 	 * @return orders which meet passed parameters
 	 */
 	@Override
-	public PageModel<OrderModel> findAll(int pageNumber, int limit) {
-		PageModel<OrderModel> pageModel = new PageModel<>();
+	public Page<OrderModel> findAll(int pageNumber, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
 		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
 		Root<OrderModel> counterRoot = counterCriteria.from(OrderModel.class);
 		counterCriteria.select(criteriaBuilder.count(counterRoot));
 		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
 
 		CriteriaQuery<OrderModel> orderCriteria = criteriaBuilder.createQuery(OrderModel.class);
 		Root<OrderModel> orderRoot = orderCriteria.from(OrderModel.class);
 		orderCriteria.select(orderRoot);
 
 		TypedQuery<OrderModel> typedQuery = entityManager.createQuery(orderCriteria);
-		typedQuery.setFirstResult(pageNumber);
+		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		pageModel.setEntities(typedQuery.getResultList());
-		pageModel.setCurrentPage(pageNumber);
-		
+		List<OrderModel> orders = typedQuery.getResultList();
+
+		Pageable pageable = PageRequest.of(pageNumber, limit);
+		Page<OrderModel> pageModel = new PageImpl<>(orders, pageable, totalEntriesAmount);
+
 		return pageModel;
 	}
 
@@ -164,8 +159,7 @@ public class OrderRepositoryImpl implements OrderRepository {
 	 * @return orders which meet passed parameters
 	 */
 	@Override
-	public PageModel<OrderModel> readAllByUserId(long userId, int pageNumber, int limit) {
-		PageModel<OrderModel> pageModel = new PageModel<>();
+	public Page<OrderModel> readAllByUserId(long userId, int pageNumber, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
 		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
@@ -174,7 +168,6 @@ public class OrderRepositoryImpl implements OrderRepository {
 		counterCriteria.where(
 				criteriaBuilder.equal(counterRoot.join(OrderModel_.user, JoinType.INNER).get(UserModel_.id), userId));
 		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
 
 		CriteriaQuery<OrderModel> orderCriteria = criteriaBuilder.createQuery(OrderModel.class);
 		Root<OrderModel> orderRoot = orderCriteria.from(OrderModel.class);
@@ -183,10 +176,12 @@ public class OrderRepositoryImpl implements OrderRepository {
 		orderCriteria.where(criteriaBuilder.equal(join.get(UserModel_.id), userId));
 
 		TypedQuery<OrderModel> typedQuery = entityManager.createQuery(orderCriteria);
-		typedQuery.setFirstResult(pageNumber);
+		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		pageModel.setEntities(typedQuery.getResultList());
-		pageModel.setCurrentPage(pageNumber);
+		List<OrderModel> orders = typedQuery.getResultList();
+
+		Pageable pageable = PageRequest.of(pageNumber, limit);
+		Page<OrderModel> pageModel = new PageImpl<>(orders, pageable, totalEntriesAmount);
 
 		return pageModel;
 	}

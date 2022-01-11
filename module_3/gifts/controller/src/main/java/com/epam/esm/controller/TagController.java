@@ -1,12 +1,9 @@
 package com.epam.esm.controller;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.util.MultiValueMap;
@@ -20,11 +17,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.epam.esm.controller.converter.PageViewConverter;
+import com.epam.esm.controller.assembler.TagViewAssembler;
 import com.epam.esm.controller.converter.TagViewConverter;
-import com.epam.esm.controller.view.PageView;
 import com.epam.esm.controller.view.TagView;
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.service.TagService;
 
@@ -37,15 +32,17 @@ import com.epam.esm.service.TagService;
 public class TagController {
 
 	private final TagService tagService;
-	private final PageViewConverter<TagView, TagDto> pageConverter;
 	private final TagViewConverter tagConverter;
+	private final PagedResourcesAssembler<TagDto> pagedResourcesAssembler;
+	private final TagViewAssembler tagViewAssembler;
 
 	@Autowired
-	public TagController(TagService tagService, TagViewConverter tagConverter,
-			PageViewConverter<TagView, TagDto> pageConverter) {
+	public TagController(TagService tagService, TagViewConverter tagConverter, TagViewAssembler tagViewAssembler,
+			PagedResourcesAssembler<TagDto> pagedResourcesAssembler) {
 		this.tagService = tagService;
-		this.pageConverter = pageConverter;
 		this.tagConverter = tagConverter;
+		this.pagedResourcesAssembler = pagedResourcesAssembler;
+		this.tagViewAssembler = tagViewAssembler;
 	}
 
 	/**
@@ -58,9 +55,7 @@ public class TagController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public TagView create(@RequestBody TagView tagView) {
 		TagDto createdTag = tagService.create(tagConverter.convertToDto(tagView));
-		TagView createdTagView = tagConverter.convertToView(createdTag);
-		HateoasUtil.addLinksToTag(createdTagView);
-		return createdTagView;
+		return tagViewAssembler.toModel(createdTag);
 	}
 
 	/**
@@ -73,9 +68,7 @@ public class TagController {
 	@ResponseStatus(HttpStatus.OK)
 	public TagView readById(@PathVariable long id) {
 		TagDto tagDto = tagService.readById(id);
-		TagView tagView = tagConverter.convertToView(tagDto);
-		HateoasUtil.addLinksToTag(tagView);
-		return tagView;
+		return tagViewAssembler.toModel(tagDto);
 	}
 
 	/**
@@ -86,20 +79,10 @@ public class TagController {
 	 * @return tags which meet passed parameters
 	 */
 	@GetMapping
-	public ResponseEntity<PageView<TagView>> readAll(@RequestParam MultiValueMap<String, String> params) {
-		PageDto<TagDto> tagPage = tagService.readAll(params);
-		List<TagDto> tags = tagPage.getEntities();
-
-		if (tagPage == null || tags == null || tags.isEmpty()) {
-			return new ResponseEntity<>(null, HttpStatus.NO_CONTENT);
-		} else {
-			List<TagView> tagsView = new ArrayList<>(tags.size());
-			tags.forEach(tagDto -> tagsView.add(tagConverter.convertToView(tagDto)));
-			PageView<TagView> tagPageView = pageConverter.convertToView(tagPage, tagsView);
-			tagsView.forEach(tagView -> HateoasUtil.addLinksToTag(tagView));
-			HateoasUtil.addLinksToPage(tagPageView, linkTo(methodOn(TagController.class).readAll(params)));
-			return new ResponseEntity<>(tagPageView, HttpStatus.OK);
-		}
+	public ResponseEntity<PagedModel<TagView>> readAll(@RequestParam MultiValueMap<String, String> params) {
+		Page<TagDto> tagPage = tagService.readAll(params);
+		PagedModel<TagView> page = pagedResourcesAssembler.toModel(tagPage, tagViewAssembler);
+		return new ResponseEntity<>(page, HttpStatus.OK);
 	}
 
 	/**

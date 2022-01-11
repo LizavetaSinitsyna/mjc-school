@@ -15,23 +15,18 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
-import org.hibernate.Criteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.MultiValueMap;
 
-import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.UserRepository;
-import com.epam.esm.repository.model.CertificateModel;
-import com.epam.esm.repository.model.OrderModel;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.RoleModel;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.UserModel_;
 import com.epam.esm.repository.query_builder.QueryBuilderUtil;
@@ -158,25 +153,25 @@ public class UserRepositoryImpl implements UserRepository {
 	 * @return users which meet passed parameters
 	 */
 	@Override
-	public PageModel<UserModel> findAll(int pageNumber, int limit) {
-		PageModel<UserModel> pageModel = new PageModel<>();
+	public Page<UserModel> findAll(int pageNumber, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
 		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
 		Root<UserModel> counterRoot = counterCriteria.from(UserModel.class);
 		counterCriteria.select(criteriaBuilder.count(counterRoot));
 		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
 
 		CriteriaQuery<UserModel> userCriteria = criteriaBuilder.createQuery(UserModel.class);
 		Root<UserModel> userRoot = userCriteria.from(UserModel.class);
 		userCriteria.select(userRoot);
 		TypedQuery<UserModel> typedQuery = entityManager.createQuery(userCriteria);
-		typedQuery.setFirstResult(pageNumber);
+		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		pageModel.setEntities(typedQuery.getResultList());
-		pageModel.setCurrentPage(pageNumber);
-		
+		List<UserModel> users = typedQuery.getResultList();
+
+		Pageable pageable = PageRequest.of(pageNumber, limit);
+		Page<UserModel> pageModel = new PageImpl<>(users, pageable, totalEntriesAmount);
+
 		return pageModel;
 	}
 }

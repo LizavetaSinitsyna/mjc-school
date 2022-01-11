@@ -15,10 +15,10 @@ public class ServiceConstant {
 	// General
 	public static final String PARAMS = "params";
 	public static final String OFFSET = "page";
-	public static final String LIMIT = "limit";
-	public static final int DEFAULT_PAGE_NUMBER = 1;
+	public static final String LIMIT = "size";
+	public static final int DEFAULT_PAGE_NUMBER = 0;
 	public static final int DEFAULT_LIMIT = 10;
-	public static final int MIN_PAGE_NUMBER = 1;
+	public static final int MIN_PAGE_NUMBER = 0;
 	public static final int MIN_LIMIT_NUMBER = 1;
 	public static final int MAX_LIMIT = 100;
 	public static final Set<String> GENERAL_POSSIBLE_READ_PARAMS = new HashSet<String>(

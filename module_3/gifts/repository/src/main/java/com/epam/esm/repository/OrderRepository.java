@@ -2,8 +2,9 @@ package com.epam.esm.repository;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+
 import com.epam.esm.repository.model.OrderModel;
-import com.epam.esm.repository.model.PageModel;
 
 /**
  * 
@@ -19,7 +20,7 @@ public interface OrderRepository extends GeneralRepository<OrderModel> {
 	 * @param limit  amount of orders to be read
 	 * @return orders which meet passed parameters
 	 */
-	PageModel<OrderModel> readAllByUserId(long userId, int offset, int limit);
+	Page<OrderModel> readAllByUserId(long userId, int offset, int limit);
 
 	/**
 	 * Saves the passed orders.

@@ -2,9 +2,9 @@ package com.epam.esm.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.util.MultiValueMap;
 
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 
 /**
@@ -44,7 +44,7 @@ public interface TagService {
 	 *               ordering
 	 * @return tags which meet passed parameters
 	 */
-	PageDto<TagDto> readAll(MultiValueMap<String, String> params);
+	Page<TagDto> readAll(MultiValueMap<String, String> params);
 
 	/**
 	 * Deletes tag with passed id.
@@ -55,8 +55,7 @@ public interface TagService {
 	int delete(long tagId);
 
 	/**
-	 * Finds the most widely used tag of a user with the highest cost of all
-	 * orders.
+	 * Finds the most widely used tag of a user with the highest cost of all orders.
 	 * 
 	 * @return the most widely used tag of a user with the highest cost of all
 	 *         orders

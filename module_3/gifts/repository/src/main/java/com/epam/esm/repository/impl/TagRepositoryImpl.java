@@ -15,22 +15,19 @@ import javax.persistence.criteria.Predicate;
 import javax.persistence.criteria.Root;
 import javax.transaction.Transactional;
 
-import org.hibernate.Criteria;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.support.GeneratedKeyHolder;
-import org.springframework.jdbc.support.KeyHolder;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.TagRepository;
-import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
-import com.epam.esm.repository.query_builder.CertificateQueryBuilder;
 import com.epam.esm.repository.query_builder.QueryBuilderUtil;
 import com.epam.esm.repository.query_builder.TagQueryBuilder;
 
@@ -173,8 +170,7 @@ public class TagRepositoryImpl implements TagRepository {
 	 * @return tags which meet passed parameters
 	 */
 	@Override
-	public PageModel<TagModel> findAll(int pageNumber, int limit) {
-		PageModel<TagModel> pageModel = new PageModel<>();
+	public Page<TagModel> findAll(int pageNumber, int limit) {
 		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
 
 		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
@@ -182,18 +178,19 @@ public class TagRepositoryImpl implements TagRepository {
 		counterCriteria.select(criteriaBuilder.count(counterRoot));
 		counterCriteria.where(criteriaBuilder.equal(counterRoot.get(TagModel_.isDeleted), false));
 		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-		pageModel.setTotalPagesAmount(QueryBuilderUtil.retrievePageAmount(totalEntriesAmount, limit));
 
 		CriteriaQuery<TagModel> tagCriteria = criteriaBuilder.createQuery(TagModel.class);
 		Root<TagModel> tagRoot = tagCriteria.from(TagModel.class);
 		tagCriteria.select(tagRoot);
 		tagCriteria.where(criteriaBuilder.equal(tagRoot.get(TagModel_.isDeleted), false));
 		TypedQuery<TagModel> typedQuery = entityManager.createQuery(tagCriteria);
-		typedQuery.setFirstResult(pageNumber);
+		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
 		typedQuery.setMaxResults(limit);
-		pageModel.setEntities(typedQuery.getResultList());
-		pageModel.setCurrentPage(pageNumber);
-		
+		List<TagModel> tags = typedQuery.getResultList();
+
+		Pageable pageable = PageRequest.of(pageNumber, limit);
+		Page<TagModel> pageModel = new PageImpl<>(tags, pageable, totalEntriesAmount);
+
 		return pageModel;
 	}
 

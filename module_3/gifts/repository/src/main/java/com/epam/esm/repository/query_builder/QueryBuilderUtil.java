@@ -9,11 +9,7 @@ public class QueryBuilderUtil {
 	 * @return calculated start index for read query
 	 */
 	public static int retrieveStartIndex(int pageNumber, int offset) {
-		int startIndex = 0;
-		if (pageNumber > 1) {
-			startIndex += (pageNumber - 1) * offset;
-		}
-		return startIndex;
+		return pageNumber * offset;
 	}
 
 	public static long retrievePageAmount(long totalEntriesAmount, int offset) {

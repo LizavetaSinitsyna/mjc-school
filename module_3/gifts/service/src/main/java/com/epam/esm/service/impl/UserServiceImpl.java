@@ -6,11 +6,10 @@ import java.util.Map;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
-import com.epam.esm.dto.PageDto;
-import com.epam.esm.dto.TagDto;
 import com.epam.esm.dto.UserDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
@@ -18,9 +17,7 @@ import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.RoleRepository;
 import com.epam.esm.repository.UserRepository;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.RoleModel;
-import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.UserService;
@@ -82,7 +79,7 @@ public class UserServiceImpl implements UserService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public PageDto<UserDto> readAll(MultiValueMap<String, String> params) {
+	public Page<UserDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = userValidation.validateReadParams(paramsInLowerCase);
 
@@ -101,8 +98,8 @@ public class UserServiceImpl implements UserService {
 			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		PageModel<UserModel> pageModel = userRepository.findAll(offset, limit);
-		List<UserModel> userModels = pageModel.getEntities();
+		Page<UserModel> pageModel = userRepository.findAll(offset, limit);
+		List<UserModel> userModels = pageModel.getContent();
 		List<UserDto> userDtos = new ArrayList<>(limit);
 		if (userModels != null) {
 			userModels.forEach(userModel -> userDtos.add(userConverter.convertToDto(userModel)));

@@ -2,11 +2,11 @@ package com.epam.esm.service;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.OrderDataDto;
 import com.epam.esm.dto.OrderDto;
-import com.epam.esm.dto.PageDto;
 
 /**
  * 
@@ -47,7 +47,7 @@ public interface OrderService {
 	 *               ordering
 	 * @return orders for specified user which meet the passed parameters
 	 */
-	PageDto<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params);
+	Page<OrderDto> readAllByUserId(long userId, MultiValueMap<String, String> params);
 
 	/**
 	 * Reads information about the order with passed id for the specified user.
@@ -65,5 +65,5 @@ public interface OrderService {
 	 *               ordering
 	 * @return orders which meet passed parameters
 	 */
-	PageDto<OrderDto> readAll(MultiValueMap<String, String> params);
+	Page<OrderDto> readAll(MultiValueMap<String, String> params);
 }

@@ -5,11 +5,11 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
@@ -18,7 +18,6 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.TagService;
@@ -127,7 +126,7 @@ public class TagServiceImpl implements TagService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public PageDto<TagDto> readAll(MultiValueMap<String, String> params) {
+	public Page<TagDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 		Map<ErrorCode, String> errors = tagValidation.validateReadParams(paramsInLowerCase);
 
@@ -146,8 +145,8 @@ public class TagServiceImpl implements TagService {
 			limit = Integer.parseInt(params.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		PageModel<TagModel> pageModel = tagRepository.findAll(offset, limit);
-		List<TagModel> tagModels = pageModel.getEntities();
+		Page<TagModel> pageModel = tagRepository.findAll(offset, limit);
+		List<TagModel> tagModels = pageModel.getContent();
 		List<TagDto> tagDtos = new ArrayList<>(limit);
 		if (tagModels != null) {
 			tagModels.forEach(tagModel -> tagDtos.add(tagConverter.convertToDto(tagModel)));

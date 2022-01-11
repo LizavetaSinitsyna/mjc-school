@@ -8,12 +8,12 @@ import java.util.Optional;
 import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.ErrorCode;
 import com.epam.esm.exception.NotFoundException;
@@ -22,7 +22,6 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
 import com.epam.esm.service.ServiceConstant;
@@ -154,7 +153,7 @@ public class CertificateServiceImpl implements CertificateService {
 	 * @throws ValidationException if passed parameters are invalid
 	 */
 	@Override
-	public PageDto<CertificateDto> readAll(MultiValueMap<String, String> params) {
+	public Page<CertificateDto> readAll(MultiValueMap<String, String> params) {
 		MultiValueMap<String, String> paramsInLowerCase = ValidationUtil.mapToLowerCase(params);
 
 		Map<ErrorCode, String> errors = certificateValidation.validateReadParams(paramsInLowerCase);
@@ -178,8 +177,8 @@ public class CertificateServiceImpl implements CertificateService {
 			limit = Integer.parseInt(paramsInLowerCase.get(ServiceConstant.LIMIT).get(0));
 		}
 
-		PageModel<CertificateModel> pageModel = certificateRepository.findAll(paramsInLowerCase, pageNumber, limit);
-		List<CertificateModel> certificateModels = pageModel.getEntities();
+		Page<CertificateModel> pageModel = certificateRepository.findAll(paramsInLowerCase, pageNumber, limit);
+		List<CertificateModel> certificateModels = pageModel.getContent();
 		List<CertificateDto> certificateDtos = new ArrayList<>(limit);
 		if (certificateModels != null) {
 			certificateModels.forEach(

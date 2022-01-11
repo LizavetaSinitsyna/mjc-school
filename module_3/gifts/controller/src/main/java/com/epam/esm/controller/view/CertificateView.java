@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
@@ -12,6 +13,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 
 @Data
+@Relation(collectionRelation = "certificates", itemRelation = "certificate")
 @EqualsAndHashCode(callSuper = true)
 public class CertificateView extends RepresentationModel<CertificateView> {
 	private Long id;
