@@ -15,6 +15,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import com.epam.esm.repository.UserRepository;
@@ -106,8 +110,13 @@ class UserRepositoryImplTest {
 	void testFindAll() {
 		entityManager.persist(userModel1);
 		entityManager.persist(userModel2);
-		List<UserModel> actual = userRepository.findAll(OFFSET_1, LIMIT_1);
-		List<UserModel> expected = Arrays.asList(userModel2);
+
+		Pageable pageable = PageRequest.of(OFFSET_1, LIMIT_1);
+		List<UserModel> expectedList = Arrays.asList(userModel2);
+		Page<UserModel> expected = new PageImpl<>(expectedList, pageable, expectedList.size());
+
+		Page<UserModel> actual = userRepository.findAll(OFFSET_1, LIMIT_1);
+
 		Assertions.assertEquals(expected, actual);
 	}
 }

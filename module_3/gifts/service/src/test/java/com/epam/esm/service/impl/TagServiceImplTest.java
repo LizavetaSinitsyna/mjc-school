@@ -10,6 +10,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -20,7 +24,9 @@ import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.TagModel;
+import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.TagService;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.converter.TagConverter;
 import com.epam.esm.service.validation.TagValidation;
 
@@ -28,14 +34,15 @@ class TagServiceImplTest {
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long CERTIFIATE_ID_1 = 1L;
 	private static final Long INVALID_ID = -1L;
-	private static final int OFFSET = 0;
-	private static final int LIMIT = 10;
 
 	private static TagValidation tagValidation;
 	private static TagConverter tagConverter;
+	private static PageConverter<TagDto, TagModel> pageConverter;
 	private static TagService tagService;
 	private TagRepository tagRepository;
 	private CertificateRepository certificateRepository;
+	private Page<TagModel> tagModelsPage;
+	private Page<TagDto> tagDtosPage;
 
 	private TagModel tagModel1;
 	private TagDto tagDto1;
@@ -44,13 +51,15 @@ class TagServiceImplTest {
 	public static void init() {
 		tagValidation = new TagValidation();
 		tagConverter = new TagConverter();
+		pageConverter = new PageConverter<>();
 	}
 
 	@BeforeEach
 	public void setUp() {
 		certificateRepository = Mockito.mock(CertificateRepository.class);
 		tagRepository = Mockito.mock(TagRepository.class);
-		tagService = new TagServiceImpl(certificateRepository, tagRepository, tagConverter, tagValidation);
+		tagService = new TagServiceImpl(certificateRepository, tagRepository, tagConverter, tagValidation,
+				pageConverter);
 
 		tagModel1 = new TagModel();
 		tagModel1.setName("food");
@@ -58,6 +67,16 @@ class TagServiceImplTest {
 
 		tagDto1 = new TagDto();
 		tagDto1.setName("food");
+
+		List<TagDto> tagDtos = new ArrayList<>();
+		tagDtos.add(tagDto1);
+
+		List<TagModel> tagModels = new ArrayList<>();
+		tagModels.add(tagModel1);
+
+		Pageable pageable = PageRequest.of(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT);
+		tagModelsPage = new PageImpl<>(tagModels, pageable, tagModels.size());
+		tagDtosPage = new PageImpl<>(tagDtos, pageable, tagDtos.size());
 	}
 
 	@Test
@@ -121,16 +140,16 @@ class TagServiceImplTest {
 	@Test
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		List<TagModel> tagModels = Arrays.asList(tagModel1);
 
-		List<TagDto> expected = Arrays.asList(tagDto1);
+		Page<TagDto> expected = tagDtosPage;
 
-		Mockito.when(tagRepository.findAll(OFFSET, LIMIT)).thenReturn(tagModels);
+		Mockito.when(tagRepository.findAll(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT))
+				.thenReturn(tagModelsPage);
 
-		List<TagDto> actual = tagService.readAll(params);
+		Page<TagDto> actual = tagService.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(tagRepository).findAll(OFFSET, LIMIT);
+		Mockito.verify(tagRepository).findAll(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT);
 	}
 
 	@Test

@@ -16,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -137,8 +141,13 @@ class CertificateRepositoryImplTest {
 		entityManager.persist(certificate1);
 		entityManager.persist(certificate2);
 		params.add(EntityConstant.SEARCH, SEARCH_PATTERN);
-		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
-		List<CertificateModel> expected = Arrays.asList(certificate2);
+
+		Pageable pageable = PageRequest.of(OFFSET, LIMIT_2);
+		List<CertificateModel> expectedList = Arrays.asList(certificate2);
+		Page<CertificateModel> expected = new PageImpl<>(expectedList, pageable, expectedList.size());
+
+		Page<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
+
 		Assertions.assertEquals(expected, actual);
 	}
 
@@ -148,8 +157,13 @@ class CertificateRepositoryImplTest {
 		entityManager.persist(certificate1);
 		entityManager.persist(certificate2);
 		params.add(EntityConstant.TAG, TAG_NAME);
-		List<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
-		List<CertificateModel> expected = Arrays.asList(certificate1, certificate2);
+
+		Pageable pageable = PageRequest.of(OFFSET, LIMIT_2);
+		List<CertificateModel> expectedList = Arrays.asList(certificate1, certificate2);
+		Page<CertificateModel> expected = new PageImpl<>(expectedList, pageable, expectedList.size());
+
+		Page<CertificateModel> actual = certificateRepository.findAll(params, OFFSET, LIMIT_2);
+
 		Assertions.assertEquals(expected, actual);
 	}
 
@@ -157,8 +171,13 @@ class CertificateRepositoryImplTest {
 	void testFindAll() {
 		entityManager.persist(certificate1);
 		entityManager.persist(certificate2);
-		List<CertificateModel> actual = certificateRepository.findAll(OFFSET, LIMIT_2);
-		List<CertificateModel> expected = Arrays.asList(certificate1, certificate2);
+
+		Pageable pageable = PageRequest.of(OFFSET, LIMIT_2);
+		List<CertificateModel> expectedList = Arrays.asList(certificate1, certificate2);
+		Page<CertificateModel> expected = new PageImpl<>(expectedList, pageable, expectedList.size());
+
+		Page<CertificateModel> actual = certificateRepository.findAll(OFFSET, LIMIT_2);
+
 		Assertions.assertEquals(expected, actual);
 	}
 

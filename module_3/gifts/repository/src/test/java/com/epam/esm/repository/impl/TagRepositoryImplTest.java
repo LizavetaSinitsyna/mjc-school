@@ -18,12 +18,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.repository.model.TagModel_;
-import com.epam.esm.repository.model.UserModel;
 
 @DataJpaTest
 @EntityScan("com.epam.esm")
@@ -103,8 +106,13 @@ class TagRepositoryImplTest {
 	void testReadAll() {
 		entityManager.persist(tag1);
 		entityManager.persist(tag2);
-		List<TagModel> actual = tagRepository.findAll(OFFSET, LIMIT_1);
-		List<TagModel> expected = Arrays.asList(tag1);
+
+		Pageable pageable = PageRequest.of(OFFSET, LIMIT_1);
+		List<TagModel> expectedList = Arrays.asList(tag1);
+		Page<TagModel> expected = new PageImpl<>(expectedList, pageable, 2);
+
+		Page<TagModel> actual = tagRepository.findAll(OFFSET, LIMIT_1);
+
 		Assertions.assertEquals(expected, actual);
 	}
 

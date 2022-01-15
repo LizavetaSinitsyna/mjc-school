@@ -253,13 +253,9 @@ public class CertificateServiceImpl implements CertificateService {
 
 		certificateDto.setId(certificateId);
 		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
-		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
+		certificateRepository.updateCertificate(certificateConverter.convertToModel(certificateDto));
 
-		CertificateModel certificateModel = certificateRepository.updateCertificate(certificateToUpdate);
-
-		CertificateDto updatedCertificate = certificateConverter.convertToDto(certificateModel);
-
-		return readById(updatedCertificate.getId());
+		return readById(certificateId);
 	}
 
 	/**
@@ -292,13 +288,9 @@ public class CertificateServiceImpl implements CertificateService {
 
 		certificateDto.setId(certificateId);
 		certificateDto.setTags(obtainCertificateTags(certificateDto.getTags()));
-		CertificateModel certificateToUpdate = certificateConverter.convertToModel(certificateDto);
+		certificateRepository.updateCertificate(certificateConverter.convertToModel(certificateDto));
 
-		CertificateModel updatedCertificateModel = certificateRepository.updateCertificate(certificateToUpdate);
-
-		CertificateDto updatedCertificateDto = certificateConverter.convertToDto(updatedCertificateModel);
-
-		return updatedCertificateDto;
+		return readById(certificateId);
 	}
 
 	private void checkCertificateExistenceById(long certificateId) {

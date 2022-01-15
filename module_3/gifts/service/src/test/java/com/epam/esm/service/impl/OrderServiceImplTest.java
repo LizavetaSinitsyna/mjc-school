@@ -11,6 +11,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -33,12 +37,14 @@ import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
 import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.service.OrderService;
+import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.converter.OrderConverter;
 import com.epam.esm.service.converter.OrderDataConverter;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.validation.OrderValidation;
 
 class OrderServiceImplTest {
-	private static final int OFFSET = 0;
+	private static final int PAGE_NUMBER = 0;
 	private static final int LIMIT = 1;
 	private static final Long ORDER_ID_1 = 1L;
 	private static final Long CERTIFICATE_ID_1 = 1L;
@@ -50,6 +56,7 @@ class OrderServiceImplTest {
 	private CertificateRepository certificateRepository;
 	private static OrderConverter orderConverter;
 	private static OrderDataConverter orderDataConverter;
+	private static PageConverter<OrderDto, OrderModel> pageConverter;
 	private static OrderValidation orderValidation;
 	private static OrderService orderService;
 	private TagModel tagModel1;
@@ -62,12 +69,15 @@ class OrderServiceImplTest {
 	private CertificateModel certificateModel1;
 	private CertificateDto certificateDto1;
 	private BigDecimal cost;
+	private Page<OrderModel> orderModelsPage;
+	private Page<OrderDto> orderDtosPage;
 
 	@BeforeAll
 	public static void init() {
 		orderConverter = new OrderConverter();
 		orderDataConverter = new OrderDataConverter();
 		orderValidation = new OrderValidation();
+		pageConverter = new PageConverter<>();
 	}
 
 	@BeforeEach
@@ -76,7 +86,7 @@ class OrderServiceImplTest {
 		orderRepository = Mockito.mock(OrderRepository.class);
 		userRepository = Mockito.mock(UserRepository.class);
 		orderService = new OrderServiceImpl(orderRepository, userRepository, certificateRepository, orderConverter,
-				orderDataConverter, orderValidation);
+				orderDataConverter, orderValidation, pageConverter);
 
 		cost = new BigDecimal("20");
 
@@ -145,6 +155,16 @@ class OrderServiceImplTest {
 
 		orderDataDto1 = new OrderDataDto();
 		orderDataDto1.setCost(cost);
+
+		List<OrderDto> orderDtos = new ArrayList<>();
+		orderDtos.add(orderDto1);
+
+		List<OrderModel> orderModels = new ArrayList<>();
+		orderModels.add(orderModel1);
+
+		Pageable pageable = PageRequest.of(PAGE_NUMBER, LIMIT);
+		orderModelsPage = new PageImpl<>(orderModels, pageable, orderModels.size());
+		orderDtosPage = new PageImpl<>(orderDtos, pageable, orderDtos.size());
 	}
 
 	@Test
@@ -169,22 +189,19 @@ class OrderServiceImplTest {
 	@Test
 	void testReadAllByUserId() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.put(EntityConstant.OFFSET, Arrays.asList(Integer.toString(OFFSET)));
-		params.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(LIMIT)));
-		List<OrderDto> expected = new ArrayList<>();
-		expected.add(orderDto1);
+		params.put(ServiceConstant.OFFSET, Arrays.asList(Integer.toString(PAGE_NUMBER)));
+		params.put(ServiceConstant.LIMIT, Arrays.asList(Integer.toString(LIMIT)));
 
-		List<OrderModel> orderModelList = new ArrayList<>();
-		orderModelList.add(orderModel1);
+		Page<OrderDto> expected = orderDtosPage;
 
 		Mockito.when(userRepository.userExistsById(USER_ID_1)).thenReturn(true);
-		Mockito.when(orderRepository.readAllByUserId(USER_ID_1, OFFSET, LIMIT)).thenReturn(orderModelList);
+		Mockito.when(orderRepository.readAllByUserId(USER_ID_1, PAGE_NUMBER, LIMIT)).thenReturn(orderModelsPage);
 
-		List<OrderDto> actual = orderService.readAllByUserId(USER_ID_1, params);
+		Page<OrderDto> actual = orderService.readAllByUserId(USER_ID_1, params);
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(userRepository).userExistsById(USER_ID_1);
-		Mockito.verify(orderRepository).readAllByUserId(USER_ID_1, OFFSET, LIMIT);
+		Mockito.verify(orderRepository).readAllByUserId(USER_ID_1, PAGE_NUMBER, LIMIT);
 	}
 
 	@Test
@@ -296,20 +313,17 @@ class OrderServiceImplTest {
 	@Test
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.put(EntityConstant.OFFSET, Arrays.asList(Integer.toString(OFFSET)));
-		params.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(LIMIT)));
-		List<OrderDto> expected = new ArrayList<>();
-		expected.add(orderDto1);
+		params.put(ServiceConstant.OFFSET, Arrays.asList(Integer.toString(PAGE_NUMBER)));
+		params.put(ServiceConstant.LIMIT, Arrays.asList(Integer.toString(LIMIT)));
 
-		List<OrderModel> orderModelList = new ArrayList<>();
-		orderModelList.add(orderModel1);
+		Page<OrderDto> expected = orderDtosPage;
 
-		Mockito.when(orderRepository.findAll(OFFSET, LIMIT)).thenReturn(orderModelList);
+		Mockito.when(orderRepository.findAll(PAGE_NUMBER, LIMIT)).thenReturn(orderModelsPage);
 
-		List<OrderDto> actual = orderService.readAll(params);
+		Page<OrderDto> actual = orderService.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(orderRepository).findAll(OFFSET, LIMIT);
+		Mockito.verify(orderRepository).findAll(PAGE_NUMBER, LIMIT);
 	}
 
 	@Test

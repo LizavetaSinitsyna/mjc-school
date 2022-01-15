@@ -12,11 +12,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.CertificateDto;
-import com.epam.esm.dto.PageDto;
 import com.epam.esm.dto.TagDto;
 import com.epam.esm.exception.NullEntityException;
 import com.epam.esm.exception.ValidationException;
@@ -24,7 +27,6 @@ import com.epam.esm.repository.CertificateRepository;
 import com.epam.esm.repository.TagRepository;
 import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.EntityConstant;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.TagModel;
 import com.epam.esm.service.CertificateService;
 import com.epam.esm.service.ServiceConstant;
@@ -38,15 +40,13 @@ class CertificateServiceImplTest {
 	private static final Long CERTIFICATE_ID_1 = 1L;
 	private static final Long TAG_ID_1 = 1L;
 	private static final Long INVALID_ID = -1L;
-	private static final int PAGE_NUMBER = 1;
-	private static final int LIMIT = 10;
 
 	private CertificateModel certificateModel1;
 	private CertificateDto certificateDto1;
 	private TagModel tagModel1;
 	private TagDto tagDto1;
-	private PageModel<CertificateModel> certificateModelsPage;
-	private PageDto<CertificateDto> certificateDtosPage;
+	private Page<CertificateModel> certificateModelsPage;
+	private Page<CertificateDto> certificateDtosPage;
 
 	private CertificateRepository certificateRepository;
 	private TagRepository tagRepository;
@@ -110,10 +110,10 @@ class CertificateServiceImplTest {
 		certificateModels.add(certificateModel1);
 		List<CertificateDto> certificateDtos = new ArrayList<>();
 		certificateDtos.add(certificateDto1);
-		certificateModelsPage = new PageModel<>();
-		certificateModelsPage.setEntities(certificateModels);
-		certificateDtosPage = new PageDto<>();
-		certificateDtosPage.setEntities(certificateDtos);
+
+		Pageable pageable = PageRequest.of(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT);
+		certificateModelsPage = new PageImpl<>(certificateModels, pageable, certificateModels.size());
+		certificateDtosPage = new PageImpl<>(certificateDtos, pageable, certificateModels.size());
 	}
 
 	@Test
@@ -183,13 +183,15 @@ class CertificateServiceImplTest {
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 
-		PageDto<CertificateDto> expected = certificateDtosPage;
+		Page<CertificateDto> expected = certificateDtosPage;
 
-		Mockito.when(certificateRepository.findAll(params, PAGE_NUMBER, LIMIT)).thenReturn(certificateModelsPage);
-		PageDto<CertificateDto> actual = certificateServiceImpl.readAll(params);
+		Mockito.when(certificateRepository.findAll(params, ServiceConstant.DEFAULT_PAGE_NUMBER,
+				ServiceConstant.DEFAULT_LIMIT)).thenReturn(certificateModelsPage);
+		Page<CertificateDto> actual = certificateServiceImpl.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(certificateRepository).findAll(params, PAGE_NUMBER, LIMIT);
+		Mockito.verify(certificateRepository).findAll(params, ServiceConstant.DEFAULT_PAGE_NUMBER,
+				ServiceConstant.DEFAULT_LIMIT);
 	}
 
 	@Test
@@ -197,11 +199,11 @@ class CertificateServiceImplTest {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
 		params.put(EntityConstant.ORDER_BY, Arrays.asList(EntityConstant.CERTIFICATE_CREATE_DATE));
 
-		PageDto<CertificateDto> expected = certificateDtosPage;
+		Page<CertificateDto> expected = certificateDtosPage;
 
 		Mockito.when(certificateRepository.findAll(Mockito.any(), Mockito.eq(ServiceConstant.DEFAULT_PAGE_NUMBER),
 				Mockito.eq(ServiceConstant.DEFAULT_LIMIT))).thenReturn(certificateModelsPage);
-		PageDto<CertificateDto> actual = certificateServiceImpl.readAll(params);
+		Page<CertificateDto> actual = certificateServiceImpl.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(certificateRepository).findAll(Mockito.any(), Mockito.eq(ServiceConstant.DEFAULT_PAGE_NUMBER),

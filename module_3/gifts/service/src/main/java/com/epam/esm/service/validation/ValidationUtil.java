@@ -52,22 +52,27 @@ public class ValidationUtil {
 	}
 
 	/**
-	 * Turns keys and values of passed map to lower case.
+	 * Turns keys and values of the passed map to lower case and removes all extra
+	 * spaces.
 	 * 
 	 * @param params the map which should be in lower case
 	 * @return passed map with all keys and values in lower case
 	 * @throws NullEntityException if passed params is {@code null}
+	 * @see #removeExtraSpaces(String)
 	 */
 	public static MultiValueMap<String, String> mapToLowerCase(MultiValueMap<String, String> params) {
 		checkNull(params, ServiceConstant.PARAMS);
 		MultiValueMap<String, String> paramsInLowerCase = new LinkedMultiValueMap<>();
 		for (Map.Entry<String, List<String>> entry : params.entrySet()) {
-			String key = entry.getKey().toLowerCase();
+			String key = removeExtraSpaces(entry.getKey().toLowerCase());
+			List<String> value = entry.getValue();
+			List<String> valueWithoutExtraSpaces = new ArrayList<>(value.size());
+			value.stream().forEach(element -> valueWithoutExtraSpaces.add(removeExtraSpaces(element)));
 			if (paramsInLowerCase.containsKey(key)) {
-				paramsInLowerCase.get(key).addAll(entry.getValue());
+				paramsInLowerCase.get(key).addAll(valueWithoutExtraSpaces);
 			} else {
-				paramsInLowerCase.put(entry.getKey().toLowerCase(), entry.getValue().stream().map(String::toLowerCase)
-						.collect(Collectors.toCollection(ArrayList::new)));
+				paramsInLowerCase.put(key, (valueWithoutExtraSpaces.stream().map(String::toLowerCase)
+						.collect(Collectors.toCollection(ArrayList::new))));
 			}
 		}
 		return paramsInLowerCase;

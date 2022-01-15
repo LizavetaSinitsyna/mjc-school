@@ -51,7 +51,7 @@ import com.epam.esm.repository.query_builder.QueryBuilderUtil;
 public class CertificateRepositoryImpl implements CertificateRepository {
 	private static final List<String> UPDATABLE_FIELDS = Arrays.asList(EntityConstant.CERTIFICATE_DESCRIPTION,
 			EntityConstant.CERTIFICATE_DURATION, EntityConstant.CERTIFICATE_PRICE, EntityConstant.NAME,
-			EntityConstant.CERTIFICATE_LAST_UPDATE_DATE, EntityConstant.CERTIFICATE_TAGS);
+			EntityConstant.CERTIFICATE_TAGS);
 
 	@PersistenceContext
 	private EntityManager entityManager;

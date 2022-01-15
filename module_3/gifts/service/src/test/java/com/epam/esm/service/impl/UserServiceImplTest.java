@@ -10,6 +10,10 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -23,16 +27,16 @@ import com.epam.esm.repository.model.RoleModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.service.ServiceConstant;
 import com.epam.esm.service.UserService;
+import com.epam.esm.service.converter.PageConverter;
 import com.epam.esm.service.converter.UserConverter;
 import com.epam.esm.service.validation.UserValidation;
 
 class UserServiceImplTest {
-	private static final int OFFSET = 0;
-	private static final int LIMIT = 10;
 	private static final long USER_ID_1 = 1L;
 
 	private static UserValidation userValidation;
 	private static UserConverter userConverter;
+	private static PageConverter<UserDto, UserModel> pageConverter;
 	private UserRepository userRepository;
 	private RoleRepository roleRepository;
 	private UserModel userModel1;
@@ -40,18 +44,21 @@ class UserServiceImplTest {
 	private RoleModel roleModel1;
 	private RoleDto roleDto1;
 	private static UserService userService;
+	private Page<UserModel> userModelsPage;
+	private Page<UserDto> userDtosPage;
 
 	@BeforeAll
 	public static void init() {
 		userValidation = new UserValidation();
 		userConverter = new UserConverter();
+		pageConverter = new PageConverter<>();
 	}
 
 	@BeforeEach
 	public void setUp() {
 		userRepository = Mockito.mock(UserRepository.class);
 		roleRepository = Mockito.mock(RoleRepository.class);
-		userService = new UserServiceImpl(userRepository, roleRepository, userConverter, userValidation);
+		userService = new UserServiceImpl(userRepository, roleRepository, userConverter, userValidation, pageConverter);
 
 		roleModel1 = new RoleModel();
 		roleModel1.setName("user");
@@ -66,6 +73,16 @@ class UserServiceImplTest {
 		userDto1 = new UserDto();
 		userDto1.setLogin("user1");
 		userDto1.setRole(roleDto1);
+
+		List<UserDto> userDtos = new ArrayList<>();
+		userDtos.add(userDto1);
+
+		List<UserModel> userModels = new ArrayList<>();
+		userModels.add(userModel1);
+
+		Pageable pageable = PageRequest.of(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT);
+		userModelsPage = new PageImpl<>(userModels, pageable, userModels.size());
+		userDtosPage = new PageImpl<>(userDtos, pageable, userDtos.size());
 	}
 
 	@Test
@@ -83,21 +100,16 @@ class UserServiceImplTest {
 	@Test
 	void testReadAll() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.put(EntityConstant.OFFSET, Arrays.asList(Integer.toString(OFFSET)));
-		params.put(EntityConstant.LIMIT, Arrays.asList(Integer.toString(LIMIT)));
 
-		List<UserDto> expected = new ArrayList<>();
-		expected.add(userDto1);
+		Page<UserDto> expected = userDtosPage;
 
-		List<UserModel> userModelList = new ArrayList<>();
-		userModelList.add(userModel1);
+		Mockito.when(userRepository.findAll(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT))
+				.thenReturn(userModelsPage);
 
-		Mockito.when(userRepository.findAll(OFFSET, LIMIT)).thenReturn(userModelList);
-
-		List<UserDto> actual = userService.readAll(params);
+		Page<UserDto> actual = userService.readAll(params);
 		Assertions.assertEquals(expected, actual);
 
-		Mockito.verify(userRepository).findAll(OFFSET, LIMIT);
+		Mockito.verify(userRepository).findAll(ServiceConstant.DEFAULT_PAGE_NUMBER, ServiceConstant.DEFAULT_LIMIT);
 	}
 
 	@Test
@@ -113,7 +125,7 @@ class UserServiceImplTest {
 	@Test
 	void testReadAllWithInvalidOffsetParam() {
 		MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
-		params.put(EntityConstant.OFFSET, Arrays.asList("one"));
+		params.put(ServiceConstant.OFFSET, Arrays.asList("one"));
 
 		Assertions.assertThrows(ValidationException.class, () -> {
 			userService.readAll(params);

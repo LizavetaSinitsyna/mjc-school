@@ -16,6 +16,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.ComponentScan;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.test.annotation.DirtiesContext;
 
 import com.epam.esm.repository.OrderRepository;
@@ -35,6 +39,7 @@ class OrderRepositoryImplTest {
 	private static final int OFFSET_0 = 0;
 	private static final int OFFSET_1 = 1;
 	private static final int LIMIT_2 = 2;
+	private static final int LIMIT_1 = 1;
 	private static final Long ORDER_ID_1 = 1L;
 	private static final Long USER_ID_1 = 1L;
 
@@ -165,8 +170,13 @@ class OrderRepositoryImplTest {
 	void testFindAll() {
 		entityManager.persist(orderModel1);
 		entityManager.persist(orderModel2);
-		List<OrderModel> actual = orderRepository.findAll(OFFSET_1, LIMIT_2);
-		List<OrderModel> expected = Arrays.asList(orderModel2);
+
+		Pageable pageable = PageRequest.of(OFFSET_1, LIMIT_1);
+		List<OrderModel> expectedList = Arrays.asList(orderModel2);
+		Page<OrderModel> expected = new PageImpl<>(expectedList, pageable, expectedList.size());
+
+		Page<OrderModel> actual = orderRepository.findAll(OFFSET_1, LIMIT_1);
+
 		Assertions.assertEquals(expected, actual);
 	}
 
@@ -174,10 +184,12 @@ class OrderRepositoryImplTest {
 	void testReadAllByUserId() {
 		entityManager.persist(orderModel1);
 		entityManager.persist(orderModel2);
-		
-		List<OrderModel> expected = new ArrayList<>();
-		expected.add(orderModel1);
-		List<OrderModel> actual = orderRepository.readAllByUserId(USER_ID_1, OFFSET_0, LIMIT_2);
+
+		Pageable pageable = PageRequest.of(OFFSET_0, LIMIT_2);
+		List<OrderModel> expectedList = Arrays.asList(orderModel1);
+		Page<OrderModel> expected = new PageImpl<>(expectedList, pageable, expectedList.size());
+
+		Page<OrderModel> actual = orderRepository.readAllByUserId(USER_ID_1, OFFSET_0, LIMIT_2);
 		Assertions.assertEquals(expected, actual);
 	}
 }
