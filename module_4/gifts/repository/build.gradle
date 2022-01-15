@@ -1,0 +1,9 @@
+dependencies {
+	implementation 'mysql:mysql-connector-java'
+	implementation 'org.apache.commons:commons-lang3'
+	
+	compileOnly 'org.hibernate:hibernate-jpamodelgen'	
+	annotationProcessor 'org.hibernate:hibernate-jpamodelgen'
+		
+	testImplementation 'com.h2database:h2'
+}
