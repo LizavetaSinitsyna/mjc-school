@@ -11,6 +11,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class UserView extends RepresentationModel<UserView> {
 	private Long id;
-	private String login;
+	private String username;
 	private RoleView role;
 }

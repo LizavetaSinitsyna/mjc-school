@@ -49,10 +49,10 @@ public class ServiceConstant {
 
 	// User
 	public static final int USER_MIN_NAME_LENGTH = 5;
-	public static final int USER_MAX_NAME_LENGTH = 25;
+	public static final int USER_MAX_NAME_LENGTH = 20;
 
 	// Role
-	public static final String DEFAULT_ROLE_NAME = "user";
+	public static final String DEFAULT_ROLE_NAME = "ROLE_USER";
 
 	// Order
 	public static final int ORDER_UNIQUE_CERTIFICATE_MAX_AMOUNT = 100;

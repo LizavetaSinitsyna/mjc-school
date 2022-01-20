@@ -31,7 +31,7 @@ public class UserGenerator {
 			String name;
 			while ((name = reader.readLine()) != null && lineCounter < amount) {
 				UserDto userDto = new UserDto();
-				userDto.setLogin(name);
+				userDto.setUsername(name);
 				userDtosToCreate.add(userDto);
 				++lineCounter;
 			}

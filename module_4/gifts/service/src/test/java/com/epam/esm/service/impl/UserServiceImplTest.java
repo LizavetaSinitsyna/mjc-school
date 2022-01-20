@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
@@ -39,6 +40,7 @@ class UserServiceImplTest {
 	private static PageConverter<UserDto, UserModel> pageConverter;
 	private UserRepository userRepository;
 	private RoleRepository roleRepository;
+	private PasswordEncoder passwordEncoder;
 	private UserModel userModel1;
 	private UserDto userDto1;
 	private RoleModel roleModel1;
@@ -58,20 +60,22 @@ class UserServiceImplTest {
 	public void setUp() {
 		userRepository = Mockito.mock(UserRepository.class);
 		roleRepository = Mockito.mock(RoleRepository.class);
-		userService = new UserServiceImpl(userRepository, roleRepository, userConverter, userValidation, pageConverter);
+		passwordEncoder = Mockito.mock(PasswordEncoder.class);
+		userService = new UserServiceImpl(userRepository, roleRepository, userConverter, userValidation, pageConverter,
+				passwordEncoder);
 
 		roleModel1 = new RoleModel();
 		roleModel1.setName("user");
 
 		userModel1 = new UserModel();
-		userModel1.setLogin("user1");
+		userModel1.setUsername("user1");
 		userModel1.setRole(roleModel1);
 
 		roleDto1 = new RoleDto();
 		roleDto1.setName("user");
 
 		userDto1 = new UserDto();
-		userDto1.setLogin("user1");
+		userDto1.setUsername("user1");
 		userDto1.setRole(roleDto1);
 
 		List<UserDto> userDtos = new ArrayList<>();

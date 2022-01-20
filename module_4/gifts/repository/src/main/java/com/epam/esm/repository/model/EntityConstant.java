@@ -27,6 +27,8 @@ public class EntityConstant {
 	public static final String TAG_ID = "tag_id";
 	public static final String ORDER_ID = "order_id";
 	public static final String USER_ID = "user_id";
+	
+	public static final String USER_LOGIN = "login";
 
 	public static final String ORDER_CERTIFICATES = "certificates";
 	public static final String ORDER = "order";

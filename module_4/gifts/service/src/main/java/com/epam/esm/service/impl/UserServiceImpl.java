@@ -3,10 +3,13 @@ package com.epam.esm.service.impl;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
@@ -38,15 +41,18 @@ public class UserServiceImpl implements UserService {
 	private final UserConverter userConverter;
 	private final PageConverter<UserDto, UserModel> pageConverter;
 	private final UserValidation userValidation;
+	private final PasswordEncoder passwordEncoder;
 
 	@Autowired
 	public UserServiceImpl(UserRepository userRepository, RoleRepository roleRepository, UserConverter userConverter,
-			UserValidation userValidation, PageConverter<UserDto, UserModel> pageConverter) {
+			UserValidation userValidation, PageConverter<UserDto, UserModel> pageConverter,
+			PasswordEncoder passwordEncoder) {
 		this.userRepository = userRepository;
 		this.roleRepository = roleRepository;
 		this.userConverter = userConverter;
 		this.pageConverter = pageConverter;
 		this.userValidation = userValidation;
+		this.passwordEncoder = passwordEncoder;
 	}
 
 	/**
@@ -68,6 +74,18 @@ public class UserServiceImpl implements UserService {
 				EntityConstant.ID + ValidationUtil.ERROR_RESOURCE_DELIMITER + userId, ErrorCode.NO_USER_FOUND));
 
 		return userConverter.convertToDto(userModel);
+	}
+
+	@Override
+	public UserDto readByLoginAndPassword(String login, String password) {
+		Optional<UserModel> userModel = userRepository.findByLogin(login);
+
+		if (userModel.isEmpty() || !passwordEncoder.matches(password, userModel.get().getPassword())) {
+			throw new ValidationException(EntityConstant.USER_LOGIN + ValidationUtil.ERROR_RESOURCE_DELIMITER + login,
+					ErrorCode.INVALID_LOGIN_OR_PASSWORD);
+		}
+
+		return userConverter.convertToDto(userModel.get());
 	}
 
 	/**
@@ -146,18 +164,29 @@ public class UserServiceImpl implements UserService {
 	}
 
 	private UserModel obtainUserModelToSave(UserDto userDto) {
-		RoleModel roleModel = roleRepository.findByName(ServiceConstant.DEFAULT_ROLE_NAME).get();
 		Map<ErrorCode, String> errors = userValidation.validateAllUserFields(userDto);
-		if (userRepository.userExistsByLogin(ValidationUtil.removeExtraSpaces(userDto.getLogin()))) {
+		if (userRepository.userExistsByLogin(ValidationUtil.removeExtraSpaces(userDto.getUsername()))) {
 			errors.put(ErrorCode.DUPLICATED_USER_NAME,
-					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + userDto.getLogin());
+					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + userDto.getUsername());
 		}
 		if (!errors.isEmpty()) {
 			throw new ValidationException(errors, ErrorCode.INVALID_USER);
 		}
+
+		RoleModel roleModel = roleRepository.findByName(ServiceConstant.DEFAULT_ROLE_NAME).get();
 		userDto.setId(null);
 		UserModel userModelToSave = userConverter.convertToModel(userDto);
 		userModelToSave.setRole(roleModel);
+		userModelToSave.setPassword(passwordEncoder.encode(userDto.getPassword()));
 		return userModelToSave;
+	}
+
+	@Override
+	public UserDto loadUserByUsername(String username) throws UsernameNotFoundException {
+		UserModel userModel = userRepository.findByLogin(username)
+				.orElseThrow(() -> new NotFoundException(
+						EntityConstant.USER_LOGIN + ValidationUtil.ERROR_RESOURCE_DELIMITER + username,
+						ErrorCode.NO_USER_FOUND));
+		return userConverter.convertToDto(userModel);
 	}
 }

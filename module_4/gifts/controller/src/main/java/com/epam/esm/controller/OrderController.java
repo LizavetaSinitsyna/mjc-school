@@ -6,6 +6,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -58,6 +59,7 @@ public class OrderController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
+	@PreAuthorize("hasRole('ADMIN')")
 	public OrderView readById(@PathVariable long id) {
 		OrderDto orderDto = orderService.readById(id);
 		return orderViewAssembler.toModel(orderDto);
@@ -71,6 +73,7 @@ public class OrderController {
 	 * @return orders which meet passed parameters
 	 */
 	@GetMapping
+	@PreAuthorize("hasRole('ADMIN')")
 	public ResponseEntity<PagedModel<OrderView>> readAll(@RequestParam MultiValueMap<String, String> params) {
 		Page<OrderDto> orderPage = orderService.readAll(params);
 		PagedModel<OrderView> page = pagedResourcesAssembler.toModel(orderPage, orderViewAssembler);
@@ -86,6 +89,7 @@ public class OrderController {
 	 * @return orders for specified user which meet the passed parameters
 	 */
 	@GetMapping("/users/{userId}")
+	@PreAuthorize("hasRole('ADMIN') or #userId == principal.id")
 	public ResponseEntity<PagedModel<OrderView>> readByUserId(@PathVariable long userId,
 			@RequestParam MultiValueMap<String, String> params) {
 		Page<OrderDto> orderPage = orderService.readAllByUserId(userId, params);
@@ -101,6 +105,7 @@ public class OrderController {
 	 * @return information about the order with passed id for the specified user
 	 */
 	@GetMapping("/{orderId}/users/{userId}")
+	@PreAuthorize("hasRole('ADMIN') or #userId == principal.id")
 	public OrderDataView readOrderDataByUserId(@PathVariable long userId, @PathVariable long orderId) {
 		OrderDataDto orderDataDto = orderService.readOrderDataByUserId(userId, orderId);
 		OrderDataView orderDataView = orderDataConverter.convertToView(orderDataDto);
@@ -116,6 +121,7 @@ public class OrderController {
 	 * @return saved order
 	 */
 	@PostMapping("/users/{userId}")
+	@PreAuthorize("#userId == principal.id")
 	public OrderView create(@PathVariable long userId, @RequestBody OrderView orderView) {
 		OrderDto createdOrderDto = orderService.create(userId, orderConverter.convertToDto(orderView));
 		OrderView createdOrderView = orderConverter.convertToView(createdOrderDto);

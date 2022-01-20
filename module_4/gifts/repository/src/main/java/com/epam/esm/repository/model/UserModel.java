@@ -24,7 +24,9 @@ public class UserModel {
 	@Column(nullable = false, updatable = false)
 	private Long id;
 	@Column(nullable = false, length = 25, unique = true)
-	private String login;
+	private String username;
+	@Column(nullable = false, length = 60)
+	private String password;
 	@ManyToOne
 	@JoinColumn(name = "role_id", nullable = false)
 	private RoleModel role;

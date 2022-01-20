@@ -6,6 +6,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -56,6 +57,7 @@ public class CertificateController {
 	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasRole('ADMIN')")
 	public CertificateView create(@RequestBody CertificateView certificateView) {
 		CertificateDto createdCertificateDto = certificateService
 				.create(certificateConverter.convertToDto(certificateView));
@@ -101,6 +103,7 @@ public class CertificateController {
 	 */
 	@PatchMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
+	@PreAuthorize("hasRole('ADMIN')")
 	public CertificateView updateCertificateFields(@RequestBody CertificateView certificateView,
 			@PathVariable long id) {
 		CertificateDto updatedCertificateDto = certificateService.updateCertificateFields(id,
@@ -119,6 +122,7 @@ public class CertificateController {
 	 */
 	@PutMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
+	@PreAuthorize("hasRole('ADMIN')")
 	public CertificateView updateEntireCertificate(@RequestBody CertificateView certificateView,
 			@PathVariable long id) {
 		CertificateDto updatedCertificateDto = certificateService.updateEntireCertificate(id,
@@ -134,6 +138,7 @@ public class CertificateController {
 	 */
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@PreAuthorize("hasRole('ADMIN')")
 	public void delete(@PathVariable long id) {
 		certificateService.delete(id);
 	}

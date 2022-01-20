@@ -28,7 +28,7 @@ public class UserQueryBuilder {
 		Root<UserModel> userRoot = userCriteria.from(UserModel.class);
 		userCriteria.select(userRoot);
 		userCriteria.where(
-				criteriaBuilder.equal(criteriaBuilder.lower(userRoot.get(UserModel_.login)), login.toLowerCase()));
+				criteriaBuilder.equal(criteriaBuilder.lower(userRoot.get(UserModel_.username)), login.toLowerCase()));
 		return entityManager.createQuery(userCriteria);
 	}
 }

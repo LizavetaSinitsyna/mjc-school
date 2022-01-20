@@ -33,7 +33,6 @@ import com.epam.esm.repository.model.CertificateModel;
 import com.epam.esm.repository.model.OrderCertificateModel;
 import com.epam.esm.repository.model.OrderModel;
 import com.epam.esm.repository.model.OrderModel_;
-import com.epam.esm.repository.model.PageModel;
 import com.epam.esm.repository.model.UserModel;
 import com.epam.esm.repository.model.UserModel_;
 import com.epam.esm.repository.query_builder.QueryBuilderUtil;

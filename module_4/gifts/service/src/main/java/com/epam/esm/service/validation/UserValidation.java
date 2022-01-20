@@ -7,6 +7,7 @@ import com.epam.esm.service.ServiceConstant;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import org.springframework.stereotype.Component;
 import org.springframework.util.MultiValueMap;
@@ -17,9 +18,35 @@ import org.springframework.util.MultiValueMap;
  */
 @Component
 public class UserValidation {
+	private static final String PASSWORD_REGEX = "^(?=.*?[A-ZÀ-ß])(?=.*?[a-zà-ÿ])(?=.*?[0-9])(?=.*?[ !\\\"#\\$%&'\\(\\)\\*\\+,\\-\\./:;<=>\\?@\\[\\]\\^_`{|}~]).{8,25}$";
+	private static final String USERNAME_REGEX = "^[a-zA-Z0-9à-ÿÀ-ß]([\\._-](?![\\._-])|[a-zA-Z0-9à-ÿÀ-ß]){3,18}[a-zA-Z0-9à-ÿÀ-ß]$";
 
 	public UserValidation() {
 
+	}
+
+	/**
+	 * Validates username.
+	 * 
+	 * @param username the username to validate.
+	 * @return {@code true} if username is valid and {@code false} otherwise.
+	 */
+	public boolean validateUsername(String username) {
+		Pattern pattern = Pattern.compile(USERNAME_REGEX);
+		return !(username == null) && pattern.matcher(username).matches();
+
+	}
+
+	/**
+	 * Validates password.
+	 * 
+	 * @param password the password to validate.
+	 * @return {@code true} if password is valid and {@code false} otherwise.
+	 */
+
+	public boolean checkPassword(String password) {
+		Pattern pattern = Pattern.compile(PASSWORD_REGEX);
+		return !(password == null) && pattern.matcher(password).matches();
 	}
 
 	/**
@@ -60,10 +87,12 @@ public class UserValidation {
 	public Map<ErrorCode, String> validateAllUserFields(UserDto userDto) {
 		ValidationUtil.checkNull(userDto, EntityConstant.USER);
 		Map<ErrorCode, String> errors = new HashMap<>();
-		if (!ValidationUtil.checkLength(userDto.getLogin(), ServiceConstant.USER_MIN_NAME_LENGTH,
-				ServiceConstant.USER_MAX_NAME_LENGTH)) {
+		if (!validateUsername(userDto.getUsername())) {
 			errors.put(ErrorCode.INVALID_USER_NAME,
-					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + userDto.getLogin());
+					EntityConstant.NAME + ValidationUtil.ERROR_RESOURCE_DELIMITER + userDto.getUsername());
+		}
+		if (!checkPassword(userDto.getPassword())) {
+			errors.put(ErrorCode.INVALID_USER_PASSWORD, "");
 		}
 		return errors;
 	}

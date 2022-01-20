@@ -91,7 +91,7 @@ class OrderServiceImplTest {
 		cost = new BigDecimal("20");
 
 		userModel1 = new UserModel();
-		userModel1.setLogin("user1");
+		userModel1.setUsername("user1");
 
 		orderModel1 = new OrderModel();
 		orderModel1.setUser(userModel1);
@@ -125,7 +125,7 @@ class OrderServiceImplTest {
 		orderModel1.setCertificates(orderCertificateModelList);
 
 		userDto1 = new UserDto();
-		userDto1.setLogin("user1");
+		userDto1.setUsername("user1");
 
 		orderDto1 = new OrderDto();
 		orderDto1.setUser(userDto1);

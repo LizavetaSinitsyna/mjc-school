@@ -6,6 +6,7 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -53,6 +54,7 @@ public class TagController {
 	 */
 	@PostMapping
 	@ResponseStatus(HttpStatus.CREATED)
+	@PreAuthorize("hasRole('ADMIN')")
 	public TagView create(@RequestBody TagView tagView) {
 		TagDto createdTag = tagService.create(tagConverter.convertToDto(tagView));
 		return tagViewAssembler.toModel(createdTag);
@@ -66,6 +68,7 @@ public class TagController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
+	@PreAuthorize("isAuthenticated()")
 	public TagView readById(@PathVariable long id) {
 		TagDto tagDto = tagService.readById(id);
 		return tagViewAssembler.toModel(tagDto);
@@ -79,6 +82,7 @@ public class TagController {
 	 * @return tags which meet passed parameters
 	 */
 	@GetMapping
+	@PreAuthorize("isAuthenticated()")
 	public ResponseEntity<PagedModel<TagView>> readAll(@RequestParam MultiValueMap<String, String> params) {
 		Page<TagDto> tagPage = tagService.readAll(params);
 		PagedModel<TagView> page = pagedResourcesAssembler.toModel(tagPage, tagViewAssembler);
@@ -92,6 +96,7 @@ public class TagController {
 	 */
 	@DeleteMapping("/{id}")
 	@ResponseStatus(HttpStatus.NO_CONTENT)
+	@PreAuthorize("hasRole('ADMIN')")
 	public void delete(@PathVariable long id) {
 		tagService.delete(id);
 	}

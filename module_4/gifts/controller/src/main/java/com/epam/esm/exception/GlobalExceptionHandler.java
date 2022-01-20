@@ -84,6 +84,14 @@ public class GlobalExceptionHandler {
 		return new ApiRootCausesException(errorMessage, errorCode.getCode(), error.toString());
 	}
 
+	@ExceptionHandler(InvalidJwtException.class)
+	@ResponseStatus(HttpStatus.FORBIDDEN)
+	public ApiException handleInvalidJwtException(InvalidJwtException exception) {
+		ErrorCode errorCode = ErrorCode.INVALID_JWT_TOKEN;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiException(errorMessage, errorCode.getCode());
+	}
+
 	private ApiException handleException(Map<ErrorCode, String> errors, ErrorCode generalErrorCode,
 			String invalidResource) {
 		String errorMessage = obtainExceptionMessage(generalErrorCode.getCode(), invalidResource);

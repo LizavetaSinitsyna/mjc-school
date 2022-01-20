@@ -3,6 +3,7 @@ package com.epam.esm.service;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.UserDto;
@@ -12,7 +13,7 @@ import com.epam.esm.dto.UserDto;
  * Contains methods for working mostly with user entities.
  *
  */
-public interface UserService {
+public interface UserService extends UserDetailsService {
 	/**
 	 * Reads user with passed id.
 	 * 
@@ -45,4 +46,6 @@ public interface UserService {
 	 * @return saved users
 	 */
 	List<UserDto> createUsers(List<UserDto> userDtos);
+
+	UserDto readByLoginAndPassword(String login, String password);
 }
