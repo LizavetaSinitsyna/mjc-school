@@ -16,6 +16,7 @@ import com.epam.esm.service.UserService;
 
 @Component
 public class UserGenerator {
+	private static final String DEFAULT_PASSWORD = "Password1!";
 	private final UserService userService;
 
 	@Autowired
@@ -32,6 +33,7 @@ public class UserGenerator {
 			while ((name = reader.readLine()) != null && lineCounter < amount) {
 				UserDto userDto = new UserDto();
 				userDto.setUsername(name);
+				userDto.setPassword(DEFAULT_PASSWORD);
 				userDtosToCreate.add(userDto);
 				++lineCounter;
 			}

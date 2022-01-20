@@ -12,6 +12,7 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -88,6 +89,14 @@ public class GlobalExceptionHandler {
 	@ResponseStatus(HttpStatus.FORBIDDEN)
 	public ApiException handleInvalidJwtException(InvalidJwtException exception) {
 		ErrorCode errorCode = ErrorCode.INVALID_JWT_TOKEN;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiException(errorMessage, errorCode.getCode());
+	}
+	
+	@ExceptionHandler(AuthenticationException.class)
+	@ResponseStatus(HttpStatus.FORBIDDEN)
+	public ApiException handleAuthenticationException(AuthenticationException exception) {
+		ErrorCode errorCode = ErrorCode.UNAUTHORIZED_ACCESS;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiException(errorMessage, errorCode.getCode());
 	}

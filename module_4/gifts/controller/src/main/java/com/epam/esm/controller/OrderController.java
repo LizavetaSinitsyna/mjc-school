@@ -1,5 +1,7 @@
 package com.epam.esm.controller;
 
+import java.security.Principal;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.web.PagedResourcesAssembler;
@@ -7,6 +9,7 @@ import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +36,8 @@ import com.epam.esm.service.OrderService;
 @RestController
 @RequestMapping("/api/v1/orders")
 public class OrderController {
-
+	private static final String AUTH_EXCEPTION_MESSAGE = "Forbidden";
+	
 	private final OrderService orderService;
 	private final OrderViewConverter orderConverter;
 	private final OrderDataViewConverter orderDataConverter;
@@ -59,9 +63,12 @@ public class OrderController {
 	 */
 	@GetMapping("/{id}")
 	@ResponseStatus(HttpStatus.OK)
-	@PreAuthorize("hasRole('ADMIN')")
-	public OrderView readById(@PathVariable long id) {
+	@PreAuthorize("hasRole('ADMIN') or hasRole('USER')")
+	public OrderView readById(@PathVariable long id, Principal principal) {
 		OrderDto orderDto = orderService.readById(id);
+		if (!orderDto.getUser().getUsername().equals(principal.getName())) {
+			throw new AuthenticationCredentialsNotFoundException(AUTH_EXCEPTION_MESSAGE);
+		}
 		return orderViewAssembler.toModel(orderDto);
 	}
 

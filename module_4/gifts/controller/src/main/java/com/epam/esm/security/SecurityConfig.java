@@ -2,7 +2,6 @@ package com.epam.esm.security;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,15 +29,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http.httpBasic().disable().csrf().disable().sessionManagement()
-				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and()
-				.anonymous().disable()/*-.and().authorizeRequests()
-				.antMatchers(HttpMethod.POST, "/api/v1/certificates/*").hasRole("ADMIN")
-				.antMatchers(HttpMethod.PATCH).hasRole("ADMIN")
-				.antMatchers(HttpMethod.PUT).hasRole("ADMIN")
-				.antMatchers(HttpMethod.DELETE).hasRole("ADMIN")
-				.antMatchers("/api/v1/orders").hasRole("ADMIN")
-				.antMatchers("/api/v1/orders").hasRole("ADMIN")
-				.antMatchers("/api/v1/users/register", "/api/v1/users/auth").permitAll()*/
+				.sessionCreationPolicy(SessionCreationPolicy.STATELESS).and().anonymous().disable()
 				.addFilterBefore(exceptionHandlerFilter, SecurityContextPersistenceFilter.class)
 				.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 	}

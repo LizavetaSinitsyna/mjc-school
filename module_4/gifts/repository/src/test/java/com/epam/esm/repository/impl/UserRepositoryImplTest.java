@@ -30,6 +30,7 @@ import com.epam.esm.repository.model.UserModel;
 @ComponentScan("com.epam.esm")
 @DirtiesContext(classMode = DirtiesContext.ClassMode.BEFORE_EACH_TEST_METHOD)
 class UserRepositoryImplTest {
+	private static final String PASSWORD = "Password1!";
 	private static final int OFFSET_1 = 1;
 	private static final int LIMIT_1 = 1;
 	private static final Long USER_ID_1 = 1L;
@@ -51,13 +52,15 @@ class UserRepositoryImplTest {
 		entityManager.persist(roleModel1);
 
 		userModel1 = new UserModel();
-		userModel1.setLogin("user1");
+		userModel1.setUsername("user1");
 		userModel1.setRole(roleModel1);
+		userModel1.setPassword(PASSWORD);
 		entityManager.persist(userModel1);
 
 		userModel2 = new UserModel();
-		userModel2.setLogin("user2");
+		userModel2.setUsername("user2");
 		userModel2.setRole(roleModel1);
+		userModel2.setPassword(PASSWORD);
 	}
 
 	@Test

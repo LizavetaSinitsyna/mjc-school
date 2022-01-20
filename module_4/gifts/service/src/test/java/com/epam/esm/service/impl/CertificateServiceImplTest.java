@@ -261,6 +261,7 @@ class CertificateServiceImplTest {
 
 		Mockito.when(certificateRepository.updateCertificate(Mockito.any())).thenReturn(certificateModel1);
 		Mockito.when(certificateRepository.findByName(Mockito.any())).thenReturn(Optional.of(certificateModel1));
+		Mockito.when(certificateRepository.findById(CERTIFICATE_ID_1)).thenReturn(Optional.of(certificateModel1));
 		Mockito.when(certificateRepository.certificateExistsById(CERTIFICATE_ID_1)).thenReturn(true);
 		Mockito.when(tagRepository.save(Mockito.any())).thenReturn(tagModel1);
 		Mockito.when(tagRepository.findByName(Mockito.any())).thenReturn(Optional.ofNullable(null));

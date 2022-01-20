@@ -14,12 +14,14 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.RoleDto;
 import com.epam.esm.dto.UserDto;
+import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.RoleRepository;
 import com.epam.esm.repository.UserRepository;
@@ -34,6 +36,8 @@ import com.epam.esm.service.validation.UserValidation;
 
 class UserServiceImplTest {
 	private static final long USER_ID_1 = 1L;
+	private static final String PASSWORD = "Password1!";
+	private static final String LOGIN = "user1";
 
 	private static UserValidation userValidation;
 	private static UserConverter userConverter;
@@ -65,18 +69,18 @@ class UserServiceImplTest {
 				passwordEncoder);
 
 		roleModel1 = new RoleModel();
-		roleModel1.setName("user");
 
 		userModel1 = new UserModel();
-		userModel1.setUsername("user1");
+		userModel1.setUsername(LOGIN);
 		userModel1.setRole(roleModel1);
+		userModel1.setPassword(PASSWORD);
 
 		roleDto1 = new RoleDto();
-		roleDto1.setName("user");
 
 		userDto1 = new UserDto();
-		userDto1.setUsername("user1");
+		userDto1.setUsername(LOGIN);
 		userDto1.setRole(roleDto1);
+		userDto1.setPassword(PASSWORD);
 
 		List<UserDto> userDtos = new ArrayList<>();
 		userDtos.add(userDto1);
@@ -99,6 +103,50 @@ class UserServiceImplTest {
 		Assertions.assertEquals(expected, actual);
 
 		Mockito.verify(userRepository).findById(Mockito.anyLong());
+	}
+
+	@Test
+	void testReadByLoginAndPassword() {
+		UserDto expected = userDto1;
+
+		Mockito.when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(userModel1));
+		Mockito.when(passwordEncoder.matches(Mockito.any(), Mockito.anyString())).thenReturn(true);
+
+		UserDto actual = userService.readByLoginAndPassword(LOGIN, PASSWORD);
+		Assertions.assertEquals(expected, actual);
+
+		Mockito.verify(userRepository).findByLogin(Mockito.any());
+	}
+
+	@Test
+	void testReadByLoginAndPasswordWithInvalidPassword() {
+		Mockito.when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(userModel1));
+		Mockito.when(passwordEncoder.matches(Mockito.any(), Mockito.anyString())).thenReturn(false);
+
+		Assertions.assertThrows(ValidationException.class, () -> {
+			userService.readByLoginAndPassword(LOGIN, PASSWORD);
+		});
+	}
+
+	@Test
+	void testLoadUserByUsername() {
+		UserDto expected = userDto1;
+
+		Mockito.when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(userModel1));
+
+		UserDetails actual = userService.loadUserByUsername(LOGIN);
+		Assertions.assertEquals(expected, actual);
+
+		Mockito.verify(userRepository).findByLogin(Mockito.any());
+	}
+
+	@Test
+	void testLoadUserByUsernameWithNonExistedUsername() {
+		Mockito.when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.ofNullable(null));
+
+		Assertions.assertThrows(NotFoundException.class, () -> {
+			userService.loadUserByUsername(LOGIN);
+		});
 	}
 
 	@Test
@@ -150,6 +198,7 @@ class UserServiceImplTest {
 
 		Mockito.verify(userRepository).save(Mockito.any());
 		Mockito.verify(userRepository).userExistsByLogin(Mockito.any());
+		Mockito.verify(passwordEncoder).encode(Mockito.any());
 	}
 
 	@Test

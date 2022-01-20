@@ -80,6 +80,12 @@ public class UserController {
 		return new ResponseEntity<>(page, HttpStatus.OK);
 	}
 
+	/**
+	 * Creates and saves the passed user.
+	 * 
+	 * @param userRegistrationRequest the user to be saved
+	 * @return saved user
+	 */
 	@PostMapping("/register")
 	@ResponseStatus(HttpStatus.CREATED)
 	public UserView register(@RequestBody UserRequestView userRegistrationRequest) {
@@ -87,6 +93,13 @@ public class UserController {
 		return userViewAssembler.toModel(userDto);
 	}
 
+	/**
+	 * Performs authentication of the user with passed credentials.
+	 * 
+	 * @param userRegistrationRequest the user entity with credentials for
+	 *                                authentication
+	 * @return authentication token
+	 */
 	@PostMapping("/auth")
 	@ResponseStatus(HttpStatus.OK)
 	public AuthResponse authenticate(@RequestBody UserRequestView userRegistrationRequest) {

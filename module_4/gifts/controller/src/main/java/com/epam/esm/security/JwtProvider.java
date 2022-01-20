@@ -38,7 +38,7 @@ public class JwtProvider {
 			throw new InvalidJwtException(e.getMessage());
 		}
 	}
-	
+
 	public String obtainLoginFromToken(String token) {
 		Claims claims = Jwts.parser().setSigningKey(jwtSecret).parseClaimsJws(token).getBody();
 		return claims.getSubject();

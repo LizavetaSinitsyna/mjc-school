@@ -8,7 +8,6 @@ import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -76,6 +75,15 @@ public class UserServiceImpl implements UserService {
 		return userConverter.convertToDto(userModel);
 	}
 
+	/**
+	 * Reads user with passed login and password.
+	 * 
+	 * @param login    the username of the user to be read
+	 * @param password the password of the user to be read
+	 * @return user with passed login and password
+	 * @throws ValidationException if passed user with passed login and password
+	 *                             doesn't exist
+	 */
 	@Override
 	public UserDto readByLoginAndPassword(String login, String password) {
 		Optional<UserModel> userModel = userRepository.findByLogin(login);
@@ -181,8 +189,15 @@ public class UserServiceImpl implements UserService {
 		return userModelToSave;
 	}
 
+	/**
+	 * Locates the user based on the username.
+	 * 
+	 * @param username the username identifying the user whose data is required.
+	 * @return a fully populated user record (never <code>null</code>)
+	 * @throws NotFoundException if user with passed username does not exist
+	 */
 	@Override
-	public UserDto loadUserByUsername(String username) throws UsernameNotFoundException {
+	public UserDto loadUserByUsername(String username) {
 		UserModel userModel = userRepository.findByLogin(username)
 				.orElseThrow(() -> new NotFoundException(
 						EntityConstant.USER_LOGIN + ValidationUtil.ERROR_RESOURCE_DELIMITER + username,

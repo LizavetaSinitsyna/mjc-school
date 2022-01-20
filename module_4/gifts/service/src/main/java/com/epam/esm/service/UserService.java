@@ -47,5 +47,12 @@ public interface UserService extends UserDetailsService {
 	 */
 	List<UserDto> createUsers(List<UserDto> userDtos);
 
+	/**
+	 * Reads user with passed login and password.
+	 * 
+	 * @param login    the username of the user to be read
+	 * @param password the password of the user to be read
+	 * @return user with passed login and password
+	 */
 	UserDto readByLoginAndPassword(String login, String password);
 }
