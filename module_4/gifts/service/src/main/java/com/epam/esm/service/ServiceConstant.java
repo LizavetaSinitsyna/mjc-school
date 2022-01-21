@@ -50,6 +50,7 @@ public class ServiceConstant {
 	// User
 	public static final int USER_MIN_NAME_LENGTH = 5;
 	public static final int USER_MAX_NAME_LENGTH = 20;
+	public static final String AUTH_EXCEPTION_MESSAGE = "Forbidden";
 
 	// Role
 	public static final String DEFAULT_ROLE_NAME = "ROLE_USER";
