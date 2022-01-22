@@ -18,8 +18,8 @@ import org.springframework.util.MultiValueMap;
  */
 @Component
 public class UserValidation {
-	private static final String PASSWORD_REGEX = "^(?=.*?[A-Z¿-ﬂ])(?=.*?[a-z‡-ˇ])(?=.*?[0-9])(?=.*?[ !\\\"#\\$%&'\\(\\)\\*\\+,\\-\\./:;<=>\\?@\\[\\]\\^_`{|}~]).{8,25}$";
-	private static final String USERNAME_REGEX = "^[a-zA-Z0-9‡-ˇ¿-ﬂ]([\\._-](?![\\._-])|[a-zA-Z0-9‡-ˇ¿-ﬂ]){3,18}[a-zA-Z0-9‡-ˇ¿-ﬂ]$";
+	private static final String PASSWORD_REGEX = "^(?=.*?[A-Z–ê-–Ø])(?=.*?[a-z–∞-—è])(?=.*?[0-9])(?=.*?[ !\\\"#\\$%&'\\(\\)\\*\\+,\\-\\./:;<=>\\?@\\[\\]\\^_`{|}~]).{8,25}$";
+	private static final String USERNAME_REGEX = "^[a-zA-Z0-9–∞-—è–ê-–Ø]([\\._-](?![\\._-])|[a-zA-Z0-9–∞-—è–ê-–Ø]){3,18}[a-zA-Z0-9–∞-—è–ê-–Ø]$";
 
 	public UserValidation() {
 
@@ -32,7 +32,7 @@ public class UserValidation {
 	 * @return {@code true} if username is valid and {@code false} otherwise.
 	 */
 	public boolean validateUsername(String username) {
-		Pattern pattern = Pattern.compile(USERNAME_REGEX);
+		Pattern pattern = Pattern.compile(USERNAME_REGEX,  Pattern.UNICODE_CHARACTER_CLASS);
 		return !(username == null) && pattern.matcher(username).matches();
 
 	}
