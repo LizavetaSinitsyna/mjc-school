@@ -14,7 +14,6 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
-import org.springframework.util.AntPathMatcher;
 import org.springframework.util.PathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -26,14 +25,15 @@ public class JwtFilter extends OncePerRequestFilter {
 	public static final String AUTHORIZATION_HEADER = "Authorization";
 	public static final String TOKEN_HEADER_PREFIX = "Bearer ";
 	public static final int TOKEN_HEADER_FIRST_CHAR_INDEX = 7;
-	private static final PathMatcher pathMatcher = new AntPathMatcher();
+	private final PathMatcher pathMatcher;
 	private final Map<String, String> ignoredRequests;
 
 	private final JwtProvider jwtProvider;
 	private final UserService userService;
 
 	@Autowired
-	public JwtFilter(JwtProvider jwtProvider, UserService userService) {
+	public JwtFilter(JwtProvider jwtProvider, UserService userService, PathMatcher pathMatcher) {
+		this.pathMatcher = pathMatcher;
 		this.jwtProvider = jwtProvider;
 		this.userService = userService;
 

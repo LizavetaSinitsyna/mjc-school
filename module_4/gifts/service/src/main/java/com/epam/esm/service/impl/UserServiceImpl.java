@@ -8,6 +8,7 @@ import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
@@ -81,7 +82,7 @@ public class UserServiceImpl implements UserService {
 	 * @param login    the username of the user to be read
 	 * @param password the password of the user to be read
 	 * @return user with passed login and password
-	 * @throws ValidationException if passed user with passed login and password
+	 * @throws AuthenticationCredentialsNotFoundException if passed user with passed login and password
 	 *                             doesn't exist
 	 */
 	@Override
@@ -89,8 +90,7 @@ public class UserServiceImpl implements UserService {
 		Optional<UserModel> userModel = userRepository.findByLogin(login);
 
 		if (userModel.isEmpty() || !passwordEncoder.matches(password, userModel.get().getPassword())) {
-			throw new ValidationException(EntityConstant.USER_LOGIN + ValidationUtil.ERROR_RESOURCE_DELIMITER + login,
-					ErrorCode.INVALID_LOGIN_OR_PASSWORD);
+			throw new AuthenticationCredentialsNotFoundException(ServiceConstant.AUTH_EXCEPTION_MESSAGE);
 		}
 
 		return userConverter.convertToDto(userModel.get());

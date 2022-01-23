@@ -6,6 +6,8 @@ import org.springframework.boot.web.servlet.support.SpringBootServletInitializer
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.ReloadableResourceBundleMessageSource;
+import org.springframework.util.AntPathMatcher;
+import org.springframework.util.PathMatcher;
 
 @SpringBootApplication
 public class Application extends SpringBootServletInitializer {
@@ -22,5 +24,10 @@ public class Application extends SpringBootServletInitializer {
 		messageSource.setBasename(MESSAGE_SOURCE_BASENAME);
 		messageSource.setDefaultEncoding(DEFAULT_ENCODING);
 		return messageSource;
+	}
+
+	@Bean
+	public PathMatcher pathMatcher() {
+		return new AntPathMatcher();
 	}
 }

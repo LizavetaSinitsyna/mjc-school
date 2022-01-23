@@ -95,9 +95,9 @@ public class GlobalExceptionHandler {
 	}
 	
 	@ExceptionHandler(AuthenticationException.class)
-	@ResponseStatus(HttpStatus.FORBIDDEN)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
 	public ApiException handleAuthenticationException(AuthenticationException exception) {
-		ErrorCode errorCode = ErrorCode.UNAUTHORIZED_ACCESS;
+		ErrorCode errorCode = ErrorCode.AUTHORIZATION_FAILED;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiException(errorMessage, errorCode.getCode());
 	}
@@ -105,7 +105,7 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(AccessDeniedException.class)
 	@ResponseStatus(HttpStatus.FORBIDDEN)
 	public ApiException handleAccessDeniedException(AccessDeniedException exception) {
-		ErrorCode errorCode = ErrorCode.UNAUTHORIZED_ACCESS;
+		ErrorCode errorCode = ErrorCode.FORBIDDEN_ACCESS;
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiException(errorMessage, errorCode.getCode());
 	}
