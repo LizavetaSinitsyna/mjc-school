@@ -1,0 +1,12 @@
+ext {
+	jwtVersion = "0.9.1"
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.boot:spring-boot-starter-hateoas'
+	
+	implementation "io.jsonwebtoken:jjwt:$jwtVersion"
+	
+	implementation project(':service')	
+}
