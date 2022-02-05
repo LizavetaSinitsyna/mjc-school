@@ -9,6 +9,10 @@ public class GeneralException extends RuntimeException {
 	private ErrorCode generalErrorCode;
 	private Map<ErrorCode, String> errors;
 
+	public GeneralException(ErrorCode generalErrorCode) {
+		this.generalErrorCode = generalErrorCode;
+	}
+
 	public GeneralException(String invalidResource, ErrorCode generalErrorCode) {
 		this.invalidResource = invalidResource;
 		this.generalErrorCode = generalErrorCode;

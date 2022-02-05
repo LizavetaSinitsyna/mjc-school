@@ -154,20 +154,8 @@ public class UserRepositoryImpl implements UserRepository {
 	 */
 	@Override
 	public Page<UserModel> findAll(int pageNumber, int limit) {
-		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-
-		CriteriaQuery<Long> counterCriteria = criteriaBuilder.createQuery(Long.class);
-		Root<UserModel> counterRoot = counterCriteria.from(UserModel.class);
-		counterCriteria.select(criteriaBuilder.count(counterRoot));
-		long totalEntriesAmount = entityManager.createQuery(counterCriteria).getSingleResult();
-
-		CriteriaQuery<UserModel> userCriteria = criteriaBuilder.createQuery(UserModel.class);
-		Root<UserModel> userRoot = userCriteria.from(UserModel.class);
-		userCriteria.select(userRoot);
-		TypedQuery<UserModel> typedQuery = entityManager.createQuery(userCriteria);
-		typedQuery.setFirstResult(QueryBuilderUtil.retrieveStartIndex(pageNumber, limit));
-		typedQuery.setMaxResults(limit);
-		List<UserModel> users = typedQuery.getResultList();
+		long totalEntriesAmount = userQueryBuilder.obtainCounterQuery(entityManager).getSingleResult();
+		List<UserModel> users = userQueryBuilder.obtainReadAllQuery(entityManager, pageNumber, limit).getResultList();
 
 		Pageable pageable = PageRequest.of(pageNumber, limit);
 		Page<UserModel> pageModel = new PageImpl<>(users, pageable, totalEntriesAmount);

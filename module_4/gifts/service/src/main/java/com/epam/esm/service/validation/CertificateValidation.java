@@ -47,7 +47,7 @@ public class CertificateValidation {
 			return false;
 		}
 		int scale = price.scale();
-		return scale <= ServiceConstant.CERTIFICATE_PRICE_SCALE;
+		return scale == ServiceConstant.CERTIFICATE_PRICE_SCALE;
 	}
 
 	/**

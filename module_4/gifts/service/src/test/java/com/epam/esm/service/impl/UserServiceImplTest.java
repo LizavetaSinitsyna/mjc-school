@@ -15,13 +15,14 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.RoleDto;
 import com.epam.esm.dto.UserDto;
-import com.epam.esm.exception.NotFoundException;
+import com.epam.esm.exception.IncorrectUserCredentialsException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.RoleRepository;
 import com.epam.esm.repository.UserRepository;
@@ -123,7 +124,7 @@ class UserServiceImplTest {
 		Mockito.when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.of(userModel1));
 		Mockito.when(passwordEncoder.matches(Mockito.any(), Mockito.anyString())).thenReturn(false);
 
-		Assertions.assertThrows(ValidationException.class, () -> {
+		Assertions.assertThrows(IncorrectUserCredentialsException.class, () -> {
 			userService.readByLoginAndPassword(LOGIN, PASSWORD);
 		});
 	}
@@ -144,7 +145,7 @@ class UserServiceImplTest {
 	void testLoadUserByUsernameWithNonExistedUsername() {
 		Mockito.when(userRepository.findByLogin(LOGIN)).thenReturn(Optional.ofNullable(null));
 
-		Assertions.assertThrows(NotFoundException.class, () -> {
+		Assertions.assertThrows(UsernameNotFoundException.class, () -> {
 			userService.loadUserByUsername(LOGIN);
 		});
 	}

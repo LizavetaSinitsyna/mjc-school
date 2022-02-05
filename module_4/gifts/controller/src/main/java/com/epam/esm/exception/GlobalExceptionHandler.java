@@ -14,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -93,7 +94,7 @@ public class GlobalExceptionHandler {
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiException(errorMessage, errorCode.getCode());
 	}
-	
+
 	@ExceptionHandler(AuthenticationException.class)
 	@ResponseStatus(HttpStatus.UNAUTHORIZED)
 	public ApiException handleAuthenticationException(AuthenticationException exception) {
@@ -101,7 +102,15 @@ public class GlobalExceptionHandler {
 		String errorMessage = obtainExceptionMessage(errorCode.getCode());
 		return new ApiException(errorMessage, errorCode.getCode());
 	}
-	
+
+	@ExceptionHandler(UsernameNotFoundException.class)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ApiException handleUsernameNotFoundException(UsernameNotFoundException exception) {
+		ErrorCode errorCode = ErrorCode.INVALID_JWT_TOKEN;
+		String errorMessage = obtainExceptionMessage(errorCode.getCode());
+		return new ApiException(errorMessage, errorCode.getCode());
+	}
+
 	@ExceptionHandler(AccessDeniedException.class)
 	@ResponseStatus(HttpStatus.FORBIDDEN)
 	public ApiException handleAccessDeniedException(AccessDeniedException exception) {
@@ -135,6 +144,12 @@ public class GlobalExceptionHandler {
 	@ExceptionHandler(NotFoundException.class)
 	@ResponseStatus(HttpStatus.NOT_FOUND)
 	public ApiException handleNotFoundException(NotFoundException exception) {
+		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
+	}
+
+	@ExceptionHandler(IncorrectUserCredentialsException.class)
+	@ResponseStatus(HttpStatus.UNAUTHORIZED)
+	public ApiException handleIncorrectUserCredentialsException(IncorrectUserCredentialsException exception) {
 		return handleException(exception.getErrors(), exception.getGeneralErrorCode(), exception.getInvalidResource());
 	}
 

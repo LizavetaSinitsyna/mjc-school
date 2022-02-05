@@ -8,13 +8,14 @@ import java.util.Optional;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.dto.UserDto;
 import com.epam.esm.exception.ErrorCode;
+import com.epam.esm.exception.IncorrectUserCredentialsException;
 import com.epam.esm.exception.NotFoundException;
 import com.epam.esm.exception.ValidationException;
 import com.epam.esm.repository.RoleRepository;
@@ -82,15 +83,15 @@ public class UserServiceImpl implements UserService {
 	 * @param login    the username of the user to be read
 	 * @param password the password of the user to be read
 	 * @return user with passed login and password
-	 * @throws AuthenticationCredentialsNotFoundException if passed user with passed login and password
-	 *                             doesn't exist
+	 * @throws IncorrectUserCredentialsException if user with passed login and
+	 *                                           password doesn't exist
 	 */
 	@Override
 	public UserDto readByLoginAndPassword(String login, String password) {
 		Optional<UserModel> userModel = userRepository.findByLogin(login);
 
 		if (userModel.isEmpty() || !passwordEncoder.matches(password, userModel.get().getPassword())) {
-			throw new AuthenticationCredentialsNotFoundException(ServiceConstant.AUTH_EXCEPTION_MESSAGE);
+			throw new IncorrectUserCredentialsException(ErrorCode.INCORRECT_USER_CREDENTIALS);
 		}
 
 		return userConverter.convertToDto(userModel.get());
@@ -194,14 +195,12 @@ public class UserServiceImpl implements UserService {
 	 * 
 	 * @param username the username identifying the user whose data is required.
 	 * @return a fully populated user record (never <code>null</code>)
-	 * @throws NotFoundException if user with passed username does not exist
+	 * @throws UsernameNotFoundException if user with passed username does not exist
 	 */
 	@Override
 	public UserDto loadUserByUsername(String username) {
 		UserModel userModel = userRepository.findByLogin(username)
-				.orElseThrow(() -> new NotFoundException(
-						EntityConstant.USER_LOGIN + ValidationUtil.ERROR_RESOURCE_DELIMITER + username,
-						ErrorCode.NO_USER_FOUND));
+				.orElseThrow(() -> new UsernameNotFoundException(ServiceConstant.AUTH_EXCEPTION_MESSAGE));
 		return userConverter.convertToDto(userModel);
 	}
 }

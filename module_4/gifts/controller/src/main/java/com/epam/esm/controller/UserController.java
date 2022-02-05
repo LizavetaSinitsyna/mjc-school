@@ -18,7 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.epam.esm.controller.assembler.UserViewAssembler;
-import com.epam.esm.controller.converter.UserRequestViewConverter;
+import com.epam.esm.controller.converter.UserViewConverter;
 import com.epam.esm.controller.view.AuthResponse;
 import com.epam.esm.controller.view.UserRequestView;
 import com.epam.esm.controller.view.UserView;
@@ -37,17 +37,17 @@ public class UserController {
 	private final UserService userService;
 	private final PagedResourcesAssembler<UserDto> pagedResourcesAssembler;
 	private final UserViewAssembler userViewAssembler;
-	private final UserRequestViewConverter userRegistrationRequestConverter;
+	private final UserViewConverter<UserRequestView> userViewConverter;
 	private final JwtProvider jwtProvider;
 
 	@Autowired
 	public UserController(UserService userService, UserViewAssembler userViewAssembler,
 			PagedResourcesAssembler<UserDto> pagedResourcesAssembler,
-			UserRequestViewConverter userRegistrationRequestConverter, JwtProvider jwtProvider) {
+			UserViewConverter<UserRequestView> userViewConverter, JwtProvider jwtProvider) {
 		this.userService = userService;
 		this.pagedResourcesAssembler = pagedResourcesAssembler;
 		this.userViewAssembler = userViewAssembler;
-		this.userRegistrationRequestConverter = userRegistrationRequestConverter;
+		this.userViewConverter = userViewConverter;
 		this.jwtProvider = jwtProvider;
 	}
 
@@ -89,7 +89,7 @@ public class UserController {
 	@PostMapping("/register")
 	@ResponseStatus(HttpStatus.CREATED)
 	public UserView register(@RequestBody UserRequestView userRegistrationRequest) {
-		UserDto userDto = userService.create(userRegistrationRequestConverter.convertToDto(userRegistrationRequest));
+		UserDto userDto = userService.create(userViewConverter.convertToDto(userRegistrationRequest));
 		return userViewAssembler.toModel(userDto);
 	}
 

@@ -5,11 +5,11 @@ import org.modelmapper.Converter;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Component;
 
-import com.epam.esm.controller.view.UserView;
+import com.epam.esm.controller.view.User;
 import com.epam.esm.dto.UserDto;
 
 @Component
-public class UserViewConverter {
+public class UserViewConverter<T extends User> {
 	private final ModelMapper modelMapper;
 	private Converter<String, String> spaceRemover = new AbstractConverter<String, String>() {
 		protected String convert(String source) {
@@ -23,11 +23,11 @@ public class UserViewConverter {
 		modelMapper.getConfiguration().setFieldMatchingEnabled(true);
 	}
 
-	public UserDto convertToDto(UserView userView) {
+	public UserDto convertToDto(T userView) {
 		return modelMapper.map(userView, UserDto.class);
 	}
 
-	public UserView convertToView(UserDto userDto) {
-		return modelMapper.map(userDto, UserView.class);
+	public T convertToView(UserDto userDto, Class<T> destinationType) {
+		return modelMapper.map(userDto, destinationType);
 	}
 }

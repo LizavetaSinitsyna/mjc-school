@@ -13,10 +13,10 @@ import com.epam.esm.dto.UserDto;
 @Component
 public class UserViewAssembler extends RepresentationModelAssemblerSupport<UserDto, UserView> {
 
-	private final UserViewConverter userConverter;
+	private final UserViewConverter<UserView> userConverter;
 
 	@Autowired
-	public UserViewAssembler(UserViewConverter userConverter) {
+	public UserViewAssembler(UserViewConverter<UserView> userConverter) {
 		super(UserController.class, UserView.class);
 		this.userConverter = userConverter;
 
@@ -24,7 +24,7 @@ public class UserViewAssembler extends RepresentationModelAssemblerSupport<UserD
 
 	@Override
 	public UserView toModel(UserDto entity) {
-		UserView userView = userConverter.convertToView(entity);
+		UserView userView = userConverter.convertToView(entity, UserView.class);
 		HateoasUtil.addLinksToUser(userView);
 		return userView;
 	}

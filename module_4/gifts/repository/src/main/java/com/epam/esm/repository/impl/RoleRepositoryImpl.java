@@ -1,27 +1,16 @@
 package com.epam.esm.repository.impl;
 
-import java.sql.PreparedStatement;
-import java.util.List;
 import java.util.Optional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.CriteriaBuilder;
-import javax.persistence.criteria.CriteriaQuery;
-import javax.persistence.criteria.CriteriaUpdate;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.transaction.Transactional;
 
 import org.springframework.stereotype.Repository;
-import org.springframework.util.MultiValueMap;
 
 import com.epam.esm.repository.RoleRepository;
-import com.epam.esm.repository.model.EntityConstant;
 import com.epam.esm.repository.model.RoleModel;
-import com.epam.esm.repository.model.RoleModel_;
+import com.epam.esm.repository.query_builder.RoleQueryBuilder;
 
 /**
  * 
@@ -34,8 +23,10 @@ public class RoleRepositoryImpl implements RoleRepository {
 	@PersistenceContext
 	private EntityManager entityManager;
 
-	public RoleRepositoryImpl() {
+	private final RoleQueryBuilder roleQueryBuilder;
 
+	public RoleRepositoryImpl(RoleQueryBuilder roleQueryBuilder) {
+		this.roleQueryBuilder = roleQueryBuilder;
 	}
 
 	/**
@@ -46,14 +37,8 @@ public class RoleRepositoryImpl implements RoleRepository {
 	 */
 	@Override
 	public Optional<RoleModel> findByName(String roleName) {
-		CriteriaBuilder criteriaBuilder = entityManager.getCriteriaBuilder();
-		CriteriaQuery<RoleModel> roleCriteria = criteriaBuilder.createQuery(RoleModel.class);
-		Root<RoleModel> roleRoot = roleCriteria.from(RoleModel.class);
-		roleCriteria.select(roleRoot);
-		roleCriteria.where(
-				criteriaBuilder.equal(criteriaBuilder.lower(roleRoot.get(RoleModel_.name)), roleName.toLowerCase()));
 		try {
-			return Optional.of(entityManager.createQuery(roleCriteria).getSingleResult());
+			return Optional.of(roleQueryBuilder.obtainReadByNameQuery(entityManager, roleName).getSingleResult());
 		} catch (NoResultException e) {
 			return Optional.empty();
 		}

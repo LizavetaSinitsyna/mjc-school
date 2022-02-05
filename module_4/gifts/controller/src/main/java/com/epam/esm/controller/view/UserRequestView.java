@@ -1,9 +1,10 @@
 package com.epam.esm.controller.view;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 
 @Data
-public class UserRequestView {
-	private String username;
+@EqualsAndHashCode(callSuper = true)
+public class UserRequestView extends User {
 	private String password;
 }

@@ -10,8 +10,8 @@ import org.springframework.data.web.PagedResourcesAssembler;
 import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -72,7 +72,7 @@ public class OrderController {
 	public OrderView readById(@PathVariable long id, Principal principal, HttpServletRequest request) {
 		OrderDto orderDto = orderService.readById(id);
 		if (request.isUserInRole(USER_ROLE_NAME) && !orderDto.getUser().getUsername().equals(principal.getName())) {
-			throw new AuthenticationCredentialsNotFoundException(AUTH_EXCEPTION_MESSAGE);
+			throw new AccessDeniedException(AUTH_EXCEPTION_MESSAGE);
 		}
 		return orderViewAssembler.toModel(orderDto);
 	}
